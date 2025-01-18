@@ -1,9 +1,10 @@
 {
-  "name": "backend",
+  "name": "user_service",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "src/user_service/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+     "start": "nodemon index.js"
   },
   "author": "",
   "license": "ISC",
