@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
-const routes = require('./routes');
+const router = require('./router');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
@@ -13,7 +13,6 @@ const server = http.createServer(app);
 
 // Middleware để truyền io vào req
 app.use((req, res, next) => {
-    req.io = io;
     next();
 });
 
@@ -26,7 +25,7 @@ app.use(express.urlencoded({ limit: '50mb' }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-routes(app);
+router(app);
 
 mongoose
     .connect(`${process.env.MONGO_DB}`)
@@ -42,4 +41,4 @@ server.listen(PORT, () => {
     console.log('Server on running port', +PORT);
 });
 
-module.exports = { app,io };
+module.exports = { app };

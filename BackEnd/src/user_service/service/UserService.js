@@ -1,35 +1,53 @@
-const User = require('../model/UserModel');
+const { User, Account,Role } = require('../model/UserModel');
 const bcrypt = require('bcryptjs');
 const { generalAccessToken, refreshAccessToken } = require('../service/JwtServices');
 
-const createUser = (newUser) => {
+const createUser = async (newUser) => {
     return new Promise(async (resolve, reject) => {
         const { name, password } = newUser;
         try {
-            const checkUser = await User.findOne({
-                name: name,
-            });
-            if (checkUser !== null) {
-                await checkUser.save();
-                resolve({
+            const checkUser = await User.findOne({ name });
+            if (checkUser) {
+                return resolve({
                     status: 'ERR',
-                    message: 'The name is already service',
+                    message: 'The name is already in use',
                 });
             }
+
             const hash = bcrypt.hashSync(String(password), 10);
-            const createUser = await User.create({
-                name,
-                password: hash,
-            });
-            if (createUser) {
-                resolve({
-                    status: 'OK',
-                    message: 'Success user service',
-                    data: createUser,
+
+            // Tìm role CUSTOMER
+            const customerRole = await Role.findOne({ name: "CUSTOMER" });
+            if (!customerRole) {
+                return resolve({
+                    status: 'ERR',
+                    message: 'Role CUSTOMER does not exist',
                 });
             }
+
+            // **Tạo User trước**
+            const user = new User({ name,password: hash });
+            await user.save(); // Lưu user vào database
+
+            // **Tạo Account với `user_id`**
+            const account = new Account({
+                account_id: Date.now(),
+                user_id: user._id,
+                roles: [{ _id: customerRole._id, name: customerRole.name }],
+            });
+            await account.save(); // Lưu account vào database
+
+            // **Cập nhật User với Account**
+            user.account = account._id;
+            await user.save(); // Lưu lại user với account mới
+
+            resolve({
+                status: 'OK',
+                message: 'User created successfully',
+                data: user,
+            });
         } catch (e) {
-            console.error('Error service:', e);
+            console.error('Error in service:', e);
             reject(e);
         }
     });
@@ -71,6 +89,22 @@ const loginUser = (userLogin) => {
                 userId: checkUser.id,
             });
         } catch (e) {
+            console.error("Error in loginUser service:", e);
+            reject(e);
+        }
+    });
+};
+
+const getAllUser = () => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const allUser = await User.find();
+            resolve({
+                status: 'OK',
+                message: 'Get all Success',
+                data: allUser,
+            });
+        } catch (e) {
             reject(e);
         }
     });
@@ -79,4 +113,5 @@ const loginUser = (userLogin) => {
 module.exports = {
     createUser,
     loginUser,
+    getAllUser
 };

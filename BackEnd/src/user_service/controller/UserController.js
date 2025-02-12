@@ -38,10 +38,29 @@ const loginUser = async (req, res) => {
         res.cookie('refresh_token', refresh_token, {
             httpOnly: true,
             secure: false,
-            samesite: 'strict',
+            sameSite: 'strict',
             path: '/',
         });
         return res.status(200).json({ ...newResponse, refresh_token }); // lưu ý refresh token ở đây
+    } catch (e) {
+         console.error("Error in loginUser:", e); 
+        return res.status(500).json({
+            message: e.message || "Internal Server Error",
+        });
+    }
+};
+
+const refreshToken = async (req, res) => {
+    try {
+        let token = req.headers.token.split(' ')[1];
+        if (!token) {
+            return res.status(200).json({
+                status: 'ERR',
+                message: 'The token is required',
+            });
+        }
+        const response = await JwtServices.refreshTokenJwtService(token);
+        return res.status(200).json(response);
     } catch (e) {
         return res.status(404).json({
             message: e,
@@ -49,7 +68,21 @@ const loginUser = async (req, res) => {
     }
 };
 
+const getAllUser = async (req, res) => {
+    try {
+        const response = await UserService.getAllUser();
+        return res.status(200).json(response);
+    } catch (e) {
+        return res.status(404).json({
+            message: e,
+        });
+    }
+};
+
+
 module.exports = {
     createUser,
     loginUser,
+    refreshToken,
+    getAllUser
 };
