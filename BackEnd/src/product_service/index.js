@@ -5,7 +5,7 @@ const categoryRoutes = require('./routes/Category_Route');
 require('dotenv').config();
 
 const app = express();
-const port = 3000;
+const port = 5002;
 const mongoURI = process.env.mongoURI;
 
 // Sử dụng middleware có sẵn trong Express để parse JSON
