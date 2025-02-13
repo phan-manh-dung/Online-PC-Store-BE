@@ -84,9 +84,9 @@ const loginUser = (userLogin) => {
             resolve({
                 status: 'OK',
                 message: 'Success',
+                userId: checkUser.id,
                 access_token,
                 refresh_token,
-                userId: checkUser.id,
             });
         } catch (e) {
             console.error("Error in loginUser service:", e);
