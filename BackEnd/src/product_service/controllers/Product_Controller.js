@@ -23,7 +23,50 @@ const getProductById = async (req, res) => {
     }
 };
 
+// Handler để thêm mới một sản phẩm
+const createProduct = async (req, res) => {
+    const newProductData = req.body;
+    try {
+        const newProduct = await productService.createProduct(newProductData);
+        res.status(201).json(newProduct);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
+// Handler để cập nhật thông tin sản phẩm
+const updateProduct = async (req, res) => {
+    const { id } = req.params;
+    const updateData = req.body;
+    try {
+        const updatedProduct = await productService.updateProduct(id, updateData);
+        if (!updatedProduct) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        res.status(200).json(updatedProduct);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
+// Handler để xóa sản phẩm
+const deleteProduct = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const deletedProduct = await productService.deleteProduct(id);
+        if (!deletedProduct) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        res.status(200).json({ message: 'Product deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getAllProducts,
     getProductById,
+    createProduct,
+    updateProduct,
+    deleteProduct
 };
