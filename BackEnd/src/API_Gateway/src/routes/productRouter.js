@@ -15,9 +15,9 @@ const errorHandler = (error, res) => {
     });
 };
 
-router.get('/', async (req, res) => {
+router.get('/get-all', async (req, res) => {
     try {
-        const response = await productServiceClient.get('/api/products', {
+        const response = await productServiceClient.get('/api/product/get-all', {
             params: req.query
         });
         res.status(response.status).json(response.data);
@@ -26,9 +26,9 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/get-by-id/:id', async (req, res) => {
     try {
-        const response = await productServiceClient.get(`/api/products/${req.params.id}`);
+        const response = await productServiceClient.get(`/api/product/get-by-id/${req.params.id}`);
         res.status(response.status).json(response.data);
     } catch (error) {
         errorHandler(error, res);

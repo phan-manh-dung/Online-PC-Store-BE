@@ -53,34 +53,79 @@ const createUser = async (newUser) => {
     });
 };
 
+// const loginUser = (userLogin) => {
+//     return new Promise(async (resolve, reject) => {
+//         const { name, password } = userLogin;
+//         try {
+//             const checkUser = await User.findOne({
+//                 name: name,
+//             });
+//             if (checkUser === null) {
+//                 resolve({
+//                     status: 'ERR',
+//                     message: 'The user is not database service',
+//                 });
+//             }
+//             const comparePassword = bcrypt.compareSync(password, checkUser.password);
+//             if (!comparePassword) {
+//                 resolve({
+//                     status: 'ERR',
+//                     message: 'The password or user is incorrect service',
+//                 });
+//             }
+//             const access_token = await generalAccessToken({
+//                 id: checkUser.id,
+//                 isAdmin: checkUser.isAdmin,
+//             });
+//             const refresh_token = await refreshAccessToken({
+//                 id: checkUser.id,
+//                 isAdmin: checkUser.isAdmin,
+//             });
+//             resolve({
+//                 status: 'OK',
+//                 message: 'Success',
+//                 userId: checkUser.id,
+//                 access_token,
+//                 refresh_token,
+//             });
+//         } catch (e) {
+//             console.error("Error in loginUser service:", e);
+//             reject(e);
+//         }
+//     });
+// };
+
 const loginUser = (userLogin) => {
     return new Promise(async (resolve, reject) => {
         const { name, password } = userLogin;
         try {
-            const checkUser = await User.findOne({
-                name: name,
-            });
-            if (checkUser === null) {
-                resolve({
+            const checkUser = await User.findOne({ name }).populate("account"); 
+            if (!checkUser) {
+                return resolve({
                     status: 'ERR',
-                    message: 'The user is not database service',
+                    message: 'The user is not in the database',
                 });
             }
+
             const comparePassword = bcrypt.compareSync(password, checkUser.password);
             if (!comparePassword) {
-                resolve({
+                return resolve({
                     status: 'ERR',
-                    message: 'The password or user is incorrect service',
+                    message: 'The password or user is incorrect',
                 });
             }
+
+            const roles = checkUser.account?.roles?.map(role => role.name) || [];
+
             const access_token = await generalAccessToken({
                 id: checkUser.id,
-                isAdmin: checkUser.isAdmin,
+                roles,
             });
+
             const refresh_token = await refreshAccessToken({
                 id: checkUser.id,
-                isAdmin: checkUser.isAdmin,
             });
+
             resolve({
                 status: 'OK',
                 message: 'Success',
@@ -110,8 +155,34 @@ const getAllUser = () => {
     });
 };
 
+const deleteUser = (id) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+           const user = await User.findById(id);
+            if (!user) {
+                return resolve({
+                    status: 'ERR',
+                    message: 'The user does not exist',
+                });
+            }
+
+            if (user.account) {
+                await Account.findByIdAndDelete(user.account);
+            }
+            await User.findByIdAndDelete(id);
+            resolve({
+                status: 'OK',
+                message: 'Delete User Success',
+            });
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
 module.exports = {
     createUser,
     loginUser,
-    getAllUser
+    getAllUser,
+    deleteUser
 };

@@ -79,10 +79,30 @@ const getAllUser = async (req, res) => {
     }
 };
 
+const deleteUser = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        if (!userId) {
+            return res.status(200).json({
+                status: 'ERR',
+                message: 'The userId do not exist delete',
+            });
+        }
+        const response = await UserService.deleteUser(userId); // nếu k rơi vào trường hợp nào thì cho
+        //userId qua thằng UserService
+        return res.status(200).json(response);
+    } catch (e) {
+        return res.status(404).json({
+            message: e,
+        });
+    }
+};
+
 
 module.exports = {
     createUser,
     loginUser,
     refreshToken,
-    getAllUser
+    getAllUser,
+    deleteUser
 };

@@ -16,7 +16,6 @@ const errorHandler = (error, res) => {
     });
 };
 
-// Sign-in endpoint
 router.post('/sign-in', async (req, res) => {
     try {
         const response = await userServiceClient.post('/api/user/sign-in', req.body);
@@ -26,17 +25,15 @@ router.post('/sign-in', async (req, res) => {
     }
 });
 
-// Các endpoints khác
-router.get('/profile', async (req, res) => {
+router.post('/sign-up', async (req, res) => {
     try {
-        const token = req.headers.authorization;
-        const response = await userServiceClient.get('/api/user/profile', {
-            headers: { Authorization: token }
-        });
+        const response = await userServiceClient.post('/api/user/sign-up', req.body);
         res.status(response.status).json(response.data);
     } catch (error) {
         errorHandler(error, res);
     }
 });
+
+
 
 module.exports = router;

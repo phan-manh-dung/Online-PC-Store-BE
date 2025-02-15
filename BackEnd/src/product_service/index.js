@@ -18,7 +18,7 @@ mongoose
         process.exit(1);
     });
 
-app.use('/api', productRoutes);
+app.use('/api/product', productRoutes);
 app.use('/api', categoryRoutes);
 
 app.listen(port, () => {
