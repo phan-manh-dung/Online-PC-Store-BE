@@ -1,10 +1,9 @@
 const jwt = require('jsonwebtoken');
-const { User, Account } = require("../../user_service/model/UserModel");
 const dotenv = require('dotenv');
 dotenv.config();
 
 const authMiddleware = async (req, res, next) => {
-    const token = req.headers.token?.split(' ')[1];
+    const token = req.headers['authorization']?.split(' ')[1];
     if (!token) {
         return res.status(401).json({
             message: 'Token is missing',
