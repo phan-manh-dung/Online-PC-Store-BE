@@ -52,7 +52,7 @@ const loginUser = async (req, res) => {
 
 const refreshToken = async (req, res) => {
     try {
-        let token = req.headers.token.split(' ')[1];
+        const token = req.headers.authorization?.split(' ')[1];
         if (!token) {
             return res.status(200).json({
                 status: 'ERR',
@@ -98,11 +98,65 @@ const deleteUser = async (req, res) => {
     }
 };
 
+const logUotUser = async (req, res) => {
+    try {
+        res.clearCookie('refresh_token');
+        return res.status(200).json({
+            status: 'OK',
+            message: 'Log out success',
+        });
+    } catch (e) {
+        return res.status(404).json({
+            message: e,
+        });
+    }
+};
+
+const updateUser = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const data = req.body;
+        if (!userId) {
+            return res.status(200).json({
+                status: 'ERR',
+                message: 'The userId do not exist',
+            });
+        }
+        const response = await UserService.updateUser(userId, data);
+        return res.status(200).json(response);
+    } catch (e) {
+        return res.status(404).json({
+            message: e,
+        });
+    }
+};
+
+const getDetailsUser = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        if (!userId) {
+            return res.status(200).json({
+                status: 'ERR',
+                message: 'The userId do not exist getDetail',
+            });
+        }
+        const response = await UserService.getDetailsUser(userId); 
+        return res.status(200).json(response);
+    } catch (e) {
+        return res.status(404).json({
+            message: e,
+        });
+    }
+};
+
 
 module.exports = {
     createUser,
     loginUser,
     refreshToken,
     getAllUser,
-    deleteUser
+    deleteUser,
+    logUotUser,
+    updateUser,
+    getDetailsUser
 };

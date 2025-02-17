@@ -53,48 +53,6 @@ const createUser = async (newUser) => {
     });
 };
 
-// const loginUser = (userLogin) => {
-//     return new Promise(async (resolve, reject) => {
-//         const { name, password } = userLogin;
-//         try {
-//             const checkUser = await User.findOne({
-//                 name: name,
-//             });
-//             if (checkUser === null) {
-//                 resolve({
-//                     status: 'ERR',
-//                     message: 'The user is not database service',
-//                 });
-//             }
-//             const comparePassword = bcrypt.compareSync(password, checkUser.password);
-//             if (!comparePassword) {
-//                 resolve({
-//                     status: 'ERR',
-//                     message: 'The password or user is incorrect service',
-//                 });
-//             }
-//             const access_token = await generalAccessToken({
-//                 id: checkUser.id,
-//                 isAdmin: checkUser.isAdmin,
-//             });
-//             const refresh_token = await refreshAccessToken({
-//                 id: checkUser.id,
-//                 isAdmin: checkUser.isAdmin,
-//             });
-//             resolve({
-//                 status: 'OK',
-//                 message: 'Success',
-//                 userId: checkUser.id,
-//                 access_token,
-//                 refresh_token,
-//             });
-//         } catch (e) {
-//             console.error("Error in loginUser service:", e);
-//             reject(e);
-//         }
-//     });
-// };
-
 const loginUser = (userLogin) => {
     return new Promise(async (resolve, reject) => {
         const { name, password } = userLogin;
@@ -180,9 +138,59 @@ const deleteUser = (id) => {
     });
 };
 
+const updateUser = (id, data) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const checkUser = await User.findOne({
+                _id: id,
+            });
+            if (checkUser === null) {
+                resolve({
+                    status: 'ERR',
+                    message: 'The user is not exists',
+                });
+            }
+
+            const updatedUser = await User.findByIdAndUpdate(id, data, { new: true });
+            resolve({
+                status: 'OK',
+                message: 'SUCCESS',
+                data: updatedUser,
+            });
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
+const getDetailsUser = (id) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const user = await User.findOne({
+                _id: id,
+            });
+            if (user === null) {
+                resolve({
+                    status: 'ERR',
+                    message: 'The user is not exists getDetail',
+                });
+            }
+            resolve({
+                status: 'OK',
+                message: 'Success getDetail',
+                data: user,
+            });
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
 module.exports = {
     createUser,
     loginUser,
     getAllUser,
-    deleteUser
+    deleteUser,
+    updateUser,
+    getDetailsUser
 };
