@@ -19,7 +19,7 @@ mongoose
     });
 
 app.use('/api/product', productRoutes);
-app.use('/api', categoryRoutes);
+app.use('/api/category', categoryRoutes);
 
 app.listen(port, () => {
     console.log(`Product Service running at http://localhost:${port}`);
