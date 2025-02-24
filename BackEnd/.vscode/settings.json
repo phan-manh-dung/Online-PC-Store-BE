@@ -1,5 +1,4 @@
 {
     "editor.formatOnSave": true,
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "C_Cpp.errorSquiggles": "enabled"
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
 }

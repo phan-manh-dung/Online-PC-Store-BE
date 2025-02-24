@@ -1,0 +1,459 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Dashboard with Activity Tracking</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .api-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: transform 0.2s;
+            border-left: 5px solid #3498db;
+        }
+
+        .api-card.active {
+            border-left: 5px solid #27ae60;
+        }
+
+        .api-card.inactive {
+            border-left: 5px solid #e74c3c;
+            opacity: 0.8;
+        }
+
+        .api-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .api-path {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            word-break: break-all;
+        }
+
+        .method {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            margin-right: 5px;
+            font-size: 12px;
+        }
+
+        .GET {
+            background-color: #27ae60;
+        }
+
+        .POST {
+            background-color: #2980b9;
+        }
+
+        .PUT {
+            background-color: #f39c12;
+        }
+
+        .DELETE {
+            background-color: #c0392b;
+        }
+
+        .PATCH {
+            background-color: #8e44ad;
+        }
+
+        .middleware {
+            display: inline-block;
+            background-color: #ecf0f1;
+            color: #7f8c8d;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-right: 5px;
+            font-size: 12px;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .filter-btn {
+            background-color: #ecf0f1;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .summary {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .api-activity {
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        .call-count {
+            background-color: #2ecc71;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        .no-calls {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-active {
+            background-color: #2ecc71;
+        }
+
+        .status-inactive {
+            background-color: #e74c3c;
+        }
+
+        .last-called {
+            color: #7f8c8d;
+            font-style: italic;
+            margin-top: 5px;
+        }
+
+        .tab-container {
+            margin-bottom: 20px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background-color: #ecf0f1;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .tab-btn.active {
+            background-color: #3498db;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .api-card {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>API Services Dashboard</h1>
+
+        <div class="tab-container">
+            <div class="tab-buttons">
+                <button class="tab-btn active" data-tab="all">All APIs</button>
+                <button class="tab-btn" data-tab="active">Active APIs</button>
+                <button class="tab-btn" data-tab="inactive">Inactive APIs</button>
+            </div>
+        </div>
+
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search APIs...">
+            <div class="filters">
+                <button class="filter-btn active" data-method="ALL">All</button>
+                <button class="filter-btn" data-method="GET">GET</button>
+                <button class="filter-btn" data-method="POST">POST</button>
+                <button class="filter-btn" data-method="PUT">PUT</button>
+                <button class="filter-btn" data-method="DELETE">DELETE</button>
+            </div>
+        </div>
+
+        <div class="summary" id="apiSummary">
+            <!-- Summary will be filled by JavaScript -->
+        </div>
+
+        <div id="apiList">
+            <!-- API cards will be filled by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        let apiData = [];
+        let apiStats = {
+            callCounts: {},
+            lastCalled: {}
+        };
+        const apiList = document.getElementById('apiList');
+        const searchInput = document.getElementById('searchInput');
+        const apiSummary = document.getElementById('apiSummary');
+        let currentFilter = 'ALL';
+        let currentTab = 'all';
+
+        // Thời gian tối đa (ms) kể từ lần cuối gọi để coi API là active
+        const ACTIVE_THRESHOLD = 60 * 60 * 1000; // 1 giờ
+
+        // Function to check if an API is active
+        function isApiActive(apiPath, method) {
+            const key = `${method}:${apiPath}`;
+            if (!apiStats.lastCalled[key]) return false;
+
+            const lastCalledTime = new Date(apiStats.lastCalled[key]).getTime();
+            const currentTime = new Date().getTime();
+            return (currentTime - lastCalledTime) < ACTIVE_THRESHOLD;
+        }
+
+        // Function to get call count for an API
+        function getCallCount(apiPath, method) {
+            const key = `${method}:${apiPath}`;
+            return apiStats.callCounts[key] || 0;
+        }
+
+        // Function to get last called time for an API
+        function getLastCalled(apiPath, method) {
+            const key = `${method}:${apiPath}`;
+            return apiStats.lastCalled[key] || null;
+        }
+
+        // Function to render the API list
+        function renderAPIList(apis) {
+            apiList.innerHTML = '';
+            apis.forEach(api => {
+                // Check if at least one method is active
+                let isActive = false;
+                api.methods.forEach(method => {
+                    if (isApiActive(api.path, method)) {
+                        isActive = true;
+                    }
+                });
+
+                // Skip based on current tab
+                if (currentTab === 'active' && !isActive) return;
+                if (currentTab === 'inactive' && isActive) return;
+
+                const card = document.createElement('div');
+                card.className = `api-card ${isActive ? 'active' : 'inactive'}`;
+
+                let methodsHtml = '';
+                let activityHtml = '';
+
+                api.methods.forEach(method => {
+                    const callCount = getCallCount(api.path, method);
+                    const lastCalled = getLastCalled(api.path, method);
+                    const methodIsActive = isApiActive(api.path, method);
+
+                    methodsHtml += `<span class="method ${method}">${method}</span>`;
+
+                    activityHtml += `
+                        <div class="api-activity">
+                            <span class="status-indicator ${methodIsActive ? 'status-active' : 'status-inactive'}"></span>
+                            ${method}: <span class="call-count ${callCount === 0 ? 'no-calls' : ''}">${callCount} calls</span>
+                            ${lastCalled ? `<div class="last-called">Last called: ${formatDate(lastCalled)}</div>` : ''}
+                        </div>
+                    `;
+                });
+
+                let middlewaresHtml = '';
+                api.middlewares.forEach(middleware => {
+                    middlewaresHtml += `<span class="middleware">${middleware}</span>`;
+                });
+
+                card.innerHTML = `
+                    <div class="api-path">${api.path}</div>
+                    <div>${methodsHtml}</div>
+                    <div style="margin-top: 10px;">${middlewaresHtml}</div>
+                    <div style="margin-top: 15px;">${activityHtml}</div>
+                `;
+
+                apiList.appendChild(card);
+            });
+        }
+
+        // Function to format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString();
+        }
+
+        // Function to update the summary
+        function updateSummary(apis) {
+            const totalApis = apis.length;
+            const methodCount = {};
+            let activeCount = 0;
+            let inactiveCount = 0;
+
+            apis.forEach(api => {
+                let apiActive = false;
+                api.methods.forEach(method => {
+                    methodCount[method] = (methodCount[method] || 0) + 1;
+                    if (isApiActive(api.path, method)) {
+                        apiActive = true;
+                    }
+                });
+
+                if (apiActive) activeCount++;
+                else inactiveCount++;
+            });
+
+            let summaryHtml = `<strong>Total APIs:</strong> ${totalApis} | <strong>Active:</strong> ${activeCount} | <strong>Inactive:</strong> ${inactiveCount}<br><strong>Methods:</strong> `;
+
+            for (const [method, count] of Object.entries(methodCount)) {
+                summaryHtml += `<span class="method ${method}">${method}: ${count}</span> `;
+            }
+
+            apiSummary.innerHTML = summaryHtml;
+        }
+
+        // Function to filter APIs
+        function filterAPIs() {
+            const searchTerm = searchInput.value.toLowerCase();
+            let filteredApis = apiData;
+
+            // Filter by search term
+            if (searchTerm) {
+                filteredApis = filteredApis.filter(api =>
+                    api.path.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            // Filter by method
+            if (currentFilter !== 'ALL') {
+                filteredApis = filteredApis.filter(api =>
+                    api.methods.includes(currentFilter)
+                );
+            }
+
+            renderAPIList(filteredApis);
+            updateSummary(filteredApis);
+        }
+
+        // Fetch API data
+        async function fetchData() {
+            try {
+                // Fetch API list
+                const apiResponse = await fetch('http://localhost:5555/list-api');
+                apiData = await apiResponse.json();
+
+                // Fetch API stats
+                const statsResponse = await fetch('http://localhost:5555/api-stats');
+                apiStats = await statsResponse.json();
+
+                filterAPIs();
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        // Refresh data at intervals
+        function setupRefresh() {
+            fetchData(); // Initial fetch
+
+            // Refresh every 30 seconds
+            setInterval(fetchData, 30000);
+        }
+
+        // Event listeners
+        searchInput.addEventListener('input', filterAPIs);
+
+        // Method filter buttons
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                // Add active class to clicked button
+                button.classList.add('active');
+
+                currentFilter = button.getAttribute('data-method');
+                filterAPIs();
+            });
+        });
+
+        // Tab buttons
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                // Add active class to clicked button
+                button.classList.add('active');
+
+                currentTab = button.getAttribute('data-tab');
+                filterAPIs();
+            });
+        });
+
+        // Initialize
+        setupRefresh();
+    </script>
+</body>
+
+</html>
