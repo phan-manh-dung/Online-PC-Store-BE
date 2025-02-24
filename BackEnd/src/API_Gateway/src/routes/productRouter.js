@@ -35,4 +35,72 @@ router.get('/get-by-id/:id', async (req, res) => {
     }
 });
 
+router.post('/admin/create', async (req, res) => {
+    const token = req.headers['authorization']?.split(' ')[1]; 
+    
+    if (!token) {
+        return res.status(401).json({
+            message: 'Token is missing',
+            status: 'ERROR',
+        });
+    }
+
+    try {
+        const response = await productServiceClient.post('/api/product/admin/create', req.body, {
+            headers: {
+                'Authorization': `Bearer ${token}`  
+            }
+        });
+        res.status(response.status).json(response.data);
+    } catch (error) {
+        errorHandler(error, res);
+    }
+});
+
+// Cập nhật thông tin sản phẩm
+router.put('/admin/update/:id', async (req, res) => {
+    const token = req.headers['authorization']?.split(' ')[1]; 
+    
+    if (!token) {
+        return res.status(401).json({
+            message: 'Token is missing',
+            status: 'ERROR',
+        });
+    }
+
+    try {
+        const response = await productServiceClient.put(`/api/product/admin/update/${req.params.id}`, req.body, {
+            headers: {
+                'Authorization': `Bearer ${token}`  
+            }
+        });
+        res.status(response.status).json(response.data);
+    } catch (error) {
+        errorHandler(error, res);
+    }
+});
+
+// Xóa sản phẩm
+router.delete('/admin/delete/:id', async (req, res) => {
+    const token = req.headers['authorization']?.split(' ')[1]; 
+    
+    if (!token) {
+        return res.status(401).json({
+            message: 'Token is missing',
+            status: 'ERROR',
+        });
+    }
+
+    try {
+        const response = await productServiceClient.delete(`/api/product/admin/delete/${req.params.id}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`  
+            }
+        });
+        res.status(response.status).json(response.data);
+    } catch (error) {
+        errorHandler(error, res);
+    }
+});
+
 module.exports = router;
