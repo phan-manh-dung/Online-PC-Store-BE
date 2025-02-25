@@ -208,4 +208,68 @@ router.post('/sign-up', async (req, res) => {
   }
 });
 
+router.get('/get-detail/:id', async (req, res) => {
+  try {
+    const response = await userServiceClient.get(`/api/user/get-detail/${req.params.id}`, req.body);
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    errorHandler(error, res);
+  }
+});
+
+router.get('/admin/get-all', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+
+    console.log('Original Authorization header:', authHeader);
+    console.log('Extracted token:', token);
+
+    if (!token) {
+      return res.status(401).json({
+        message: 'Token is missing at API Gateway',
+        status: 'ERROR',
+      });
+    }
+
+    const response = await userServiceClient.getAuth('/api/user/admin/get-all', token);
+
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('Error when calling user service:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Internal server error at API Gateway',
+      status: 'ERROR',
+    });
+  }
+});
+
+router.delete('/admin/delete-user/:id', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({
+        message: 'Token is missing at API Gateway',
+        status: 'ERROR',
+      });
+    }
+
+    const response = await userServiceClient.delete(`/api/user/admin/delete-user/${req.params.id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('Error when calling user service:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Internal server error at API Gateway',
+      status: 'ERROR',
+    });
+  }
+});
+
 module.exports = router;

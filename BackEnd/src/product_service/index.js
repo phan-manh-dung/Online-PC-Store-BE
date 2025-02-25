@@ -14,12 +14,22 @@ dotenv.config();
 
 app.use(express.json());
 
+<<<<<<< HEAD
+mongoose
+  .connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => {
+    console.error('Error connecting to MongoDB:', err.message);
+    process.exit(1);
+  });
+=======
 const SERVICE_INFO = {
   name: 'product_service',
   host: 'localhost',
   port: process.env.PORT || 5002,
   endpoints: ['/api/product/get-all'],
 };
+>>>>>>> c94e077cac42146c92d33bb2152936a4314f041f
 
 const GATEWAY_URL = 'http://localhost:5555';
 let serviceId = null;
@@ -27,6 +37,10 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb' }));
 
+<<<<<<< HEAD
+app.listen(port, () => {
+  console.log(`Product Service running at http://localhost:${port}`);
+=======
 app.use(bodyParser.json());
 app.use(cookieParser());
 router(app);
@@ -85,4 +99,5 @@ mongoose
 app.listen(SERVICE_INFO.port, () => {
   console.log(`Product Service running on http://localhost:${SERVICE_INFO.port}`);
   setTimeout(registerWithGateway, 1000);
+>>>>>>> c94e077cac42146c92d33bb2152936a4314f041f
 });
