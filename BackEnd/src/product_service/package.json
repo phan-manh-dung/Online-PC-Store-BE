@@ -14,6 +14,10 @@
     "axios": "^1.7.9",
     "body-parser": "^1.20.3",
     "cookie-parser": "^1.4.7",
+<<<<<<< HEAD
+=======
+    "cors": "^2.8.5",
+>>>>>>> c94e077cac42146c92d33bb2152936a4314f041f
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",

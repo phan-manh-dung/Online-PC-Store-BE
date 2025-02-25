@@ -67,6 +67,7 @@ class ServiceClient {
       serviceRegistry.unregister(instance.id);
       throw new Error(`Service ${this.serviceName} unavailable`);
     }
+<<<<<<< HEAD
   }
 
   async getPublic(endpoint, headers = {}) {
@@ -114,6 +115,8 @@ class ServiceClient {
       serviceRegistry.unregister(instance.id);
       throw new Error(`Service ${this.serviceName} unavailable`);
     }
+=======
+>>>>>>> c94e077cac42146c92d33bb2152936a4314f041f
   }
 
   async post(endpoint, data, headers = {}) {

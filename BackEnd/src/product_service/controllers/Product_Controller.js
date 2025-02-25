@@ -1,4 +1,6 @@
+const Product = require('../models/Product_Model');
 const productService = require('../services/Product_Service');
+
 
 // Lấy tất cả sản phẩm
 const getAllProducts = async (req, res) => {
@@ -22,6 +24,41 @@ const getProductById = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+// Lấy sản phẩm đã sắp xếp theo giá và phân trang
+const getProductsSortedbyPrice = async (req, res) => {
+    const { sort_by, page = 1, limit = 10, price_min, price_max } = req.query;
+
+    try {
+        const products = await productService.getProductsSortedbyPrice({
+            price_min,
+            price_max,
+            sort_by,
+            page,
+            limit
+        });
+
+        //tính số trang
+        const totalProducts = await productService.getProductCount({
+            price_min,
+            price_max
+        });
+
+        const totalPages = Math.ceil(totalProducts / limit);
+
+        res.status(200).json({
+            products,
+            pagination: {
+                page,
+                limit,
+                total: totalProducts,
+                total_pages: totalPages
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 
 // Handler để thêm mới một sản phẩm
 const createProduct = async (req, res) => {
@@ -68,5 +105,6 @@ module.exports = {
     getProductById,
     createProduct,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    getProductsSortedbyPrice,
 };
