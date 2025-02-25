@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const productRoutes = require('./routes/Product_Route');
 const categoryRoutes = require('./routes/Category_Route');
+const supplierRoutes = require('./routes/Supplier_Route');
 require('dotenv').config();
 
 const app = express();
@@ -19,7 +20,8 @@ mongoose
     });
 
 app.use('/api/product', productRoutes);
-app.use('/api', categoryRoutes);
+app.use('/api/category', categoryRoutes);
+app.use('/api/supplier', supplierRoutes);
 
 app.listen(port, () => {
     console.log(`Product Service running at http://localhost:${port}`);
