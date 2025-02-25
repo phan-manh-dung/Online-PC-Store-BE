@@ -11,16 +11,16 @@ const mongoURI = process.env.mongoURI;
 app.use(express.json());
 
 mongoose
-    .connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log('Connected to MongoDB'))
-    .catch((err) => {
-        console.error('Error connecting to MongoDB:', err.message);
-        process.exit(1);
-    });
+  .connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => {
+    console.error('Error connecting to MongoDB:', err.message);
+    process.exit(1);
+  });
 
 app.use('/api/product', productRoutes);
 app.use('/api', categoryRoutes);
 
 app.listen(port, () => {
-    console.log(`Product Service running at http://localhost:${port}`);
+  console.log(`Product Service running at http://localhost:${port}`);
 });

@@ -18,7 +18,7 @@ const SERVICE_INFO = {
   name: 'user_service',
   host: 'localhost',
   port: process.env.PORT || 5001,
-  endpoints: ['/api/user/sign-in', '/api/user/sign-up'],
+  endpoints: ['/api/user/sign-in', '/api/user/sign-up', '/api/user/admin/get-all', '/api/user/get-detail/:id'],
 };
 
 const GATEWAY_URL = 'http://localhost:5555';
