@@ -1,294 +1,35 @@
+// src/routes/userRouter.js
 const express = require('express');
 const router = express.Router();
 const { StatusCodes } = require('http-status-codes');
-const { product: productServiceClient } = require('../services/serviceRegistry');
+const ServiceClient = require('../services/serviceClient');
+const productServiceClient = new ServiceClient('product_service');
 
 const errorHandler = (error, res) => {
-    console.error('Service Error:', error);
-    const status = error.response?.status || StatusCodes.INTERNAL_SERVER_ERROR;
-    const message = error.response?.data?.message || 'Internal Server Error';
-    
-    res.status(status).json({
-        success: false,
-        message,
-        error: error.message
-    });
+  console.error('Service Error:', error);
+  const status = error.response?.status || StatusCodes.INTERNAL_SERVER_ERROR;
+  const message = error.response?.data?.message || 'Internal Server Error';
+  res.status(status).json({
+    success: false,
+    message,
+    error: error.message,
+  });
 };
 
 router.get('/get-all', async (req, res) => {
-    try {
-        const response = await productServiceClient.get('/api/product/get-all', {
-            params: req.query
-        });
-        res.status(response.status).json(response.data);
-    } catch (error) {
-        errorHandler(error, res);
-    }
+  try {
+    console.log('Forwarding request to product service...');
+
+    const response = await productServiceClient.get('/api/product/get-all', {});
+
+    console.log('Received response:', response.data);
+
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('Error fetching products:', error.response?.data || error.message);
+
+    errorHandler(error, res);
+  }
 });
-
-router.get('/get-by-id/:id', async (req, res) => {
-    try {
-        const response = await productServiceClient.get(`/api/product/get-by-id/${req.params.id}`);
-        res.status(response.status).json(response.data);
-    } catch (error) {
-        errorHandler(error, res);
-    }
-});
-
-router.post('/admin/create', async (req, res) => {
-    const token = req.headers['authorization']?.split(' ')[1]; 
-    
-    if (!token) {
-        return res.status(401).json({
-            message: 'Token is missing',
-            status: 'ERROR',
-        });
-    }
-
-    try {
-        const response = await productServiceClient.post('/api/product/admin/create', req.body, {
-            headers: {
-                'Authorization': `Bearer ${token}`  
-            }
-        });
-        res.status(response.status).json(response.data);
-    } catch (error) {
-        errorHandler(error, res);
-    }
-});
-
-// Cập nhật thông tin sản phẩm
-router.put('/admin/update/:id', async (req, res) => {
-    const token = req.headers['authorization']?.split(' ')[1]; 
-    
-    if (!token) {
-        return res.status(401).json({
-            message: 'Token is missing',
-            status: 'ERROR',
-        });
-    }
-
-    try {
-        const response = await productServiceClient.put(`/api/product/admin/update/${req.params.id}`, req.body, {
-            headers: {
-                'Authorization': `Bearer ${token}`  
-            }
-        });
-        res.status(response.status).json(response.data);
-    } catch (error) {
-        errorHandler(error, res);
-    }
-});
-
-// Xóa sản phẩm
-router.delete('/admin/delete/:id', async (req, res) => {
-    const token = req.headers['authorization']?.split(' ')[1]; 
-    
-    if (!token) {
-        return res.status(401).json({
-            message: 'Token is missing',
-            status: 'ERROR',
-        });
-    }
-
-    try {
-        const response = await productServiceClient.delete(`/api/product/admin/delete/${req.params.id}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`  
-            }
-        });
-        res.status(response.status).json(response.data);
-    } catch (error) {
-        errorHandler(error, res);
-    }
-});
-
-
-
-// CATEGORIES --------------------------------------------------------------------------------------------------
-
-
-router.get('/category/get-all', async (req, res) => {
-    try {
-        const response = await productServiceClient.get('/api/category/get-all', {
-            params: req.query
-        });
-        res.status(response.status).json(response.data);
-    } catch (error) {
-        errorHandler(error, res);
-    }
-});
-
-router.get('/category/get-by-id/:id', async (req, res) => {
-    try {
-        const response = await productServiceClient.get(`/api/category/get-by-id/${req.params.id}`);
-        res.status(response.status).json(response.data);
-    } catch (error) {
-        errorHandler(error, res);
-    }
-});
-
-//Tạo mới category
-router.post('/category/admin/create', async (req, res) => {
-    const token = req.headers['authorization']?.split(' ')[1]; 
-    
-    if (!token) {
-        return res.status(401).json({
-            message: 'Token is missing',
-            status: 'ERROR',
-        });
-    }
-
-    try {
-        const response = await productServiceClient.post('/api/category/admin/create', req.body, {
-            headers: {
-                'Authorization': `Bearer ${token}`  
-            }
-        });
-        res.status(response.status).json(response.data);
-    } catch (error) {
-        errorHandler(error, res);
-    }
-});
-
-// Cập nhật thông tin sản phẩm
-router.put('/category/admin/update/:id', async (req, res) => {
-    const token = req.headers['authorization']?.split(' ')[1]; 
-    
-    if (!token) {
-        return res.status(401).json({
-            message: 'Token is missing',
-            status: 'ERROR',
-        });
-    }
-
-    try {
-        const response = await productServiceClient.put(`/api/category/admin/update/${req.params.id}`, req.body, {
-            headers: {
-                'Authorization': `Bearer ${token}`  
-            }
-        });
-        res.status(response.status).json(response.data);
-    } catch (error) {
-        errorHandler(error, res);
-    }
-});
-
-// Xóa sản phẩm
-router.delete('/category/admin/delete/:id', async (req, res) => {
-    const token = req.headers['authorization']?.split(' ')[1]; 
-    
-    if (!token) {
-        return res.status(401).json({
-            message: 'Token is missing',
-            status: 'ERROR',
-        });
-    }
-
-    try {
-        const response = await productServiceClient.delete(`/api/category/admin/delete/${req.params.id}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`  
-            }
-        });
-        res.status(response.status).json(response.data);
-    } catch (error) {
-        errorHandler(error, res);
-    }
-});
-
-
-//---------------------------Supplier----------------------------------------------------------------------------
-
-
-router.get('/supplier/get-all', async (req, res) => {
-    try {
-        const response = await productServiceClient.get('/api/supplier/get-all', {
-            params: req.query
-        });
-        res.status(response.status).json(response.data);
-    } catch (error) {
-        errorHandler(error, res);
-    }
-});
-
-router.get('/supplier/get-by-id/:id', async (req, res) => {
-    try {
-        const response = await productServiceClient.get(`/api/supplier/get-by-id/${req.params.id}`);
-        res.status(response.status).json(response.data);
-    } catch (error) {
-        errorHandler(error, res);
-    }
-});
-
-//Tạo mới supplier
-router.post('/supplier/admin/create', async (req, res) => {
-    const token = req.headers['authorization']?.split(' ')[1]; 
-    
-    if (!token) {
-        return res.status(401).json({
-            message: 'Token is missing',
-            status: 'ERROR',
-        });
-    }
-
-    try {
-        const response = await productServiceClient.post('/api/supplier/admin/create', req.body, {
-            headers: {
-                'Authorization': `Bearer ${token}`  
-            }
-        });
-        res.status(response.status).json(response.data);
-    } catch (error) {
-        errorHandler(error, res);
-    }
-});
-
-// Cập nhật thông tin ncc
-router.put('/supplier/admin/update/:id', async (req, res) => {
-    const token = req.headers['authorization']?.split(' ')[1]; 
-    
-    if (!token) {
-        return res.status(401).json({
-            message: 'Token is missing',
-            status: 'ERROR',
-        });
-    }
-
-    try {
-        const response = await productServiceClient.put(`/api/supplier/admin/update/${req.params.id}`, req.body, {
-            headers: {
-                'Authorization': `Bearer ${token}`  
-            }
-        });
-        res.status(response.status).json(response.data);
-    } catch (error) {
-        errorHandler(error, res);
-    }
-});
-
-// Xóa sản phẩm
-router.delete('/supplier/admin/delete/:id', async (req, res) => {
-    const token = req.headers['authorization']?.split(' ')[1]; 
-    
-    if (!token) {
-        return res.status(401).json({
-            message: 'Token is missing',
-            status: 'ERROR',
-        });
-    }
-
-    try {
-        const response = await productServiceClient.delete(`/api/supplier/admin/delete/${req.params.id}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`  
-            }
-        });
-        res.status(response.status).json(response.data);
-    } catch (error) {
-        errorHandler(error, res);
-    }
-});
-
 
 module.exports = router;
