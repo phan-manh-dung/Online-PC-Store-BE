@@ -6,12 +6,12 @@ const createUser = async (req, res) => {
     const { name, password, confirmPassword } = req.body;
     if (!name || !password || !confirmPassword) {
       return res.status(200).json({
-        status: 'ERR',
+        status: 'EMPTY_FIELD',
         message: 'Insufficient value entered controller ',
       });
     } else if (password !== confirmPassword) {
       return res.status(200).json({
-        status: 'ERR',
+        status: 'UNLIKE_CONFIRM_PASSWORD',
         message: 'Password unlike confirmPassword controller',
       });
     }
