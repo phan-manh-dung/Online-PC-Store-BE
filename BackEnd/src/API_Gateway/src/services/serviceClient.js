@@ -67,13 +67,13 @@ class ServiceClient {
       serviceRegistry.unregister(instance.id);
       throw new Error(`Service ${this.serviceName} unavailable`);
     }
-<<<<<<< HEAD
   }
 
-  async getPublic(endpoint, headers = {}) {
-    return this._sendGetRequest(endpoint, headers);
-  }
+  // async getPublic(endpoint, headers = {}) {
+  //   return this._sendGetRequest(endpoint, headers);
+  // }
 
+  // get auth
   async getAuth(endpoint, token, headers = {}) {
     if (typeof token !== 'string' || !token.trim()) {
       throw new Error('Invalid authentication token');
@@ -117,16 +117,103 @@ class ServiceClient {
     }
   }
 
+  // delete auth
+  async deleteAuth(endpoint, token, headers = {}) {
+    if (typeof token !== 'string' || !token.trim()) {
+      throw new Error('Invalid authentication token');
+    }
+
+    return this._sendDeleteRequest(endpoint, {
+      ...headers,
+      Authorization: `Bearer ${token.trim()}`,
+    });
+  }
+
+  async _sendDeleteRequest(endpoint, headers = {}) {
+    const instance = await this._getServiceInstance();
+    if (!instance) {
+      throw new Error(`No available instances for ${this.serviceName}`);
+    }
+
+    const url = `http://${instance.host}:${instance.port}${endpoint}`;
+    console.log(`[DEBUG] DELETE request to: ${url}`);
+
+    try {
+      const response = await axios.delete(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...headers,
+        },
+        timeout: 5000,
+      });
+
+      console.log(`[DEBUG] Response received:`, response.data);
+      return response;
+    } catch (error) {
+      console.error(`[ERROR] GET request failed:`, error.message);
+      if (error.response) {
+        console.error(`[ERROR] Response status:`, error.response.status);
+        console.error(`[ERROR] Response data:`, error.response.data);
+      }
+
+      serviceRegistry.unregister(instance.id);
+      throw new Error(`Service ${this.serviceName} unavailable`);
+    }
+  }
+
+  // post
   async post(endpoint, data, headers = {}) {
     return this._makeRequest('post', endpoint, data, headers);
   }
 
-  async put(endpoint, data, headers = {}) {
-    return this._makeRequest('put', endpoint, data, headers);
+  // post auth
+  async postAuth(endpoint, headers = {}, token) {
+    if (typeof token !== 'string' || !token.trim()) {
+      throw new Error('Invalid authentication token');
+    }
+
+    return this._sendPostRequest(endpoint, headers, token.trim());
   }
 
-  async delete(endpoint, headers = {}) {
-    return this._makeRequest('delete', endpoint, null, headers);
+  async _sendPostRequest(endpoint, headers = {}, token) {
+    const instance = await this._getServiceInstance();
+    if (!instance) {
+      throw new Error(`No available instances for ${this.serviceName}`);
+    }
+
+    const url = `http://${instance.host}:${instance.port}${endpoint}`;
+    console.log(`[DEBUG] POST request to: ${url}`);
+
+    try {
+      const response = await axios.post(
+        url,
+        { refreshToken: token },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...headers,
+          },
+          timeout: 5000,
+        },
+      );
+
+      console.log(`[DEBUG] Response received:`, response.data);
+      return response;
+    } catch (error) {
+      console.error(`[ERROR] GET request failed:`, error.message);
+      if (error.response) {
+        console.error(`[ERROR] Response status:`, error.response.status);
+        console.error(`[ERROR] Response data:`, error.response.data);
+      }
+
+      serviceRegistry.unregister(instance.id);
+      throw new Error(`Service ${this.serviceName} unavailable`);
+    }
+  }
+
+  // put
+  async put(endpoint, data, headers = {}) {
+    return this._makeRequest('put', endpoint, data, headers);
   }
 }
 

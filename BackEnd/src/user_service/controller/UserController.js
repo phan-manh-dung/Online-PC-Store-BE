@@ -4,15 +4,28 @@ const JwtServices = require('../service/JwtServices');
 const createUser = async (req, res) => {
   try {
     const { name, password, confirmPassword } = req.body;
-    if (!name || !password || !confirmPassword) {
+    if (!name) {
       return res.status(200).json({
-        status: 'EMPTY_FIELD',
-        message: 'Insufficient value entered controller ',
+        status: 'ERR_NAME',
+        message: 'Name is required',
       });
-    } else if (password !== confirmPassword) {
+    }
+    if (!password) {
       return res.status(200).json({
-        status: 'UNLIKE_CONFIRM_PASSWORD',
-        message: 'Password unlike confirmPassword controller',
+        status: 'ERR_PASSWORD',
+        message: 'Password is required',
+      });
+    }
+    if (!confirmPassword) {
+      return res.status(200).json({
+        status: 'ERR_CONFIRM_PASSWORD',
+        message: 'Confirm password is required',
+      });
+    }
+    if (password !== confirmPassword) {
+      return res.status(200).json({
+        status: 'ERR_CONFIRM_PASSWORD',
+        message: 'Password and confirm password do not match',
       });
     }
     const response = await UserService.createUser(req.body);
@@ -27,10 +40,20 @@ const createUser = async (req, res) => {
 const loginUser = async (req, res) => {
   try {
     const { name, password } = req.body;
-    if (!name || !password) {
+    if (!name && !password) {
       return res.status(200).json({
-        status: 'ERR',
-        message: 'Insufficient value entered controller',
+        status: 'ERR_ALL',
+        message: 'Both name and password are required',
+      });
+    } else if (!name) {
+      return res.status(200).json({
+        status: 'ERR_NAME',
+        message: 'Name is required',
+      });
+    } else if (!password) {
+      return res.status(200).json({
+        status: 'ERR_PASSWORD',
+        message: 'Password is required',
       });
     }
     const response = await UserService.loginUser(req.body);

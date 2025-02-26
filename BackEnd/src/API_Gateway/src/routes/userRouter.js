@@ -256,12 +256,53 @@ router.delete('/admin/delete-user/:id', async (req, res) => {
       });
     }
 
-    const response = await userServiceClient.delete(`/api/user/admin/delete-user/${req.params.id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await userServiceClient.deleteAuth(`/api/user/admin/delete-user/${req.params.id}`, token);
 
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('Error when calling user service:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Internal server error at API Gateway',
+      status: 'ERROR',
+    });
+  }
+});
+
+router.post('/log-out', async (req, res) => {
+  try {
+    const response = await userServiceClient.post('/api/user/log-out', req.body);
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    errorHandler(error, res);
+  }
+});
+
+router.post('/refresh-token', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({
+        message: 'Token is missing at API Gateway',
+        status: 'ERROR',
+      });
+    }
+
+    const response = await userServiceClient.postAuth('/api/user/refresh-token', token);
+
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('Error when calling user service:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Internal server error at API Gateway',
+      status: 'ERROR',
+    });
+  }
+});
+
+router.put('/update-user/:id', async (req, res) => {
+  try {
+    const response = await userServiceClient.put(`/api/user/update-user/${req.params.id}`, req.body);
     res.status(response.status).json(response.data);
   } catch (error) {
     console.error('Error when calling user service:', error.response?.data || error.message);
