@@ -50,7 +50,7 @@ async function registerWithGateway() {
   } catch (error) {
     console.error('Failed to register with API Gateway:', error.message);
     // Thử lại sau 5 giây
-    setTimeout(registerWithGateway, 5000);
+    setTimeout(registerWithGateway, 4000);
   }
 }
 
