@@ -3,7 +3,6 @@ const express = require('express');
 const router = express.Router();
 const { StatusCodes } = require('http-status-codes');
 const ServiceClient = require('../services/serviceClient');
-const { product: productServiceClient } = require('../services/serviceRegistry');
 
 const productServiceClient = new ServiceClient('product_service');
 
