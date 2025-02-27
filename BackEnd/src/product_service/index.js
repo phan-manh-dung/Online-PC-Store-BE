@@ -18,7 +18,15 @@ const SERVICE_INFO = {
   name: 'product_service',
   host: 'localhost',
   port: process.env.PORT || 5002,
-  endpoints: ['/api/product/get-all'],
+  endpoints: ['/api/product/get-all',
+    '/api/product/get-by-id/:id',
+    '/api/category/get-all',
+    '/api/category/get-by-id/:id',
+    '/api/supplier/get-all',
+    '/api/supplier/get-by-id/:id',
+    '/api/inventory/get-all',
+    '/api/inventory/get-by-id/:id'
+  ],
 };
 
 const GATEWAY_URL = 'http://localhost:5555';
