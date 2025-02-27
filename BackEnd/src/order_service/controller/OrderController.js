@@ -11,7 +11,6 @@ const createOrder = async (req, res) => {
     const userResponse = await axios.get(`${USER_SERVICE_URL}/${userId}`);
 
     const dataUser = [];
-    console.log('dataUser 1', dataUser);
 
     if (!userResponse.data) {
       return res.status(404).json({ message: 'User not found controller' });
