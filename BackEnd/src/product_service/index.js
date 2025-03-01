@@ -25,7 +25,8 @@ const SERVICE_INFO = {
     '/api/supplier/get-all',
     '/api/supplier/get-by-id/:id',
     '/api/inventory/get-all',
-    '/api/inventory/get-by-id/:id'
+    '/api/inventory/get-by-id/:id',
+    '/api/product/admin/create'
   ],
 };
 
