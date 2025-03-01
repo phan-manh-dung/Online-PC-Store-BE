@@ -87,7 +87,7 @@ class ServiceRegistry extends EventEmitter {
       const now = Date.now();
       for (const [serviceName, instances] of this.services) {
         for (const [instanceId, instance] of instances) {
-          if (now - instance.lastHeartbeat > this.healthCheckInterval * 1) {
+          if (now - instance.lastHeartbeat > this.healthCheckInterval * 3) {
             console.log(`Removing inactive service: ${instanceId}`);
             this.unregister(instanceId);
           }

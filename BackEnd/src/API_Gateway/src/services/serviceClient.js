@@ -327,7 +327,7 @@ class ServiceClient {
           if (this.breaker.opened) {
             throw new Error(`Service ${this.serviceName} temporarily unavailable due to repeated failures`);
           }
-          serviceRegistry.unregister(instance.id);
+          //  serviceRegistry.unregister(instance.id);
           throw new Error(`Service ${this.serviceName} unavailable after ${maxRetries} retries`);
         }
 

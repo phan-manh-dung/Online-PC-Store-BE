@@ -25,8 +25,9 @@ const SERVICE_INFO = {
     '/api/user/get-detail/:id',
     '/api/user/admin/delete-user/:id',
     '/api/user/update-user/:',
-    'refresh-token',
-    'log-out',
+    '/refresh-token',
+    '/log-out',
+    '/api/user/verify-token',
   ],
 };
 
@@ -49,7 +50,7 @@ async function registerWithGateway() {
     startHeartbeat();
   } catch (error) {
     console.error('Failed to register with API Gateway:', error.message);
-    // Thử lại sau 5 giây
+    // Thử lại sau 4 giây
     setTimeout(registerWithGateway, 4000);
   }
 }
@@ -93,5 +94,5 @@ mongoose
 // Start server
 app.listen(SERVICE_INFO.port, () => {
   console.log(`User Service running on http://localhost:${SERVICE_INFO.port}`);
-  setTimeout(registerWithGateway, 1000);
+  setTimeout(registerWithGateway, 2000);
 });
