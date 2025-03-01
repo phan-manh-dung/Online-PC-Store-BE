@@ -1,28 +1,45 @@
 const mongoose = require('mongoose');
 
 const orderDetailSchema = new mongoose.Schema({
-  order_detail_id: { type: Number, required: true, unique: true },
+  name: { type: String, required: true },
+  amount: { type: Number, required: true },
+  image: { type: String, required: true },
+  description: { type: String },
   productId: { type: mongoose.Schema.Types.ObjectId, required: true },
   quantity: { type: Number, required: true },
   discount: { type: Number, required: true },
-  total_price: { type: Double, require: true },
+  color: { type: String },
+  total_price: { type: Number, require: true },
 });
 
 const orderSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, required: true },
-    status: {
+    customerInformation: [
+      {
+        name: { type: String, require: true },
+        phone: { type: Number, require: true },
+      },
+    ],
+    shippingAddress: [
+      {
+        ward: { type: String, require: true },
+        district: { type: String, required: true },
+        city: { type: String, require: true },
+        country: { type: String, require: true },
+      },
+    ],
+    statusPayment: {
       type: String,
-      enum: ['CASH', 'CREDIT_CARD', 'INTERNET_BANKING'],
-      default: 'pending',
+      enum: ['CASH', 'CREDIT_CARD', 'INTERNET_BANKING', 'MOMO'],
+      default: 'CASH',
     },
-    shippingPrice: { type: Number },
-    totalPrice: { type: Number },
-    status: {
+    statusOrder: {
       type: String,
       enum: ['wait_pay', 'pending', 'deliver', 'completed', 'cancelled'],
       default: 'pending',
     },
+    totalPrice: { type: Number },
     orderDetails: [orderDetailSchema],
     isDelivered: { type: Boolean, default: false },
     deliveredAt: { type: Date },
@@ -31,6 +48,5 @@ const orderSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
-const Order = mongoose.model('Order', orderSchema);
-const Order_Detail = mongoose.model('Order_Detail', orderDetailSchema);
-module.exports = { Order, Order_Detail };
+const Order = mongoose.model('Order', orderSchema); // tạo bảng
+module.exports = { Order };

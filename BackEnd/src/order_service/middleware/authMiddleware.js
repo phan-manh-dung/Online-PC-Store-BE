@@ -1,81 +1,35 @@
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 const { User, Account } = require('../../user_service/model/UserModel');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const authMiddleware = async (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({
-      message: 'Token is missing',
-      status: 'ERROR',
-    });
-  }
+const GATEWAY_URL = 'http://localhost:5555';
 
+const authMiddlewareOrder = async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN);
-
-    // Kiểm tra thời gian hết hạn
-    if (decoded.exp < Date.now() / 1000) {
-      return res.status(401).json({
-        message: 'Token has expired',
-        status: 'ERROR',
-      });
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    console.log('token auth', token);
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
     }
 
-    // Lấy thông tin User từ decoded token , populate dùng để lấy data liên kết account từ user
-    const user = await User.findById(decoded.id).populate('account');
-    if (!user || !user.account) {
-      return res.status(403).json({
-        message: 'Access denied: User or account not found',
-        status: 'ERROR',
-      });
-    }
-
-    // Lấy thông tin account và kiểm tra quyền ADMIN
-    const account = await Account.findById(user.account);
-    const isAdmin = account.roles.some((role) => role.name === 'ADMIN');
-    if (isAdmin || decoded.id === req.params.id) {
-      req.user = user; // Gán thông tin user vào req để dùng trong các middleware khác nếu cần
-      next();
-    } else {
-      return res.status(403).json({
-        message: 'Access denied: You are not an admin',
-        status: 'ERROR',
-      });
-    }
-  } catch (error) {
-    console.error('Error verifying token:', error);
-    return res.status(500).json({
-      message: 'Internal server error',
-      status: 'ERROR',
+    // Gọi user_service qua Gateway để xác thực token
+    const response = await axios.get(`${GATEWAY_URL}/api/user/verify-token`, {
+      headers: { Authorization: `Bearer ${token}` },
     });
+    const userData = response.data;
+    if (!userData || !userData.data) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    req.user = userData.data; // Lưu thông tin user vào req
+    next();
+  } catch (error) {
+    console.error('Error verifying token:', error.message, error.response?.data);
+    return res.status(401).json({ message: 'Token verification failed' });
   }
 };
 
-const authMiddlewareUpdate = (req, res, next) => {
-  const token = req.headers.token.split(' ')[1];
-  jwt.verify(token, process.env.ACCESS_TOKEN, function (err, user) {
-    if (err) {
-      return res.status(404).json({
-        message: 'The author 1 err verify',
-        status: 'ERR',
-      });
-    }
-    if (user?.isAdmin) {
-      next();
-    } else if (user?.id) {
-      next();
-    } else {
-      return res.status(404).json({
-        message: 'The author user err',
-        status: 'ERR',
-      });
-    }
-  });
-};
-
-module.exports = {
-  authMiddleware,
-  authMiddlewareUpdate,
-};
+module.exports = { authMiddlewareOrder };

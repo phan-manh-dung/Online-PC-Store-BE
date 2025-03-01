@@ -11,6 +11,7 @@ const app = express();
 // Routes
 const userRoutes = require('./src/routes/userRouter');
 const productRoutes = require('./src/routes/productRouter');
+const orderRoutes = require('./src/routes/orderRouter');
 
 // Rate limiting
 const limiter = rateLimit({
@@ -37,6 +38,7 @@ app.use((err, req, res, next) => {
 
 app.use('/api/user', userRoutes);
 app.use('/api/product', productRoutes);
+app.use('/api/order', orderRoutes);
 
 const apiCallCounts = {};
 const apiLastCalled = {};
@@ -77,7 +79,7 @@ serviceRegistry.register({
   name: 'api-gateway',
   host: process.env.HOST || 'localhost',
   port: process.env.PORT || 5555,
-  endpoints: ['/api/user/*', '/api/product/*'],
+  endpoints: ['/api/user/*', '/api/product/*', '/api/order/*'],
 });
 
 app.get('/health', (req, res) => {
