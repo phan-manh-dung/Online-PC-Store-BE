@@ -46,6 +46,7 @@ const getProductsSortedbyPrice = async (req, res) => {
         const totalPages = Math.ceil(totalProducts / limit);
 
         res.status(200).json({
+            type : 'PRICE',
             products,
             pagination: {
                 page,

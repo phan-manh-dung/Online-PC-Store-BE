@@ -22,6 +22,7 @@ const SERVICE_INFO = {
     //Get -------------------------------------
     '/api/product/get-all',
     '/api/product/get-by-id/:id',
+    '/api/product/get-sorted',
     '/api/category/get-all',
     '/api/category/get-by-id/:id',
     '/api/supplier/get-all',
