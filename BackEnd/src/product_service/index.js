@@ -18,7 +18,9 @@ const SERVICE_INFO = {
   name: 'product_service',
   host: 'localhost',
   port: process.env.PORT || 5002,
-  endpoints: ['/api/product/get-all',
+  endpoints: [
+    //Get -------------------------------------
+    '/api/product/get-all',
     '/api/product/get-by-id/:id',
     '/api/category/get-all',
     '/api/category/get-by-id/:id',
@@ -26,7 +28,10 @@ const SERVICE_INFO = {
     '/api/supplier/get-by-id/:id',
     '/api/inventory/get-all',
     '/api/inventory/get-by-id/:id',
-    '/api/product/admin/create'
+    //Create with auth  Admin-------------------
+    '/api/product/admin/create',
+    '/api/category/admin/create',
+    '/api/supplier/admin/create',
   ],
 };
 
