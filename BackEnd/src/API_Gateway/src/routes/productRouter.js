@@ -41,6 +41,16 @@ router.get('/product/get-by-id/:id', async (req, res) => {
   }
 });
 
+router.get('/product/get-sorted', async (req, res) => {
+  try {
+    const response = await productServiceClient.get('/api/product/get-sorted', {
+      params: req.query,
+    });
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    errorHandler(error, res);
+  }
+});
 
 router.get('/category/get-all', async (req, res) => {
   try {
