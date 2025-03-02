@@ -28,10 +28,21 @@ const SERVICE_INFO = {
     '/api/supplier/get-by-id/:id',
     '/api/inventory/get-all',
     '/api/inventory/get-by-id/:id',
+    
     //Create with auth  Admin-------------------
     '/api/product/admin/create',
     '/api/category/admin/create',
     '/api/supplier/admin/create',
+
+    //Update with auth Admin-------------------
+    '/api/product/admin/update/:id',
+    '/api/supplier/admin/update/:id',
+    '/api/category/admin/update/:id',
+
+     //Delete with auth Admin-------------------
+     '/api/product/admin/delete/:id',
+     '/api/supplier/admin/delete/:id',
+     '/api/category/admin/delete/:id',
   ],
 };
 
