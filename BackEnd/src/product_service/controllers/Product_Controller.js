@@ -60,6 +60,40 @@ const getProductsSortedbyPrice = async (req, res) => {
     }
 };
 
+//Danh sách product theo loại (danh mục)
+const getProductsByType = async (req, res) => {
+    try {
+        // Lấy tham số 'type' từ query string (req.query)
+        const { type } = req.query;  // req.query chứa các query parameters
+        console.log(`Searching for products with type: ${type}`);
+        
+        // Gọi service để lấy sản phẩm theo type
+        const products = await productService.getProductsByType(type);
+        console.log(products);
+
+        res.status(200).json(products);  // Trả về danh sách sản phẩm
+    } catch (error) {
+        res.status(500).json({ message: error.message });  // Xử lý lỗi nếu có
+    }
+};
+
+
+const getProductsByTypeSupplier = async (req, res) => {
+    const { supplierId, type } = req.query;  // Lấy tham số từ query string
+
+    if (!supplierId || !type) {
+        return res.status(400).json({ message: 'SupplierId and type are required' });
+    }
+
+    try {
+        const products = await productService.getProductsByTypeSupplier(supplierId, type);
+        res.status(200).json(products);  // Trả về danh sách sản phẩm
+    } catch (error) {
+        res.status(500).json({ message: error.message });  // Xử lý lỗi
+    }
+};
+
+  
 
 // Handler để thêm mới một sản phẩm
 const createProduct = async (req, res) => {
@@ -108,4 +142,6 @@ module.exports = {
     updateProduct,
     deleteProduct,
     getProductsSortedbyPrice,
+    getProductsByType,
+    getProductsByTypeSupplier
 };
