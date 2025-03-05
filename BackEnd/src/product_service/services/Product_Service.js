@@ -1,5 +1,6 @@
 const Product = require('../models/Product_Model');
 const supplierService = require('../services/Supplier_Service')
+const categoryService = require('../services/Category_Service')
 
 // Lấy tất cả sản phẩm
 const getAllProducts = async () => {
@@ -39,6 +40,34 @@ const getProductsByTypeSupplier = async (supplierId, type) => {
         const products = await Product.find({
             'supplier': supplierId,  
             'computer.type': type    
+        });
+
+        return products; 
+    } catch (error) {
+        console.error('Error fetching products by supplier and type:', error);
+        throw new Error(error.message);
+    }
+};
+
+
+
+const getProductsByCategorySupplier = async (supplierId, categoryId) => {
+    try {
+        const supplierInfo = await supplierService.getSupplierById(supplierId);  
+        const categoryInfo = await categoryService.getCategoryById(categoryId);
+        
+        if (!supplierInfo) {
+            throw new Error('Supplier not found');
+        }
+        else if(!categoryInfo){
+            throw new Error('Category not found')
+        }
+
+        console.log(`Searching for products from supplier: ${supplierInfo.name}, category: ${categoryInfo.name}`);
+
+        const products = await Product.find({
+            'supplier': supplierId,  
+            'category': categoryId    
         });
 
         return products; 
@@ -141,5 +170,6 @@ module.exports = {
     getProductsSortedbyPrice,
     getProductCount,
     getProductsByType,
-    getProductsByTypeSupplier
+    getProductsByTypeSupplier,
+    getProductsByCategorySupplier
 };

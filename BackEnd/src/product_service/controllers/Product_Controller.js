@@ -93,6 +93,21 @@ const getProductsByTypeSupplier = async (req, res) => {
     }
 };
 
+const getProductsByCategorySupplier = async (req, res) => {
+    const { supplierId, categoryId } = req.query;  
+
+    if (!supplierId || !categoryId) {
+        return res.status(400).json({ message: 'SupplierId and categoryId are required' });
+    }
+
+    try {
+        const products = await productService.getProductsByCategorySupplier(supplierId, categoryId);
+        res.status(200).json(products);  
+    } catch (error) {
+        res.status(500).json({ message: error.message });  
+    }
+};
+
   
 
 // Handler để thêm mới một sản phẩm
@@ -143,5 +158,6 @@ module.exports = {
     deleteProduct,
     getProductsSortedbyPrice,
     getProductsByType,
-    getProductsByTypeSupplier
+    getProductsByTypeSupplier,
+    getProductsByCategorySupplier
 };
