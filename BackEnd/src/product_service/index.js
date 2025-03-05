@@ -42,16 +42,19 @@ const SERVICE_INFO = {
     '/api/product/admin/create',
     '/api/category/admin/create',
     '/api/supplier/admin/create',
+    '/api/inventory/admin/create',
 
     //Update with auth Admin-------------------
     '/api/product/admin/update/:id',
     '/api/supplier/admin/update/:id',
     '/api/category/admin/update/:id',
+    '/api/inventory/admin/update/:id',
 
      //Delete with auth Admin-------------------
      '/api/product/admin/delete/:id',
      '/api/supplier/admin/delete/:id',
      '/api/category/admin/delete/:id',
+     '/api/inventory/admin/delete/:id'
   ],
 };
 
