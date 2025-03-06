@@ -3,6 +3,7 @@ const router = express.Router();
 const ServiceClient = require('../services/serviceClient');
 const cartServiceClient = new ServiceClient('cart_service');
 
+// lỗi
 const errorHandler = (error, res) => {
   console.error('Service Error:', error);
   const status = error.response?.status || 500;
