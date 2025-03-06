@@ -257,45 +257,51 @@ class ServiceClient {
     return this._makeRequest('post', endpoint, data, headers);
   }
 
-  // post auth
-  async postAuth(endpoint, headers = {}, token) {
+  async postAuth(endpoint, data = {}, headers = {}) {
+    // Kiểm tra token hợp lệ trước khi gửi yêu cầu
+    const token = headers.Authorization && headers.Authorization.split(' ')[1]; 
     if (typeof token !== 'string' || !token.trim()) {
       throw new Error('Invalid authentication token');
     }
-    return this._sendPostRequest(endpoint, headers, token.trim());
+    return this._sendPostRequest(endpoint, data, token.trim(), headers); 
   }
-
-  async _sendPostRequest(endpoint, headers = {}, token) {
+  
+  async _sendPostRequest(endpoint, data = {}, token, headers = {}) {
     const instance = await this._getServiceInstance();
     if (!instance) {
       throw new Error(`No available instances for ${this.serviceName}`);
     }
+  
     const url = `http://${instance.host}:${instance.port}${endpoint}`;
     console.log(`[DEBUG] POST request to: ${url}`);
-
+  
     const maxRetries = 3;
     let retryCount = 0;
-
+  
     while (retryCount < maxRetries) {
       try {
         const response = await this.breaker.fire({
           method: 'post',
           url,
-          data: { refreshToken: token },
+          data, 
           headers: {
             'Content-Type': 'application/json',
-            ...headers,
+            Authorization: `Bearer ${token}`, 
+            ...headers, 
           },
         });
         console.log(`[DEBUG] Response received on attempt ${retryCount + 1}:`, response.data);
         return response;
       } catch (error) {
         console.error(`[ERROR] POST request failed on attempt ${retryCount + 1}:`, error.message);
+  
         if (error.response) {
+          // Nếu có lỗi từ service, in thông tin lỗi và ném lại lỗi
           console.error(`[ERROR] Status: ${error.response.status}, Data:`, error.response.data);
           throw error;
         }
-
+  
+        // Nếu lỗi không phải từ response, retry lại yêu cầu
         retryCount++;
         if (retryCount === maxRetries) {
           if (this.breaker.opened) {
@@ -304,12 +310,78 @@ class ServiceClient {
           serviceRegistry.unregister(instance.id);
           throw new Error(`Service ${this.serviceName} unavailable after ${maxRetries} retries`);
         }
-
+  
+        // Đợi 3 giây trước khi thử lại
         console.log(`Retrying POST request to ${url} in 3 seconds... (Attempt ${retryCount + 1}/${maxRetries})`);
         await this._delay(3000);
       }
     }
   }
+  
+
+
+
+  async _sendPutRequest(endpoint, data = {}, token, headers = {}) {
+    const instance = await this._getServiceInstance();
+    if (!instance) {
+      throw new Error(`No available instances for ${this.serviceName}`);
+    }
+  
+    const url = `http://${instance.host}:${instance.port}${endpoint}`;
+    console.log(`[DEBUG] PUT request to: ${url}`);
+  
+    const maxRetries = 3;
+    let retryCount = 0;
+  
+    while (retryCount < maxRetries) {
+      try {
+        const response = await this.breaker.fire({
+          method: 'put',  // Chỉ cần thay đổi phương thức từ 'post' thành 'put'
+          url,
+          data, 
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`, 
+            ...headers, 
+          },
+        });
+        console.log(`[DEBUG] Response received on attempt ${retryCount + 1}:`, response.data);
+        return response;
+      } catch (error) {
+        console.error(`[ERROR] PUT request failed on attempt ${retryCount + 1}:`, error.message);
+  
+        if (error.response) {
+          // Nếu có lỗi từ service, in thông tin lỗi và ném lại lỗi
+          console.error(`[ERROR] Status: ${error.response.status}, Data:`, error.response.data);
+          throw error;
+        }
+  
+        // Nếu lỗi không phải từ response, retry lại yêu cầu
+        retryCount++;
+        if (retryCount === maxRetries) {
+          if (this.breaker.opened) {
+            throw new Error(`Service ${this.serviceName} temporarily unavailable due to repeated failures`);
+          }
+          serviceRegistry.unregister(instance.id);
+          throw new Error(`Service ${this.serviceName} unavailable after ${maxRetries} retries`);
+        }
+  
+        // Đợi 3 giây trước khi thử lại
+        console.log(`Retrying PUT request to ${url} in 3 seconds... (Attempt ${retryCount + 1}/${maxRetries})`);
+        await this._delay(3000);
+      }
+    }
+  }
+
+  async putAuth(endpoint, data = {}, headers = {}) {
+    // Kiểm tra token hợp lệ trước khi gửi yêu cầu
+    const token = headers.Authorization && headers.Authorization.split(' ')[1]; 
+    if (typeof token !== 'string' || !token.trim()) {
+      throw new Error('Invalid authentication token');
+    }
+    return this._sendPutRequest(endpoint, data, token.trim(), headers); 
+  }
+  
 
   // put
   async put(endpoint, data, headers = {}) {

@@ -1,45 +1,34 @@
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 const dotenv = require('dotenv');
 dotenv.config();
 
+const GATEWAY_URL = 'http://localhost:5555';
+
 const authMiddleware = async (req, res, next) => {
-    const token = req.headers['authorization']?.split(' ')[1];
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    console.log('token auth', token);
     if (!token) {
-        return res.status(401).json({
-            message: 'Token is missing',
-            status: 'ERROR',
-        });
+      return res.status(401).json({ message: 'No token provided' });
     }
 
-    try {
-        // Giải mã token lấy id và roles
-        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN);
-
-        if (decoded.exp < Date.now() / 1000) {
-            return res.status(401).json({
-                message: 'Token has expired',
-                status: 'ERROR',
-            });
-        }
-
-        const isAdmin = decoded.roles.includes("ADMIN");
-        if (isAdmin) {
-            req.user = decoded; 
-            next();
-        } else {
-            return res.status(403).json({
-                message: 'Access denied: You are not an admin',
-                status: 'ERROR',
-            });
-        }
-    } catch (error) {
-        return res.status(500).json({
-            message: 'Invalid token',
-            status: 'ERROR',
-        });
+    // Gọi user_service qua Gateway để xác thực token
+    const response = await axios.get(`${GATEWAY_URL}/api/user/verify-token`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const userData = response.data;
+    if (!userData || !userData.data) {
+      return res.status(401).json({ message: 'Invalid token' });
     }
+
+    req.user = userData.data; // Lưu thông tin user vào req
+    next();
+  } catch (error) {
+    console.error('Error verifying token:', error.message, error.response?.data);
+    return res.status(401).json({ message: 'Token verification failed' });
+  }
 };
 
-module.exports = {
-    authMiddleware
-};
+module.exports = { authMiddleware };
