@@ -1,12 +1,10 @@
 const axios = require('axios');
 const OrderService = require('../service/OrderService');
 
-const GATEWAY_URL = 'http://localhost:5555';
-
 const createOrder = async (req, res) => {
   try {
     const { userId, products, shippingPrice = 0 } = req.body;
-    const userResponse = await axios.get(`${GATEWAY_URL}/api/user/get-detail/${userId}`);
+    const userResponse = await axios.get(`${process.env.GATEWAY_URL}/api/user/get-detail/${userId}`);
     const userData = userResponse.data;
     // check user and get address and user
     const user = userData.data;
@@ -40,7 +38,9 @@ const createOrder = async (req, res) => {
     let orderDetailIdCounter = 1;
     // Gọi product_service qua Gateway
     for (const item of products) {
-      const productResponse = await axios.get(`${GATEWAY_URL}/api/product/product/get-by-id/${item.productId}`);
+      const productResponse = await axios.get(
+        `${process.env.GATEWAY_URL}/api/product/product/get-by-id/${item.productId}`,
+      );
       const productData = productResponse;
       if (!productData || !productData.data) {
         return res.status(404).json({ message: `Product ${item.productId} not found` });
@@ -107,4 +107,23 @@ const getAllOrder = async (req, res) => {
   }
 };
 
-module.exports = { createOrder, getDetailOrder, getAllOrder };
+const deleteOrderToCancelled = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    if (!orderId) {
+      return res.status(200).json({
+        status: 'ERR',
+        message: 'The orderId is required',
+      });
+    }
+    const response = await OrderService.deleteOrderToCancelled(orderId);
+    return res.status(200).json(response);
+  } catch (e) {
+    // console.log(e)
+    return res.status(404).json({
+      message: e,
+    });
+  }
+};
+
+module.exports = { createOrder, getDetailOrder, getAllOrder, deleteOrderToCancelled };

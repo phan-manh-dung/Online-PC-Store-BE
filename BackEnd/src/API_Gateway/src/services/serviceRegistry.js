@@ -4,7 +4,7 @@ class ServiceRegistry extends EventEmitter {
     super();
     this.services = new Map(); // Lưu trữ các service
     this.roundRobinCounters = new Map(); // Lưu trữ counter cho Round-Robin của từng service
-    this.healthCheckInterval = 60000; // Interval kiểm tra 60 giây
+    this.healthCheckInterval = 120000; // Interval kiểm tra 120 giây
     this._startHealthCheck(); // kiểm tra định kỳ xem service nào die
   }
 
