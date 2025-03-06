@@ -66,7 +66,7 @@ function startHeartbeat() {
       serviceId = null;
       registerWithGateway();
     }
-  }, 30000);
+  }, 60000);
 }
 
 // Graceful shutdown

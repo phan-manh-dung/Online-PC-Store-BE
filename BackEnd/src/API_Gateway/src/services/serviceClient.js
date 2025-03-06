@@ -188,6 +188,14 @@ class ServiceClient {
     }
   }
 
+  // delete
+  async delete(endpoint, headers = {}) {
+    console.log(`ServiceClient - Sending DELETE to ${endpoint} with headers:`, headers);
+    const response = await this._makeRequest('delete', endpoint, null, headers); // Không gửi data
+    console.log(`ServiceClient - DELETE response:`, response.data);
+    return response;
+  }
+
   // delete auth
   async deleteAuth(endpoint, token, headers = {}) {
     if (typeof token !== 'string' || !token.trim()) {

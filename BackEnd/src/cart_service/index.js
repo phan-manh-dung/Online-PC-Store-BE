@@ -1,56 +1,37 @@
+// const http = require('http');
+const router = require('./router');
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const cors = require('cors');
+
 const express = require('express');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const axios = require('axios');
 
-const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
-const cors = require('cors');
-
-const router = require('./routes');
+dotenv.config();
 const app = express();
 
-dotenv.config();
-
-app.use(express.json());
-
 const SERVICE_INFO = {
-  name: 'product_service',
+  name: 'cart_service',
   host: 'localhost',
-  port: process.env.PORT || 5002,
-  endpoints: [
-    '/api/product/get-all',
-    '/api/product/get-by-id/:id',
-    '/api/category/get-all',
-    '/api/category/get-by-id/:id',
-    '/api/supplier/get-all',
-    '/api/supplier/get-by-id/:id',
-    '/api/inventory/get-all',
-    '/api/inventory/get-by-id/:id',
-  ],
+  port: process.env.PORT || 5004,
+  endpoints: ['/api/cart/create-cart', '/apt/cart/delete-cart/:id', '/api/cart/get-cart/:id'],
 };
 
-const GATEWAY_URL = 'http://localhost:5555';
 let serviceId = null;
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb' }));
-
-app.use(bodyParser.json());
-app.use(cookieParser());
-router(app);
 
 // Register with API Gateway
 async function registerWithGateway() {
   try {
-    const response = await axios.post(`${GATEWAY_URL}/register`, SERVICE_INFO);
+    const response = await axios.post(`${process.env.GATEWAY_URL}/register`, SERVICE_INFO);
     serviceId = response.data.serviceId;
     console.log('Registered with API Gateway, serviceId:', serviceId);
     startHeartbeat();
   } catch (error) {
     console.error('Failed to register with API Gateway:', error.message);
-    // Thử lại sau 5 giây
-    setTimeout(registerWithGateway, 5000);
+    // Thử lại sau 4 giây
+    setTimeout(registerWithGateway, 4000);
   }
 }
 
@@ -58,7 +39,7 @@ async function registerWithGateway() {
 function startHeartbeat() {
   setInterval(async () => {
     try {
-      await axios.post(`${GATEWAY_URL}/heartbeat/${serviceId}`);
+      await axios.post(`${process.env.GATEWAY_URL}/heartbeat/${serviceId}`);
     } catch (error) {
       console.error('Heartbeat failed:', error.message);
       // Thử đăng ký lại nếu heartbeat thất bại
@@ -72,7 +53,7 @@ function startHeartbeat() {
 process.on('SIGINT', async () => {
   if (serviceId) {
     try {
-      await axios.post(`${GATEWAY_URL}/unregister/${serviceId}`);
+      await axios.post(`${process.env.GATEWAY_URL}/unregister/${serviceId}`);
       console.log('Unregistered from API Gateway');
     } catch (error) {
       console.error('Failed to unregister:', error.message);
@@ -81,8 +62,22 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
+// Middleware để truyền io vào req
+app.use((req, res, next) => {
+  next();
+});
+
+// app.use(bodyParser.json());
+app.use(cors());
+// app.use(express.json({ limit: '50mb' }));
+// app.use(express.urlencoded({ limit: '50mb' }));
+
+app.use(cookieParser());
+
+router(app);
+
 mongoose
-  .connect(`${process.env.mongoURI}`)
+  .connect(`${process.env.MONGO_DB}`)
   .then(() => {
     console.log('Connect to Database success');
   })
@@ -90,8 +85,10 @@ mongoose
     console.log('Connect database ERROR');
   });
 
-// Start server
+// port 4000
 app.listen(SERVICE_INFO.port, () => {
-  console.log(`Product Service running on http://localhost:${SERVICE_INFO.port}`);
+  console.log(`Cart Service running on http://localhost:${SERVICE_INFO.port}`);
   setTimeout(registerWithGateway, 1000);
 });
+
+module.exports = { app };
