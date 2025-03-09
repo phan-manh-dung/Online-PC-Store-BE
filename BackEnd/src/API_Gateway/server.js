@@ -12,11 +12,12 @@ const app = express();
 const userRoutes = require('./src/routes/userRouter');
 const productRoutes = require('./src/routes/productRouter');
 const orderRoutes = require('./src/routes/orderRouter');
+const cartRoutes = require('./src/routes/cartRouter');
 
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 1000,
 });
 
 // Middleware
@@ -39,6 +40,7 @@ app.use((err, req, res, next) => {
 app.use('/api/user', userRoutes);
 app.use('/api/product', productRoutes);
 app.use('/api/order', orderRoutes);
+app.use('/api/cart', cartRoutes);
 
 const apiCallCounts = {};
 const apiLastCalled = {};
@@ -79,7 +81,7 @@ serviceRegistry.register({
   name: 'api-gateway',
   host: process.env.HOST || 'localhost',
   port: process.env.PORT || 5555,
-  endpoints: ['/api/user/*', '/api/product/*', '/api/order/*'],
+  endpoints: ['/api/user/*', '/api/product/*', '/api/order/*', '/api/cart/*'],
 });
 
 app.get('/health', (req, res) => {

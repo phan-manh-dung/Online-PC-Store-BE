@@ -32,20 +32,28 @@ router.get('/admin/get-all-order', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1];
-    console.log('token get all', token);
-
     if (!token) {
       return res.status(401).json({
         message: 'Token is missing at API Gateway router',
         status: 'ERROR',
       });
     }
-
     const response = await orderServiceClient.getAuth('/api/order/admin/get-all-order', token);
-
     res.status(response.status).json(response.data);
   } catch (error) {
     console.error('Error when calling user service:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Internal server error at API Gateway',
+      status: 'ERROR',
+    });
+  }
+});
+
+router.delete('/cancel-order/:id', async (req, res) => {
+  try {
+    const response = await orderServiceClient.delete(`/api/order/cancel-order/${req.params.id}`);
+    res.status(response.status).json(response.data);
+  } catch (error) {
     res.status(error.response?.status || 500).json({
       message: error.response?.data?.message || 'Internal server error at API Gateway',
       status: 'ERROR',

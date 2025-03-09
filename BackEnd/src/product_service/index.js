@@ -19,7 +19,6 @@ const SERVICE_INFO = {
   host: 'localhost',
   port: process.env.PORT || 5002,
   endpoints: [
-    //Get -------------------------------------
     '/api/product/get-all',
     '/api/product/get-by-id/:id',
   
@@ -93,7 +92,7 @@ function startHeartbeat() {
       serviceId = null;
       registerWithGateway();
     }
-  }, 30000);
+  }, 60000);
 }
 
 // Graceful shutdown
