@@ -41,4 +41,17 @@ router.get('/get-cart/:id', async (req, res) => {
   }
 });
 
+router.post('/delete-many-cart', async (req, res) => {
+  try {
+    const response = await cartServiceClient.post('/api/cart/delete-many-cart', req.body);
+    console.log('res', response);
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Internal server error at API Gateway',
+      status: 'ERROR',
+    });
+  }
+});
+
 module.exports = router;
