@@ -1,3 +1,4 @@
+const { deleteModel } = require('mongoose');
 const CartService = require('../service/CartService');
 
 const createCart = async (req, res) => {
@@ -62,4 +63,37 @@ const getCartUser = async (req, res) => {
   }
 };
 
-module.exports = { createCart, deleteCart, getCartUser };
+const deleteManyCart = async (req, res) => {
+  try {
+    const cartIdObjects = req.body;
+    console.log('cartIdObjects', cartIdObjects);
+
+    // Kiểm tra xem cartIdObjects có phải mảng không
+    if (!cartIdObjects || !Array.isArray(cartIdObjects)) {
+      return res.status(400).json({
+        status: 'ERR',
+        message: 'The request body must be an array',
+      });
+    }
+
+    const ids = cartIdObjects.map((item) => item.cartId);
+    console.log('ids', ids);
+
+    if (!ids || ids.length === 0) {
+      return res.status(400).json({
+        status: 'ERR',
+        message: 'The ids are required and must not be empty',
+      });
+    }
+
+    const response = await CartService.deleteManyCart(ids);
+    return res.status(200).json(response);
+  } catch (e) {
+    return res.status(500).json({
+      message: e.message,
+      status: 'ERROR',
+    });
+  }
+};
+
+module.exports = { createCart, deleteCart, getCartUser, deleteManyCart };

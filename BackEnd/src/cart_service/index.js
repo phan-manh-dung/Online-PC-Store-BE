@@ -16,7 +16,12 @@ const SERVICE_INFO = {
   name: 'cart_service',
   host: 'localhost',
   port: process.env.PORT || 5004,
-  endpoints: ['/api/cart/create-cart', '/apt/cart/delete-cart/:id', '/api/cart/get-cart/:id'],
+  endpoints: [
+    '/api/cart/create-cart',
+    '/apt/cart/delete-cart/:id',
+    '/api/cart/get-cart/:id',
+    '/api/cart/delete-many-cart',
+  ],
 };
 
 let serviceId = null;
