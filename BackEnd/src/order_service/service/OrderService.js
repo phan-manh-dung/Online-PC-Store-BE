@@ -57,4 +57,26 @@ const getAllOrder = () => {
   });
 };
 
-module.exports = { createOrder, getOrderDetail, getAllOrder };
+const deleteOrderToCancelled = async (id) => {
+  try {
+    const order = await Order.findById(id);
+    if (!order) {
+      return {
+        status: 'ERR',
+        message: 'Order does not exist',
+      };
+    }
+    order.statusOrder = 'cancelled';
+    await order.save();
+
+    return {
+      status: 'OK',
+      message: 'Order cancelled successfully',
+      data: order,
+    };
+  } catch (e) {
+    throw e;
+  }
+};
+
+module.exports = { createOrder, getOrderDetail, getAllOrder, deleteOrderToCancelled };

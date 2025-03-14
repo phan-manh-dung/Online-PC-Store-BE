@@ -13,14 +13,14 @@ dotenv.config();
 const app = express();
 
 const SERVICE_INFO = {
-  name: 'order_service',
+  name: 'cart_service',
   host: 'localhost',
-  port: process.env.PORT || 5003,
+  port: process.env.PORT || 5004,
   endpoints: [
-    '/api/order/create-order',
-    '/api/order/get-detail-order/:id',
-    '/api/order/admin/get-all-order',
-    '/api/order/cancel-order/:id',
+    '/api/cart/create-cart',
+    '/apt/cart/delete-cart/:id',
+    '/api/cart/get-cart/:id',
+    '/api/cart/delete-many-cart',
   ],
 };
 
@@ -72,9 +72,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const PORT = process.env.PORT_ORDER_SERVICE || 5003;
-
-app.use(bodyParser.json());
+// app.use(bodyParser.json());
 app.use(cors());
 // app.use(express.json({ limit: '50mb' }));
 // app.use(express.urlencoded({ limit: '50mb' }));
@@ -94,7 +92,7 @@ mongoose
 
 // port 4000
 app.listen(SERVICE_INFO.port, () => {
-  console.log(`Order Service running on http://localhost:${SERVICE_INFO.port}`);
+  console.log(`Cart Service running on http://localhost:${SERVICE_INFO.port}`);
   setTimeout(registerWithGateway, 1000);
 });
 
