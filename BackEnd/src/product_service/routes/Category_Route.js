@@ -10,6 +10,8 @@ router.get('/get-all', categoryController.getAllCategories);
 // Route để lấy category theo id
 router.get('/get-by-id/:id', categoryController.getCategoryById);
 
+router.get("/get-by-brand", categoryController.getCategoriesBySupplier);
+
 // Route để tạo một category mới
 router.post('/admin/create', authMiddleware, categoryController.createCategory);
 
