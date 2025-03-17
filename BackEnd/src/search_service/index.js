@@ -15,7 +15,7 @@ dotenv.config();
 app.use(express.json());
 
 const SERVICE_INFO = {
-  name: 'product_service',
+  name: 'search_service',
   host: 'localhost',
   port: process.env.PORT || 5005,
   endpoints: [
@@ -27,6 +27,11 @@ const SERVICE_INFO = {
     '/api/product/get-sorted',
     '/api/product/get-products-by-type-supplier',
     '/api/product/get-products-by-category-supplier',
+    '/api/product/brands/:categoryId',
+
+
+    //For menu filter:
+    '/api/get-list-by-category/:categoryId',
 
 
     //----------------------------------------

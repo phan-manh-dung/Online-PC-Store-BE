@@ -10,17 +10,6 @@ const getAllCategories = async (req, res) => {
     }
 };
 
-const getCategoriesBySupplier = async (req, res) => {
-    try {
-      const type = req.query.type || "default"; // Lấy giá trị `type` từ query params
-      const categories = await categoryService.getCategoriesWithSuppliers(type);
-      res.status(200).json(categories);
-    } catch (error) {
-      res.status(500).json({ message: "Error retrieving data", error: error.message });
-    }
-  };
-
-
 // Handler để lấy category theo ID
 const getCategoryById = async (req, res) => {
     const { id } = req.params;
@@ -97,5 +86,4 @@ module.exports = {
     createCategory,
     updateCategory,
     deleteCategory,
-    getCategoriesBySupplier
 };

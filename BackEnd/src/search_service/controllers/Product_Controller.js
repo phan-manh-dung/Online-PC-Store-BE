@@ -107,11 +107,33 @@ const getProductsByCategorySupplier = async (req, res) => {
     }
 };
 
+
+const getBrandsByCategory = async (req, res) => {
+    try {
+        const { categoryId } = req.params;
+        if (!categoryId) {
+            return res.status(400).json({ message: "categoryId is required" });
+        }
+
+        const brands = await productService.getBrandsByCategory(categoryId);
+
+        if (brands.length === 0) {
+            return res.status(404).json({ message: "No brands found for this category" });
+        }
+
+        return res.status(200).json({ brands });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+
 module.exports = {
     getAllProducts,
     getProductById,
     getProductsSortedbyPrice,
     getProductsByType,
     getProductsByTypeSupplier,
-    getProductsByCategorySupplier
+    getProductsByCategorySupplier,
+    getBrandsByCategory
 };

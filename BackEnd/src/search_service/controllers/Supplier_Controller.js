@@ -27,4 +27,19 @@ const getSupplierById = async (req, res) => {
     }
 };
 
-module.exports = { getAllSuppliers, getSupplierById };
+const getSuppliersByCategory = async (req, res) => {
+    try {
+        const { categoryId } = req.params; 
+        if (!categoryId) {
+            return res.status(400).json({ message: 'Category ID is required' });
+        }
+
+        const suppliers = await supplierService.getUniqueSuppliersByCategory(categoryId);
+
+        res.status(200).json(suppliers);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { getAllSuppliers, getSupplierById, getSuppliersByCategory };

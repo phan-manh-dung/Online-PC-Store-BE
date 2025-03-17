@@ -23,60 +23,6 @@ const getCategoryById = async (id) => {
     }
 };
 
-const getCategoriesWithSuppliers = async (type) => {
-  return await Category.aggregate([
-    {
-      $lookup: {
-        from: "products",
-        localField: "_id",
-        foreignField: "category",
-        as: "products_info"
-      }
-    },
-    { $unwind: { path: "$products_info", preserveNullAndEmptyArrays: true } },
-    {
-      $lookup: {
-        from: "suppliers",
-        localField: "products_info.supplier",
-        foreignField: "_id",
-        as: "suppliers_info"
-      }
-    },
-    { $unwind: { path: "$suppliers_info", preserveNullAndEmptyArrays: true } },
-    {
-      $group: {
-        _id: "$_id",
-        name: { $first: "$name" },
-        description: { $first: "$description" },
-        suppliers: {
-          $addToSet: {
-            _id: "$suppliers_info._id",
-            name: "$suppliers_info.name"
-          }
-        }
-      }
-    },
-    {
-      $addFields: {
-        type: type || "default"
-      }
-    },
-    {
-      $project: {
-        _id: 1,
-        name: 1,
-        description: 1,
-        suppliers: 1,
-        type: 1
-      }
-    },
-    {
-      $sort: { _id: 1 } 
-    }
-  ]);
-};
-
-
 // Tạo một category mới
 const createCategory = async (categoryData) => {
     try {
@@ -126,5 +72,4 @@ module.exports = {
     createCategory,
     updateCategory,
     deleteCategory,
-    getCategoriesWithSuppliers
 };
