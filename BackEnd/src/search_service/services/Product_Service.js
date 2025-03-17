@@ -121,23 +121,10 @@ const getProductCount = async ({ price_min, price_max }) => {
     }
 };
 
-
-// Tạo mới sản phẩm
-const createProduct = async (productData, filePath) => {
+const getBrandsByCategory = async (categoryId) => {
     try {
-        // Upload file lên Cloudinary và lưu vào thư mục "products"
-        const cloudinaryResponse = await cloudinary.uploader.upload(filePath, {
-            folder: 'products',
-        });
-
-        // Tạo sản phẩm mới với link ảnh từ Cloudinary
-        const newProduct = new Product({
-            ...productData,
-            image: cloudinaryResponse.secure_url, // Lưu URL ảnh vào database
-        });
-
-        await newProduct.save();
-        return newProduct;
+        const brands = await Product.distinct("computer.brand", { category: categoryId });
+        return brands;
     } catch (error) {
         throw new Error(error.message);
     }
@@ -150,5 +137,6 @@ module.exports = {
     getProductCount,
     getProductsByType,
     getProductsByTypeSupplier,
-    getProductsByCategorySupplier
+    getProductsByCategorySupplier,
+    getBrandsByCategory 
 };

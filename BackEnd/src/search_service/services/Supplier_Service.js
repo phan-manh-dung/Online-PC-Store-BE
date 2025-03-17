@@ -1,4 +1,5 @@
 const Supplier = require('../models/Supplier_Model'); 
+const Product = require('../models/Product_Model');
 
 // Lấy một Supplier theo ID
 const getSupplierById = async (supplierId) => {
@@ -13,5 +14,21 @@ const getSupplierById = async (supplierId) => {
     }
 };
 
+const getUniqueSuppliersByCategory = async (categoryId) => {
+    try {
+        const supplierIds = await Product.distinct('supplier', { category: categoryId });
 
-module.exports = { getSupplierById };
+        const suppliers = await Supplier.find({ _id: { $in: supplierIds } }).select('_id name');
+
+        return {
+            hasSuppliers: suppliers.length > 0,
+            suppliers: suppliers
+        };
+    } catch (error) {
+        throw new Error(error.message);
+    }
+};
+
+
+
+module.exports = { getSupplierById, getUniqueSuppliersByCategory };

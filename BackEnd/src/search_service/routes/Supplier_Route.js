@@ -9,6 +9,8 @@ router.get('/get-all', supplierController.getAllSuppliers);
 // Lấy Supplier theo ID
 router.get('/get-by-id/:id', supplierController.getSupplierById);
 
+router.get('/get-list-by-category/:categoryId', supplierController.getSuppliersByCategory)
+
 module.exports = router;
 
 

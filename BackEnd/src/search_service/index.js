@@ -27,6 +27,11 @@ const SERVICE_INFO = {
     '/api/product/get-sorted',
     '/api/product/get-products-by-type-supplier',
     '/api/product/get-products-by-category-supplier',
+    '/api/product/brands/:categoryId',
+
+
+    //For menu filter:
+    '/api/get-list-by-category/:categoryId',
 
 
     //----------------------------------------
