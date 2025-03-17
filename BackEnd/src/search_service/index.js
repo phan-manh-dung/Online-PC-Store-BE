@@ -15,7 +15,7 @@ dotenv.config();
 app.use(express.json());
 
 const SERVICE_INFO = {
-  name: 'product_service',
+  name: 'search_service',
   host: 'localhost',
   port: process.env.PORT || 5005,
   endpoints: [
