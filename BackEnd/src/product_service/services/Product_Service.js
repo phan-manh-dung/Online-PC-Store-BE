@@ -1,6 +1,7 @@
 const Product = require('../models/Product_Model');
 const supplierService = require('../services/Supplier_Service')
 const categoryService = require('../services/Category_Service')
+const cloudinary = require('../config/cloudinaryConfig')
 
 // Lấy tất cả sản phẩm
 const getAllProducts = async () => {
@@ -125,13 +126,23 @@ const getProductCount = async ({ price_min, price_max }) => {
 
 
 // Tạo mới sản phẩm
-const createProduct = async (productData) => {
+const createProduct = async (productData, filePath) => {
     try {
-        const newProduct = new Product(productData);
+        // Upload file lên Cloudinary và lưu vào thư mục "products"
+        const cloudinaryResponse = await cloudinary.uploader.upload(filePath, {
+            folder: 'products',
+        });
+
+        // Tạo sản phẩm mới với link ảnh từ Cloudinary
+        const newProduct = new Product({
+            ...productData,
+            image: cloudinaryResponse.secure_url, // Lưu URL ảnh vào database
+        });
+
         await newProduct.save();
         return newProduct;
     } catch (error) {
-        throw new Error(`Error creating product: ${error.message}`);
+        throw new Error(error.message);
     }
 };
 

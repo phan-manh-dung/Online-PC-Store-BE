@@ -1,5 +1,6 @@
 const Product = require('../models/Product_Model');
 const productService = require('../services/Product_Service');
+const fs = require('fs')
 
 
 // Lấy tất cả sản phẩm
@@ -112,12 +113,34 @@ const getProductsByCategorySupplier = async (req, res) => {
 
 // Handler để thêm mới một sản phẩm
 const createProduct = async (req, res) => {
-    const newProductData = req.body;
     try {
-        const newProduct = await productService.createProduct(newProductData);
-        res.status(201).json(newProduct);
+        if (!req.file) {
+            return res.status(400).json({ message: 'No image uploaded' });
+        }
+
+        // Lấy dữ liệu sản phẩm từ request body
+        const productData = {
+            name: req.body.name,
+            price: req.body.price,
+            description: req.body.description,
+            computer: JSON.parse(req.body.computer), // Chuyển chuỗi JSON thành object
+            inventory: req.body.inventory,
+            category: req.body.category,
+            supplier: req.body.supplier,
+        };
+
+        // Gọi service để tạo sản phẩm
+        const newProduct = await productService.createProduct(productData, req.file.path);
+
+        // Xóa file tạm sau khi upload xong
+        fs.unlinkSync(req.file.path);
+
+        res.status(201).json({
+            message: 'Product created successfully',
+            product: newProduct,
+        });
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
 };
 
