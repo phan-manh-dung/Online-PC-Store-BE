@@ -1,6 +1,4 @@
 const Product = require('../models/Product_Model');
-const supplierService = require('../services/Supplier_Service')
-const categoryService = require('../services/Category_Service')
 const cloudinary = require('../config/cloudinaryConfig')
 
 // Lấy tất cả sản phẩm

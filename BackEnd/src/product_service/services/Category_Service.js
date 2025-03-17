@@ -72,5 +72,4 @@ module.exports = {
     createCategory,
     updateCategory,
     deleteCategory,
-    getCategoriesWithSuppliers
 };
