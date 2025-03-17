@@ -1,9 +1,7 @@
 const Product = require('../models/Product_Model');
 const supplierService = require('../services/Supplier_Service')
 const categoryService = require('../services/Category_Service')
-const cloudinary = require('../config/cloudinaryConfig')
 
-// Lấy tất cả sản phẩm
 const getAllProducts = async () => {
     return await Product.find();
 };
@@ -12,7 +10,6 @@ const getAllProducts = async () => {
 const getProductById = async (productId) => {
     return await Product.findById(productId);
 };
-
 
 const getProductsByType = async (type) => {
     if (!type) {
@@ -146,38 +143,9 @@ const createProduct = async (productData, filePath) => {
     }
 };
 
-// Cập nhật sản phẩm theo ID
-const updateProduct = async (productId, updateData) => {
-    try {
-        const updatedProduct = await Product.findByIdAndUpdate(productId, updateData, { new: true });
-        if (!updatedProduct) {
-            throw new Error('Product not found');
-        }
-        return updatedProduct;
-    } catch (error) {
-        throw new Error(`Error updating product: ${error.message}`);
-    }
-};
-
-// Xóa sản phẩm theo ID
-const deleteProduct = async (productId) => {
-    try {
-        const deletedProduct = await Product.findByIdAndDelete(productId);
-        if (!deletedProduct) {
-            throw new Error('Product not found');
-        }
-        return deletedProduct;
-    } catch (error) {
-        throw new Error(`Error deleting product: ${error.message}`);
-    }
-};
-
 module.exports = {
     getAllProducts,
     getProductById,
-    createProduct,
-    updateProduct,
-    deleteProduct,
     getProductsSortedbyPrice,
     getProductCount,
     getProductsByType,
