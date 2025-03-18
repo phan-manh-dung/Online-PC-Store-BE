@@ -32,6 +32,7 @@ const SERVICE_INFO = {
 
     //For menu filter:
     '/api/get-list-by-category/:categoryId',
+    '/api/series/:brand',
 
 
     //----------------------------------------
@@ -107,6 +108,6 @@ mongoose
 
 // Start server
 app.listen(SERVICE_INFO.port, () => {
-  console.log(`Product Service running on http://localhost:${SERVICE_INFO.port}`);
+  console.log(`Search Service running on http://localhost:${SERVICE_INFO.port}`);
   setTimeout(registerWithGateway, 1000);
 });

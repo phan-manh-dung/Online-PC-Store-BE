@@ -9,6 +9,7 @@ const productSchema = new mongoose.Schema(
     description: { type: String, required: true },
     computer: {
       brand: { type: String, required: true },
+      series: {type: String},
       ram: { type: Number, required: true },
       type: { type: String, enum: ['PC', 'LAPTOP', 'LAPTOP GAMING'], required: true },
       storage: { type: Number, required: true },
