@@ -130,6 +130,20 @@ const getBrandsByCategory = async (categoryId) => {
     }
 };
 
+const getSeriesByBrand = async (brand, type) => {
+    try {
+      const result = await Product.aggregate([
+        { $match: { "computer.brand": brand, "computer.type" : type } },
+        { $group: { _id: null, series: { $addToSet: { $concat: ["$computer.series", " series"] } } } },
+        { $project: { _id: 0, series: 1 } }
+      ]);
+  
+      return result.length > 0 ? result[0].series : [];
+    } catch (error) {
+      throw new Error("Error fetching series: " + error.message);
+    }
+  };
+
 module.exports = {
     getAllProducts,
     getProductById,
@@ -138,5 +152,6 @@ module.exports = {
     getProductsByType,
     getProductsByTypeSupplier,
     getProductsByCategorySupplier,
-    getBrandsByCategory 
+    getBrandsByCategory,
+    getSeriesByBrand 
 };

@@ -126,6 +126,20 @@ const getBrandsByCategory = async (req, res) => {
         return res.status(500).json({ message: error.message });
     }
 };
+const getSeriesByBrand = async (req, res) => {
+    try {
+      const { brand, type } = req.query; 
+  
+      if (!brand || !type) {
+        return res.status(400).json({ message: "Brand and type are required" });
+      }
+  
+      const series = await productService.getSeriesByBrand(brand, type);
+      res.json({ series });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
 
 
 module.exports = {
@@ -135,5 +149,6 @@ module.exports = {
     getProductsByType,
     getProductsByTypeSupplier,
     getProductsByCategorySupplier,
-    getBrandsByCategory
+    getBrandsByCategory,
+    getSeriesByBrand
 };
