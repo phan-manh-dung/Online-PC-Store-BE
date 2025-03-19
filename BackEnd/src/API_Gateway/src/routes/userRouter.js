@@ -5,6 +5,9 @@ const { StatusCodes } = require('http-status-codes');
 const ServiceClient = require('../services/serviceClient');
 const userServiceClient = new ServiceClient('user_service');
 
+// redis
+const { readData, createData } = require('../../../redis/v1/service/redisService');
+
 const errorHandler = (error, res) => {
   console.error('Service Error:', error);
   const status = error.response?.status || StatusCodes.INTERNAL_SERVER_ERROR;
@@ -16,10 +19,25 @@ const errorHandler = (error, res) => {
   });
 };
 
+//redis
 router.post('/sign-in', async (req, res) => {
   try {
+    // Tạo key cache dựa trên name duy nhất
+    const cacheKey = `sign-in:${req.body.name}`;
+    // Kiểm tra cache, bỏ qua lỗi nếu có
+    const cachedData = await readData(cacheKey).catch(() => null);
+    if (cachedData) {
+      // Trả về dữ liệu từ cache ngay lập tức nếu có
+      return res.status(200).json(cachedData);
+    }
+    // Nếu không có cache, gọi service
     const response = await userServiceClient.post('/api/user/sign-in', req.body);
-    res.status(response.status).json(response.data);
+    const data = response.data;
+    // Lưu vào Redis với TTL là 3600 giây (1 giờ)
+    await createData(cacheKey, data, 3600);
+    console.log(`Cache created for key: ${cacheKey}`);
+
+    res.status(response.status).json(data);
   } catch (error) {
     errorHandler(error, res);
   }

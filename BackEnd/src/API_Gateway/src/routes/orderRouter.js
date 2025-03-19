@@ -3,6 +3,8 @@ const router = express.Router();
 const ServiceClient = require('../services/serviceClient');
 const orderServiceClient = new ServiceClient('order_service');
 
+const { readData, createData } = require('../../../redis/v1/service/redisService');
+
 const errorHandler = (error, res) => {
   console.error('Service Error:', error);
   const status = error.response?.status || 500;
@@ -19,9 +21,18 @@ router.post('/create-order', async (req, res) => {
   }
 });
 
+// có redis
 router.get('/get-detail-order/:id', async (req, res) => {
   try {
+    const cacheKey = `cart-user-detail:${req.params.id}`;
+    const cachedData = await readData(cacheKey).catch(() => null);
+    if (cachedData) {
+      return res.status(200).json(cachedData);
+    }
     const response = await orderServiceClient.get(`/api/order/get-detail-order/${req.params.id}`, req.body);
+    const data = response.data;
+    await createData(cacheKey, data, 3600);
+    console.log(`Cache created for key: ${cacheKey}`);
     res.status(response.status).json(response.data);
   } catch (error) {
     errorHandler(error, res);
@@ -49,15 +60,56 @@ router.get('/admin/get-all-order', async (req, res) => {
   }
 });
 
-router.delete('/cancel-order/:id', async (req, res) => {
+// router.delete('/cancel-order/:id', async (req, res) => {
+//   try {
+//     const response = await orderServiceClient.delete(`/api/order/cancel-order/${req.params.id}`);
+//     res.status(response.status).json(response.data);
+//   } catch (error) {
+//     console.log('Error when calling order service:', error.response?.data || error.message);
+//     res.status(error.response?.status || 500).json({
+//       message: error.response?.data?.message || 'Internal server error at API Gateway',
+//       status: 'ERROR',
+//     });
+//   }
+// });
+
+// all order của 1 user có redis
+
+router.patch('/cancel-order/:id', async (req, res) => {
   try {
-    const response = await orderServiceClient.delete(`/api/order/cancel-order/${req.params.id}`);
+    const response = await orderServiceClient.patch(`/api/order/cancel-order/${req.params.id}`);
+    if (!response.data) {
+      return res.status(500).json({
+        message: 'Invalid response from order service',
+        status: 'ERROR',
+      });
+    }
     res.status(response.status).json(response.data);
   } catch (error) {
+    console.log('Error when calling order service:', error.response?.data || error.message);
     res.status(error.response?.status || 500).json({
       message: error.response?.data?.message || 'Internal server error at API Gateway',
       status: 'ERROR',
     });
+  }
+});
+
+router.get('/get-all-order-user/:id', async (req, res) => {
+  try {
+    const cacheKey = `cart-all-one-user:${req.params.id}:${req.query.statusOrder || ''}`;
+    const cachedData = await readData(cacheKey).catch(() => null);
+    if (cachedData) {
+      return res.status(200).json(cachedData);
+    }
+    const response = await orderServiceClient.get(
+      `/api/order/get-all-order-user/${req.params.id}?statusOrder=${req.query.statusOrder || ''}`,
+    );
+    const data = response.data;
+    await createData(cacheKey, data, 3600);
+    console.log(`Cache created for key: ${cacheKey}`);
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    errorHandler(error, res);
   }
 });
 

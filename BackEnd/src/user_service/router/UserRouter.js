@@ -19,7 +19,6 @@ router.get('/verify-token', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1];
-    console.log('token user router:', token);
     if (!token) {
       return res.status(401).json({ message: 'No token provided' });
     }

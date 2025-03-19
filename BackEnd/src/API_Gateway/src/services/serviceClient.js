@@ -7,10 +7,10 @@ class ServiceClient {
     this.serviceName = serviceName;
 
     this.breaker = new CircuitBreaker(this._sendRequest.bind(this), {
-      timeout: 5000,
-      errorThresholdPercentage: 50,
-      resetTimeout: 4000,
-      maxFailures: 5,
+      timeout: 5000, // chờ tối đa 5s từ phản hồi của sendRequest
+      errorThresholdPercentage: 50, // lỗi vượt quá 50% (mở) tạm dừng gửi yêu cầu đến service.
+      resetTimeout: 4000, // chờ 4s xem chuyển sang half open kiểm tra xem service đã ổn định chưa.
+      maxFailures: 5, // số lần thất bại tối đa
     });
 
     this.breaker.on('open', () => {
@@ -28,9 +28,13 @@ class ServiceClient {
     return serviceRegistry.getInstance(this.serviceName);
   }
 
-  // Hàm delay để chờ giữa các lần retry
-  _delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+  // Hàm delay với exponential backoff
+  _delay(retryCount) {
+    const baseDelay = 1000; // Thời gian cơ bản: 1 giây
+    const maxDelay = 8000; // Giới hạn tối đa: 8 giây
+    const delay = Math.min(maxDelay, baseDelay * Math.pow(2, retryCount)); // Tính delay theo cấp số nhân
+    console.log(`Waiting ${delay / 1000} seconds before retrying...`);
+    return new Promise((resolve) => setTimeout(resolve, delay));
   }
 
   async _sendRequest({ method, url, data, headers }) {
@@ -47,6 +51,7 @@ class ServiceClient {
     return response;
   }
 
+  // các request service gửi vào đây (viết logic retry thủ công)
   async _makeRequest(method, endpoint, data = null, headers = {}) {
     const instance = await this._getServiceInstance();
     if (!instance) {
@@ -79,10 +84,9 @@ class ServiceClient {
           //  serviceRegistry.unregister(instance.id);
           throw new Error(`Service ${this.serviceName} unavailable after ${maxRetries} retries`);
         }
-
-        // Đợi 3 giây trước khi thử lại
-        console.log(`Retrying request to ${url} in 3 seconds... (Attempt ${retryCount + 1}/${maxRetries})`);
-        await this._delay(3000);
+        // sử dụng delay backoff
+        await this._delay(retryCount);
+        console.log(`Retrying request to ${url} (Attempt ${retryCount + 1}/${maxRetries})`);
       }
     }
   }
@@ -164,7 +168,7 @@ class ServiceClient {
             ...headers,
           },
         });
-        console.log(`[DEBUG] Response received on attempt ${retryCount + 1}:`, response.data);
+        // console.log(`[DEBUG] Response received on attempt ${retryCount + 1}:`, response.data);
         return response;
       } catch (error) {
         console.error(`[ERROR] GET request failed on attempt ${retryCount + 1}:`, error.message);
@@ -259,48 +263,48 @@ class ServiceClient {
 
   async postAuth(endpoint, data = {}, headers = {}) {
     // Kiểm tra token hợp lệ trước khi gửi yêu cầu
-    const token = headers.Authorization && headers.Authorization.split(' ')[1]; 
+    const token = headers.Authorization && headers.Authorization.split(' ')[1];
     if (typeof token !== 'string' || !token.trim()) {
       throw new Error('Invalid authentication token');
     }
-    return this._sendPostRequest(endpoint, data, token.trim(), headers); 
+    return this._sendPostRequest(endpoint, data, token.trim(), headers);
   }
-  
+
   async _sendPostRequest(endpoint, data = {}, token, headers = {}) {
     const instance = await this._getServiceInstance();
     if (!instance) {
       throw new Error(`No available instances for ${this.serviceName}`);
     }
-  
+
     const url = `http://${instance.host}:${instance.port}${endpoint}`;
     console.log(`[DEBUG] POST request to: ${url}`);
-  
+
     const maxRetries = 3;
     let retryCount = 0;
-  
+
     while (retryCount < maxRetries) {
       try {
         const response = await this.breaker.fire({
           method: 'post',
           url,
-          data, 
+          data,
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`, 
-            ...headers, 
+            Authorization: `Bearer ${token}`,
+            ...headers,
           },
         });
         console.log(`[DEBUG] Response received on attempt ${retryCount + 1}:`, response.data);
         return response;
       } catch (error) {
         console.error(`[ERROR] POST request failed on attempt ${retryCount + 1}:`, error.message);
-  
+
         if (error.response) {
           // Nếu có lỗi từ service, in thông tin lỗi và ném lại lỗi
           console.error(`[ERROR] Status: ${error.response.status}, Data:`, error.response.data);
           throw error;
         }
-  
+
         // Nếu lỗi không phải từ response, retry lại yêu cầu
         retryCount++;
         if (retryCount === maxRetries) {
@@ -310,52 +314,49 @@ class ServiceClient {
           serviceRegistry.unregister(instance.id);
           throw new Error(`Service ${this.serviceName} unavailable after ${maxRetries} retries`);
         }
-  
+
         // Đợi 3 giây trước khi thử lại
         console.log(`Retrying POST request to ${url} in 3 seconds... (Attempt ${retryCount + 1}/${maxRetries})`);
         await this._delay(3000);
       }
     }
   }
-  
-
-
 
   async _sendPutRequest(endpoint, data = {}, token, headers = {}) {
     const instance = await this._getServiceInstance();
     if (!instance) {
       throw new Error(`No available instances for ${this.serviceName}`);
     }
-  
+
     const url = `http://${instance.host}:${instance.port}${endpoint}`;
     console.log(`[DEBUG] PUT request to: ${url}`);
-  
+
     const maxRetries = 3;
     let retryCount = 0;
-  
+
     while (retryCount < maxRetries) {
       try {
         const response = await this.breaker.fire({
-          method: 'put',  // Chỉ cần thay đổi phương thức từ 'post' thành 'put'
+          method: 'put', // Chỉ cần thay đổi phương thức từ 'post' thành 'put'
           url,
-          data, 
+          data,
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`, 
-            ...headers, 
+            Authorization: `Bearer ${token}`,
+            ...headers,
           },
         });
         console.log(`[DEBUG] Response received on attempt ${retryCount + 1}:`, response.data);
         return response;
       } catch (error) {
         console.error(`[ERROR] PUT request failed on attempt ${retryCount + 1}:`, error.message);
-  
+
         if (error.response) {
           // Nếu có lỗi từ service, in thông tin lỗi và ném lại lỗi
           console.error(`[ERROR] Status: ${error.response.status}, Data:`, error.response.data);
           throw error;
         }
-  
+
         // Nếu lỗi không phải từ response, retry lại yêu cầu
         retryCount++;
         if (retryCount === maxRetries) {
@@ -365,7 +366,7 @@ class ServiceClient {
           serviceRegistry.unregister(instance.id);
           throw new Error(`Service ${this.serviceName} unavailable after ${maxRetries} retries`);
         }
-  
+
         // Đợi 3 giây trước khi thử lại
         console.log(`Retrying PUT request to ${url} in 3 seconds... (Attempt ${retryCount + 1}/${maxRetries})`);
         await this._delay(3000);
@@ -375,17 +376,118 @@ class ServiceClient {
 
   async putAuth(endpoint, data = {}, headers = {}) {
     // Kiểm tra token hợp lệ trước khi gửi yêu cầu
-    const token = headers.Authorization && headers.Authorization.split(' ')[1]; 
+    const token = headers.Authorization && headers.Authorization.split(' ')[1];
     if (typeof token !== 'string' || !token.trim()) {
       throw new Error('Invalid authentication token');
     }
-    return this._sendPutRequest(endpoint, data, token.trim(), headers); 
+    return this._sendPutRequest(endpoint, data, token.trim(), headers);
   }
-  
 
   // put
   async put(endpoint, data, headers = {}) {
     return this._makeRequest('put', endpoint, data, headers);
+  }
+
+  //patch
+  async patch(endpoint, headers = {}) {
+    const instance = await this._getServiceInstance();
+    if (!instance) {
+      throw new Error(`No available instances for ${this.serviceName}`);
+    }
+    const url = `http://${instance.host}:${instance.port}${endpoint}`;
+    console.log(`[DEBUG] GET request to: ${url}`);
+
+    const maxRetries = 3;
+    let retryCount = 0;
+
+    while (retryCount < maxRetries) {
+      try {
+        const response = await this.breaker.fire({
+          method: 'patch',
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            ...headers,
+          },
+        });
+        console.log(`[DEBUG] Response received on attempt ${retryCount + 1}:`, response.data);
+        return response;
+      } catch (error) {
+        console.error(`[ERROR] GET request failed on attempt ${retryCount + 1}:`, error.message);
+        if (error.response) {
+          console.error(`[ERROR] Status: ${error.response.status}, Data:`, error.response.data);
+          throw error;
+        }
+
+        retryCount++;
+        if (retryCount === maxRetries) {
+          if (this.breaker.opened) {
+            throw new Error(`Service ${this.serviceName} temporarily unavailable due to repeated failures`);
+          }
+          serviceRegistry.unregister(instance.id);
+          throw new Error(`Service ${this.serviceName} unavailable after ${maxRetries} retries`);
+        }
+
+        console.log(`Retrying GET request to ${url} in 3 seconds... (Attempt ${retryCount + 1}/${maxRetries})`);
+        await this._delay(3000);
+      }
+    }
+  }
+
+  // get auth
+  async patchAuth(endpoint, token, headers = {}) {
+    if (typeof token !== 'string' || !token.trim()) {
+      throw new Error('Invalid authentication token');
+    }
+    return this._sendPatchRequest(endpoint, {
+      ...headers,
+      Authorization: `Bearer ${token.trim()}`,
+    });
+  }
+
+  async _sendPatchRequest(endpoint, headers = {}) {
+    const instance = await this._getServiceInstance();
+    if (!instance) {
+      throw new Error(`No available instances for ${this.serviceName}`);
+    }
+    const url = `http://${instance.host}:${instance.port}${endpoint}`;
+    console.log(`[DEBUG] GET request to: ${url}`);
+
+    const maxRetries = 3;
+    let retryCount = 0;
+
+    while (retryCount < maxRetries) {
+      try {
+        const response = await this.breaker.fire({
+          method: 'patch',
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            ...headers,
+          },
+        });
+        // console.log(`[DEBUG] Response received on attempt ${retryCount + 1}:`, response.data);
+        return response;
+      } catch (error) {
+        console.error(`[ERROR] GET request failed on attempt ${retryCount + 1}:`, error.message);
+        if (error.response) {
+          console.error(`[ERROR] Status: ${error.response.status}, Data:`, error.response.data);
+          throw error;
+        }
+
+        retryCount++;
+        if (retryCount === maxRetries) {
+          if (this.breaker.opened) {
+            throw new Error(`Service ${this.serviceName} temporarily unavailable due to repeated failures`);
+          }
+          serviceRegistry.unregister(instance.id);
+          throw new Error(`Service ${this.serviceName} unavailable after ${maxRetries} retries`);
+        }
+
+        console.log(`Retrying GET request to ${url} in 3 seconds... (Attempt ${retryCount + 1}/${maxRetries})`);
+        await this._delay(3000);
+      }
+    }
   }
 }
 

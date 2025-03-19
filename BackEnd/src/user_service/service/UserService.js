@@ -138,29 +138,53 @@ const deleteUser = (id) => {
   });
 };
 
-const updateUser = (id, data) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const checkUser = await User.findOne({
-        _id: id,
-      });
-      if (checkUser === null) {
-        resolve({
-          status: 'ERR',
-          message: 'The user is not exists',
-        });
-      }
+// const updateUser = (id, data) => {
+//   return new Promise(async (resolve, reject) => {
+//     try {
+//       const checkUser = await User.findOne({
+//         _id: id,
+//       });
+//       if (checkUser === null) {
+//         resolve({
+//           status: 'ERR',
+//           message: 'The user is not exists',
+//         });
+//       }
 
-      const updatedUser = await User.findByIdAndUpdate(id, data, { new: true });
-      resolve({
-        status: 'OK',
-        message: 'SUCCESS',
-        data: updatedUser,
-      });
-    } catch (e) {
-      reject(e);
+//       const updatedUser = await User.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+//       console.log('updatedUser', updatedUser);
+//       resolve({
+//         status: 'OK',
+//         message: 'SUCCESS',
+//         data: updatedUser,
+//       });
+//     } catch (e) {
+//       reject(e);
+//     }
+//   });
+// };
+
+const updateUser = async (id, data) => {
+  try {
+    // Kiểm tra nếu data trống thì không cập nhật
+    if (!Object.keys(data).length) {
+      return { status: 'ERROR', message: 'No data to update' };
     }
-  });
+
+    const updatedUser = await User.findByIdAndUpdate(id, data, {
+      new: true, // Trả về dữ liệu sau khi update
+      runValidators: true, // Kiểm tra validation khi update
+    });
+
+    if (!updatedUser) {
+      return { status: 'ERROR', message: 'User not found' };
+    }
+
+    return { status: 'OK', message: 'SUCCESS', data: updatedUser };
+  } catch (error) {
+    console.error('Error updating user:', error);
+    return { status: 'ERROR', message: 'Internal server error' };
+  }
 };
 
 const getDetailsUser = (id) => {

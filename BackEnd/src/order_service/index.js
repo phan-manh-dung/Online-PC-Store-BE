@@ -8,6 +8,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const axios = require('axios');
+const redisClient = require('../../src/redis/v1/init/redisClient');
 
 dotenv.config();
 const app = express();
@@ -21,6 +22,7 @@ const SERVICE_INFO = {
     '/api/order/get-detail-order/:id',
     '/api/order/admin/get-all-order',
     '/api/order/cancel-order/:id',
+    '/api/order/get-all-order-user/:id',
   ],
 };
 
