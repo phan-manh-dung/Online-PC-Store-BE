@@ -1,4 +1,5 @@
 const Product = require('../models/Product_Model');
+const cloudinary = require('../config/cloudinaryConfig')
 
 // Lấy tất cả sản phẩm
 const getAllProducts = async () => {
@@ -10,58 +11,24 @@ const getProductById = async (productId) => {
     return await Product.findById(productId);
 };
 
-// Hàm lấy sản phẩm đã sắp xếp theo giá
-const getProductsSortedbyPrice = async ({ price_min, price_max, sort_by, page, limit }) => {
-    try {
-        const filterOptions = {};
-        if (price_min) filterOptions.price = { $gte: parseFloat(price_min) };
-        if (price_max) filterOptions.price = { $lte: parseFloat(price_max) };
-
-        let sortOptions = {};
-        if (sort_by === 'price_asc') {
-            sortOptions = { price: 1 }; 
-        } else if (sort_by === 'price_desc') {
-            sortOptions = { price: -1 }; 
-        } else {
-            sortOptions = { price: 1 }; 
-        }
-
-        const skip = (page - 1) * limit;
-
-        const products = await Product.find(filterOptions)
-            .skip(skip)
-            .limit(parseInt(limit))
-            .sort(sortOptions); 
-
-        return products;
-    } catch (error) {
-        throw new Error(error.message);
-    }
-};
-
-// Hàm đếm tổng số sản phẩm (để tính số trang)
-const getProductCount = async ({ price_min, price_max }) => {
-    try {
-        const filterOptions = {};
-        if (price_min) filterOptions.price = { $gte: parseFloat(price_min) };
-        if (price_max) filterOptions.price = { $lte: parseFloat(price_max) };
-
-        // Đếm tổng số sản phẩm trong database
-        return await Product.countDocuments(filterOptions);
-    } catch (error) {
-        throw new Error(error.message);
-    }
-};
-
-
 // Tạo mới sản phẩm
-const createProduct = async (productData) => {
+const createProduct = async (productData, filePath) => {
     try {
-        const newProduct = new Product(productData);
+        // Upload file lên Cloudinary và lưu vào thư mục "products"
+        const cloudinaryResponse = await cloudinary.uploader.upload(filePath, {
+            folder: 'products',
+        });
+
+        // Tạo sản phẩm mới với link ảnh từ Cloudinary
+        const newProduct = new Product({
+            ...productData,
+            image: cloudinaryResponse.secure_url, // Lưu URL ảnh vào database
+        });
+
         await newProduct.save();
         return newProduct;
     } catch (error) {
-        throw new Error(`Error creating product: ${error.message}`);
+        throw new Error(error.message);
     }
 };
 
@@ -97,6 +64,4 @@ module.exports = {
     createProduct,
     updateProduct,
     deleteProduct,
-    getProductsSortedbyPrice,
-    getProductCount,
 };

@@ -1,5 +1,6 @@
 const Product = require('../models/Product_Model');
 const productService = require('../services/Product_Service');
+const fs = require('fs')
 
 
 // Lấy tất cả sản phẩm
@@ -24,51 +25,37 @@ const getProductById = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-// Lấy sản phẩm đã sắp xếp theo giá và phân trang
-const getProductsSortedbyPrice = async (req, res) => {
-    const { sort_by, page = 1, limit = 10, price_min, price_max } = req.query;
-
-    try {
-        const products = await productService.getProductsSortedbyPrice({
-            price_min,
-            price_max,
-            sort_by,
-            page,
-            limit
-        });
-
-        //tính số trang
-        const totalProducts = await productService.getProductCount({
-            price_min,
-            price_max
-        });
-
-        const totalPages = Math.ceil(totalProducts / limit);
-
-        res.status(200).json({
-            type : 'PRICE',
-            products,
-            pagination: {
-                page,
-                limit,
-                total: totalProducts,
-                total_pages: totalPages
-            }
-        });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
 
 // Handler để thêm mới một sản phẩm
 const createProduct = async (req, res) => {
-    const newProductData = req.body;
     try {
-        const newProduct = await productService.createProduct(newProductData);
-        res.status(201).json(newProduct);
+        if (!req.file) {
+            return res.status(400).json({ message: 'No image uploaded' });
+        }
+
+        // Lấy dữ liệu sản phẩm từ request body
+        const productData = {
+            name: req.body.name,
+            price: req.body.price,
+            description: req.body.description,
+            computer: JSON.parse(req.body.computer), // Chuyển chuỗi JSON thành object
+            inventory: req.body.inventory,
+            category: req.body.category,
+            supplier: req.body.supplier,
+        };
+
+        // Gọi service để tạo sản phẩm
+        const newProduct = await productService.createProduct(productData, req.file.path);
+
+        // Xóa file tạm sau khi upload xong
+        fs.unlinkSync(req.file.path);
+
+        res.status(201).json({
+            message: 'Product created successfully',
+            product: newProduct,
+        });
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -107,5 +94,4 @@ module.exports = {
     createProduct,
     updateProduct,
     deleteProduct,
-    getProductsSortedbyPrice,
 };

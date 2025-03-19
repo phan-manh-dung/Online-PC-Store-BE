@@ -15,38 +15,34 @@ dotenv.config();
 app.use(express.json());
 
 const SERVICE_INFO = {
-  name: 'product_service',
+  name: 'search_service',
   host: 'localhost',
-  port: process.env.PORT || 5002,
+  port: process.env.PORT || 5005,
   endpoints: [
     '/api/product/get-all',
     '/api/product/get-by-id/:id',
+  
+    //Filter
+    '/api/product/get-type',
+    '/api/product/get-sorted',
+    '/api/product/get-products-by-type-supplier',
+    '/api/product/get-products-by-category-supplier',
+    '/api/product/brands/:categoryId',
+
+
+    //For menu filter:
+    '/api/get-list-by-category/:categoryId',
+    '/api/series/:brand',
+
 
     //----------------------------------------
     '/api/category/get-all',
     '/api/category/get-by-id/:id',
+    '/api/category/get-by-brand',
     '/api/supplier/get-all',
     '/api/supplier/get-by-id/:id',
     '/api/inventory/get-all',
     '/api/inventory/get-by-id/:id',
-    
-    //Create with auth  Admin-------------------
-    '/api/product/admin/create',
-    '/api/category/admin/create',
-    '/api/supplier/admin/create',
-    '/api/inventory/admin/create',
-
-    //Update with auth Admin-------------------
-    '/api/product/admin/update/:id',
-    '/api/supplier/admin/update/:id',
-    '/api/category/admin/update/:id',
-    '/api/inventory/admin/update/:id',
-
-     //Delete with auth Admin-------------------
-     '/api/product/admin/delete/:id',
-     '/api/supplier/admin/delete/:id',
-     '/api/category/admin/delete/:id',
-     '/api/inventory/admin/delete/:id'
   ],
 };
 
@@ -112,6 +108,6 @@ mongoose
 
 // Start server
 app.listen(SERVICE_INFO.port, () => {
-  console.log(`Product Service running on http://localhost:${SERVICE_INFO.port}`);
+  console.log(`Search Service running on http://localhost:${SERVICE_INFO.port}`);
   setTimeout(registerWithGateway, 1000);
 });
