@@ -1,5 +1,6 @@
 const UserService = require('../service/UserService');
 const JwtServices = require('../service/JwtServices');
+const { readData, createData, deleteData, updateData } = require('../../redis/v1/service/redisService');
 
 const createUser = async (req, res) => {
   try {
@@ -139,13 +140,25 @@ const updateUser = async (req, res) => {
   try {
     const userId = req.params.id;
     const data = req.body;
+    console.log('data controller', data);
     if (!userId) {
       return res.status(200).json({
         status: 'ERR',
         message: 'The userId do not exist',
       });
     }
+    const cacheKey = `user-detail:${userId}`;
+    // Xóa cache cũ trước khi cập nhật (nếu có)
+    // Bỏ qua lỗi nếu key không tồn tại
+    await deleteData(cacheKey).catch(() => null);
+    console.log(`Cache deleted for key: ${cacheKey}`);
+
     const response = await UserService.updateUser(userId, data);
+    // Nếu cập nhật thành công, ghi đè dữ liệu mới vào cache
+    if (response.status === 'OK') {
+      await updateData(cacheKey, response, 3600);
+      console.log(`Cache updated for key: ${cacheKey}`);
+    }
     return res.status(200).json(response);
   } catch (e) {
     return res.status(404).json({
@@ -163,7 +176,18 @@ const getDetailsUser = async (req, res) => {
         message: 'The userId do not exist getDetail',
       });
     }
+    const cacheKey = `user-detail:${userId}`;
+    const cachedData = await readData(cacheKey).catch(() => null);
+    if (cachedData) {
+      return res.status(200).json(cachedData); // Trả về dữ liệu từ cache
+    }
+    // nếu không có cache thì gọi vào db để lấy data
     const response = await UserService.getDetailsUser(userId);
+    // lấy xong và tạo cache
+    if (response.status === 'OK') {
+      await createData(cacheKey, response, 3600);
+      console.log(`Cache created for key: ${cacheKey}`);
+    }
     return res.status(200).json(response);
   } catch (e) {
     return res.status(404).json({

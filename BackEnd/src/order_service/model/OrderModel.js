@@ -6,7 +6,6 @@ const orderDetailSchema = new mongoose.Schema({
   image: { type: String, required: true },
   description: { type: String },
   productId: { type: mongoose.Schema.Types.ObjectId, required: true },
-  quantity: { type: Number, required: true },
   discount: { type: Number, required: true },
   color: { type: String },
   total_price: { type: Number, require: true },

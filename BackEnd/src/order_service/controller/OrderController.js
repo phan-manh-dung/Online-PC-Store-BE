@@ -3,7 +3,7 @@ const OrderService = require('../service/OrderService');
 
 const createOrder = async (req, res) => {
   try {
-    const { userId, products, shippingPrice = 0 } = req.body;
+    const { userId, products, shippingPrice = 0, statusOrder = '', statusPayment = '' } = req.body;
     const userResponse = await axios.get(`${process.env.GATEWAY_URL}/api/user/get-detail/${userId}`);
     const userData = userResponse.data;
     // check user and get address and user
@@ -20,6 +20,8 @@ const createOrder = async (req, res) => {
       return res.status(404).json({ message: 'Phone not found controller' });
     } else if (!userAddress) {
       return res.status(400).json({ message: 'User has no address' });
+    } else if (!statusOrder || !statusPayment) {
+      return res.status(400).json({ message: 'Status Order or Status Payment is required' });
     } else {
       customerInformation.push({
         name: user?.name,
@@ -36,30 +38,34 @@ const createOrder = async (req, res) => {
     let totalPrice = 0;
     const orderDetails = [];
     let orderDetailIdCounter = 1;
-    // Gọi product_service qua Gateway
-    for (const item of products) {
-      const productResponse = await axios.get(
-        `${process.env.GATEWAY_URL}/api/product/product/get-by-id/${item.productId}`,
-      );
+
+    // Sử dụng Promise.all để gọi API song song
+    const productPromises = products.map((item) =>
+      axios.get(`${process.env.GATEWAY_URL}/api/product/product/get-by-id/${item.productId}`),
+    );
+    const productResponses = await Promise.all(productPromises);
+
+    // Xử lý dữ liệu từ các response
+    productResponses.forEach((productResponse, index) => {
       const productData = productResponse;
       if (!productData || !productData.data) {
-        return res.status(404).json({ message: `Product ${item.productId} not found` });
+        throw new Error(`Product ${products[index].productId} not found`);
       }
       const product = productData.data;
-      const totalItemPrice = product.price * item.quantity;
+      const totalItemPrice = product.price * products[index].quantity;
       orderDetails.push({
         order_detail_id: orderDetailIdCounter++,
         name: product.name,
-        amount: item.quantity,
+        amount: products[index].quantity,
         image: product.image,
-        productId: item.productId,
-        quantity: item.quantity,
-        discount: item.discount || 0,
+        productId: products[index].productId,
+        discount: products[index].discount || 0,
         color: product.color || null,
         total_price: totalItemPrice,
       });
       totalPrice += totalItemPrice;
-    }
+    });
+
     totalPrice += shippingPrice;
     const response = await OrderService.createOrder(
       userId,
@@ -67,6 +73,8 @@ const createOrder = async (req, res) => {
       shippingAddress,
       orderDetails,
       totalPrice,
+      statusOrder,
+      statusPayment,
     );
     return res.status(200).json(response);
   } catch (e) {
@@ -89,7 +97,6 @@ const getDetailOrder = async (req, res) => {
     const response = await OrderService.getOrderDetail(orderId);
     return res.status(200).json(response);
   } catch (e) {
-    // console.log(e)
     return res.status(404).json({
       message: e,
     });
@@ -119,11 +126,32 @@ const deleteOrderToCancelled = async (req, res) => {
     const response = await OrderService.deleteOrderToCancelled(orderId);
     return res.status(200).json(response);
   } catch (e) {
-    // console.log(e)
     return res.status(404).json({
       message: e,
     });
   }
 };
 
-module.exports = { createOrder, getDetailOrder, getAllOrder, deleteOrderToCancelled };
+const getAllOrderOfUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const statusOrder = req.query.statusOrder || '';
+
+    if (!userId) {
+      return res.status(400).json({
+        status: 'ERR',
+        message: 'The userId is required',
+      });
+    }
+
+    const response = await OrderService.getAllOrderOfUser(userId, statusOrder);
+    return res.status(200).json(response);
+  } catch (e) {
+    return res.status(500).json({
+      message: 'Internal Server Error',
+      error: e,
+    });
+  }
+};
+
+module.exports = { createOrder, getDetailOrder, getAllOrder, deleteOrderToCancelled, getAllOrderOfUser };

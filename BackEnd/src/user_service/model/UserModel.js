@@ -18,7 +18,11 @@ const accountSchema = new mongoose.Schema({
 
 const userSchema = new mongoose.Schema(
   {
+    // họ và tên
     name: { type: String, unique: true, required: true, index: true },
+    email: { type: String, unique: true, index: true },
+    // ngày sinh
+    dateOfBirth: { type: Date, required: false },
     password: { type: String, required: true },
     phone: { type: Number, index: true },
     avatar: { type: String },

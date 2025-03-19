@@ -15,6 +15,7 @@ const authMiddlewareOrder = async (req, res, next) => {
     // Gọi user_service qua Gateway để xác thực token
     const response = await axios.get(`${process.env.GATEWAY_URL}/api/user/verify-token`, {
       headers: { Authorization: `Bearer ${token}` },
+      timeout: 5000,
     });
     const userData = response.data;
     if (!userData || !userData.data) {

@@ -3,7 +3,6 @@ const cors = require('cors');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const serviceRegistry = require('./src/services/serviceRegistry');
-const listEndpoints = require('express-list-endpoints');
 const path = require('path');
 
 const app = express();
@@ -14,10 +13,10 @@ const productRoutes = require('./src/routes/productRouter');
 const orderRoutes = require('./src/routes/orderRouter');
 const cartRoutes = require('./src/routes/cartRouter');
 
-// Rate limiting
+// Rate limiting nếu vượt quá nó báo lỗi To many request
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 1000,
+  max: 1000, // request
 });
 
 // Middleware
@@ -42,41 +41,7 @@ app.use('/api/product', productRoutes);
 app.use('/api/order', orderRoutes);
 app.use('/api/cart', cartRoutes);
 
-const apiCallCounts = {};
-const apiLastCalled = {};
-
-// Middleware để theo dõi lượt gọi API
-app.use((req, res, next) => {
-  const path = req.path;
-  const method = req.method;
-  const key = `${method}:${path}`;
-
-  // Tăng số lượt gọi API
-  apiCallCounts[key] = (apiCallCounts[key] || 0) + 1;
-
-  // Cập nhật thời gian gọi API gần nhất
-  apiLastCalled[key] = new Date().toISOString();
-
-  next();
-});
-
-// API endpoint để lấy thông tin về lượt gọi API
-app.get('/api-stats', (req, res) => {
-  res.json({
-    callCounts: apiCallCounts,
-    lastCalled: apiLastCalled,
-  });
-});
-
-app.get('/api-dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'api-dashboard.html'));
-});
-
-app.get('/list-api', (req, res) => {
-  res.json(listEndpoints(app));
-});
-
-// Đăng ký API Gateway như một service
+// Đăng ký API Gateway cho các service
 serviceRegistry.register({
   name: 'api-gateway',
   host: process.env.HOST || 'localhost',
@@ -98,7 +63,7 @@ app.post('/register', (req, res) => {
   }
 });
 
-// Thêm route này vào server.js của API Gateway
+// Theo dõi debug
 app.get('/debug/services', (req, res) => {
   const servicesDebug = {};
   for (const [name, instances] of serviceRegistry.services) {
@@ -110,17 +75,18 @@ app.get('/debug/services', (req, res) => {
   });
 });
 
+// hủy đăng ký service
 app.post('/unregister/:serviceId', (req, res) => {
   const success = serviceRegistry.unregister(req.params.serviceId);
   res.json({ success });
 });
 
+// kiểm tra trạng thái service
 app.post('/heartbeat/:serviceId', (req, res) => {
   const success = serviceRegistry.heartbeat(req.params.serviceId);
   res.json({ success });
 });
 
-// Thêm route này vào server.js của API Gateway
 app.get('/services', (req, res) => {
   const services = {};
   for (const [name, instances] of serviceRegistry.services) {

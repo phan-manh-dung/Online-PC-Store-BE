@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const axios = require('axios');
+const redisClient = require('../../src/redis/v1/init/redisClient');
 
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');

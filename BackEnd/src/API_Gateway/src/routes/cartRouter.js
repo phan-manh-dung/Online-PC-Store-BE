@@ -3,6 +3,7 @@ const router = express.Router();
 const ServiceClient = require('../services/serviceClient');
 const cartServiceClient = new ServiceClient('cart_service');
 
+const { readData, createData } = require('../../../redis/v1/service/redisService');
 // lỗi
 const errorHandler = (error, res) => {
   console.error('Service Error:', error);
@@ -34,7 +35,16 @@ router.delete('/delete-cart/:id', async (req, res) => {
 
 router.get('/get-cart/:id', async (req, res) => {
   try {
+    const cacheKey = `get-cart-user:${req.params.id}`;
+    const cachedData = await readData(cacheKey).catch(() => null);
+    if (cachedData) {
+      return res.status(200).json(cachedData);
+    }
     const response = await cartServiceClient.get(`/api/cart/get-cart/${req.params.id}`);
+    const data = response.data;
+    // Lưu vào Redis với TTL là 3600 giây (1 giờ)
+    await createData(cacheKey, data, 3600);
+    console.log(`Cache created for key: ${cacheKey}`);
     res.status(response.status).json(response.data);
   } catch (error) {
     errorHandler(error, res);
