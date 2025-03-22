@@ -33,6 +33,7 @@ router.post('/sign-in', async (req, res) => {
     // Nếu không có cache, gọi service
     const response = await userServiceClient.post('/api/user/sign-in', req.body);
     const data = response.data;
+
     // Lưu vào Redis với TTL là 3600 giây (1 giờ)
     await createData(cacheKey, data, 3600);
     console.log(`Cache created for key: ${cacheKey}`);
