@@ -8,7 +8,7 @@ const createCart = async (req, res) => {
 
     if (!userId) return res.status(400).json({ status: 'ERR', message: 'userId is required' });
     if (!productId) return res.status(400).json({ status: 'ERR', message: 'productId is required' });
-    const requiredFields = { nameProduct, amountProduct, imageProduct, priceProduct, colorProduct, discount, type };
+    const requiredFields = { nameProduct, amountProduct, imageProduct, priceProduct };
     const missingField = Object.keys(requiredFields).find((key) => !requiredFields[key]);
     if (missingField) {
       return res.status(400).json({ status: 'ERR', message: `${missingField} is required` });

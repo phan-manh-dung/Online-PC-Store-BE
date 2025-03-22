@@ -2,7 +2,7 @@ const redis = require('redis');
 
 // Tạo một client để kết nối tới Redis Cloud
 const redisClient = redis.createClient({
-  url: process.env.REDIS_URI || process.env.REDIS_URL,
+  url: 'redis://:HxYilmEbMtWoNFit7zEe7MDhsBBW7Nkd@redis-11521.c292.ap-southeast-1-1.ec2.redns.redis-cloud.com:11521/0',
 });
 
 redisClient.on('connect', () => {
