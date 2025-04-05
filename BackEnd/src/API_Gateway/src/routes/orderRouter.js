@@ -60,21 +60,6 @@ router.get('/admin/get-all-order', async (req, res) => {
   }
 });
 
-// router.delete('/cancel-order/:id', async (req, res) => {
-//   try {
-//     const response = await orderServiceClient.delete(`/api/order/cancel-order/${req.params.id}`);
-//     res.status(response.status).json(response.data);
-//   } catch (error) {
-//     console.log('Error when calling order service:', error.response?.data || error.message);
-//     res.status(error.response?.status || 500).json({
-//       message: error.response?.data?.message || 'Internal server error at API Gateway',
-//       status: 'ERROR',
-//     });
-//   }
-// });
-
-// all order của 1 user có redis
-
 router.patch('/cancel-order/:id', async (req, res) => {
   try {
     const response = await orderServiceClient.patch(`/api/order/cancel-order/${req.params.id}`);
@@ -110,6 +95,19 @@ router.get('/get-all-order-user/:id', async (req, res) => {
     res.status(response.status).json(response.data);
   } catch (error) {
     errorHandler(error, res);
+  }
+});
+
+router.put('/update-status', async (req, res) => {
+  try {
+    const response = await orderServiceClient.put(`/api/order/update-status`, req.body);
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('Error when calling order service:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Internal server error at API Gateway',
+      status: 'ERROR',
+    });
   }
 });
 

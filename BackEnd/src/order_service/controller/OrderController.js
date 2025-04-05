@@ -3,11 +3,21 @@ const OrderService = require('../service/OrderService');
 
 const createOrder = async (req, res) => {
   try {
-    const { userId, products, shippingPrice = 0, statusOrder = '', statusPayment = '' } = req.body;
-    const userResponse = await axios.get(`${process.env.GATEWAY_URL}/api/user/get-detail/${userId}`);
-    const userData = userResponse.data;
-    // check user and get address and user
+    const { userId, products, shippingPrice = 0, totalPrice, statusOrder = '', paymentMethod = '' } = req.body;
+
+    // Kiểm tra user
+    let userData;
+    try {
+      const userResponse = await axios.get(`${process.env.GATEWAY_URL}/api/user/get-detail/${userId}`);
+      userData = userResponse.data;
+    } catch (error) {
+      console.error(`Error fetching user: ${error.message}`);
+      return res.status(404).json({ message: 'User not found from API' });
+    }
+
+    // Check user and get address
     const user = userData.data;
+    console.log('user', user);
     const userAddress = user.address && user.address.length > 0 ? user.address[0] : null;
 
     const customerInformation = [];
@@ -20,8 +30,8 @@ const createOrder = async (req, res) => {
       return res.status(404).json({ message: 'Phone not found controller' });
     } else if (!userAddress) {
       return res.status(400).json({ message: 'User has no address' });
-    } else if (!statusOrder || !statusPayment) {
-      return res.status(400).json({ message: 'Status Order or Status Payment is required' });
+    } else if (!statusOrder || !paymentMethod) {
+      return res.status(400).json({ message: 'Status Order or payment method is required' });
     } else {
       customerInformation.push({
         name: user?.name,
@@ -35,7 +45,12 @@ const createOrder = async (req, res) => {
       });
     }
 
-    let totalPrice = 0;
+    // Kiểm tra totalPrice từ request
+    if (!totalPrice || typeof totalPrice !== 'number' || totalPrice <= 0) {
+      return res.status(400).json({ message: 'Total price is required and must be a positive number' });
+    }
+
+    // Tạo order details (không tính lại totalPrice)
     const orderDetails = [];
     let orderDetailIdCounter = 1;
 
@@ -52,7 +67,10 @@ const createOrder = async (req, res) => {
         throw new Error(`Product ${products[index].productId} not found`);
       }
       const product = productData.data;
-      const totalItemPrice = product.price * products[index].quantity;
+
+      // Tính totalItemPrice để hiển thị trong orderDetails (không ảnh hưởng đến totalPrice)
+      const totalItemPrice = (totalPrice - shippingPrice) / products.length; // Chia đều cho các sản phẩm
+
       orderDetails.push({
         order_detail_id: orderDetailIdCounter++,
         name: product.name,
@@ -61,24 +79,55 @@ const createOrder = async (req, res) => {
         productId: products[index].productId,
         discount: products[index].discount || 0,
         color: product.color || null,
-        total_price: totalItemPrice,
+        total_price: totalItemPrice, // Giá hiển thị, không dùng để tính totalPrice
       });
-      totalPrice += totalItemPrice;
     });
 
-    totalPrice += shippingPrice;
+    // Tạo order với totalPrice từ request
     const response = await OrderService.createOrder(
       userId,
       customerInformation,
       shippingAddress,
       orderDetails,
-      totalPrice,
+      totalPrice, // Sử dụng totalPrice từ request
       statusOrder,
-      statusPayment,
+      paymentMethod,
     );
+
+    // Kiểm tra response từ service
+    if (response.status !== 200) {
+      return res.status(response.status).json({ message: response.message });
+    }
+
+    // Nếu paymentMethod là MOMO, gửi message đến Kafka
+    if (paymentMethod.toUpperCase() === 'MOMO') {
+      const producer = req.app.locals.producer; // Lấy producer từ app.locals
+      const orderData = {
+        orderId: response?.data?._id.toString(),
+        userId,
+        amount: totalPrice, // Sử dụng totalPrice từ request
+        orderInfo: `Thanh toán đơn hàng ${response?.data?._id}`,
+      };
+
+      try {
+        await producer.send({
+          topic: 'order-payment',
+          messages: [
+            {
+              value: JSON.stringify(orderData),
+            },
+          ],
+        });
+        console.log('Order sent to Kafka:', orderData);
+      } catch (kafkaError) {
+        console.error('Error sending to Kafka:', kafkaError);
+        // Có thể thêm logic rollback nếu cần (ví dụ: xóa đơn hàng vừa tạo)
+      }
+    }
+
     return res.status(200).json(response);
   } catch (e) {
-    console.error('Error in createOrder:', e.message);
+    console.error('Error in createOrder controller:', e.message);
     return res.status(500).json({
       message: e.message || 'Internal server error',
     });
@@ -154,4 +203,27 @@ const getAllOrderOfUser = async (req, res) => {
   }
 };
 
-module.exports = { createOrder, getDetailOrder, getAllOrder, deleteOrderToCancelled, getAllOrderOfUser };
+const updateStatusOrder = async (req, res) => {
+  try {
+    const { orderId, statusOrder } = req.body;
+
+    if (!orderId || !statusOrder) {
+      return res.status(400).json({ message: 'orderId and statusOrder are required' });
+    }
+
+    const result = await OrderService.updateStatusOrder(orderId, statusOrder);
+    res.status(result.status).json({ message: result.message, data: result.data });
+  } catch (error) {
+    console.error('Error in updateStatusOrder controller:', error.message);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
+module.exports = {
+  createOrder,
+  getDetailOrder,
+  getAllOrder,
+  deleteOrderToCancelled,
+  getAllOrderOfUser,
+  updateStatusOrder,
+};

@@ -4,14 +4,17 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const serviceRegistry = require('./src/services/serviceRegistry');
 const path = require('path');
-
 const app = express();
+
+// Middleware verify token
+const authenticateToken = require('./src/middleware/authenMiddleware');
 
 // Routes
 const userRoutes = require('./src/routes/userRouter');
 const productRoutes = require('./src/routes/productRouter');
 const orderRoutes = require('./src/routes/orderRouter');
 const cartRoutes = require('./src/routes/cartRouter');
+const paymentRoutes = require('./src/routes/paymentRouter');
 
 // Rate limiting nếu vượt quá nó báo lỗi To many request
 const limiter = rateLimit({
@@ -40,13 +43,23 @@ app.use('/api/user', userRoutes);
 app.use('/api/product', productRoutes);
 app.use('/api/order', orderRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/payment', paymentRoutes);
+
+// áp dụng cho tất cả các route kể cả API Gateway
+// app.use((req, res, next) => {
+//   // Bỏ qua xác thực cho API đăng nhập
+//   if (req.path === '/sign-in' || req.path === '/sign-up' || req.path === 'get-all' || req.path === '/register') {
+//     return next();
+//   }
+//   authenticateToken(req, res, next);
+// });
 
 // Đăng ký API Gateway cho các service
 serviceRegistry.register({
   name: 'api-gateway',
   host: process.env.HOST || 'localhost',
   port: process.env.PORT || 5555,
-  endpoints: ['/api/user/*', '/api/product/*', '/api/order/*', '/api/cart/*'],
+  endpoints: ['/api/user/*', '/api/product/*', '/api/order/*', '/api/cart/*', '/api/payment/*'],
 });
 
 app.get('/health', (req, res) => {

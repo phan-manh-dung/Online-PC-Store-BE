@@ -4,6 +4,7 @@ const router = express.Router();
 const { StatusCodes } = require('http-status-codes');
 const ServiceClient = require('../services/serviceClient');
 const userServiceClient = new ServiceClient('user_service');
+// Middleware verify token
 
 // redis
 const { readData, createData } = require('../../../redis/v1/service/redisService');
