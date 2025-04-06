@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const ServiceClient = require('../services/serviceClient');
 const orderServiceClient = new ServiceClient('order_service');
+// Middleware verify token
+const authenticateToken = require('../middleware/authenMiddleware');
 
 const { readData, createData } = require('../../../redis/v1/service/redisService');
 
@@ -12,9 +14,19 @@ const errorHandler = (error, res) => {
   res.status(status).json({ success: false, message, error: error.message });
 };
 
+router.use((req, res, next) => {
+  // Bỏ qua xác thực cho API đăng nhập
+  if (req.path === '/update-status') {
+    return next();
+  }
+  authenticateToken(req, res, next);
+});
+
 router.post('/create-order', async (req, res) => {
   try {
-    const response = await orderServiceClient.post('/api/order/create-order', req.body);
+    const response = await orderServiceClient.postAuth('/api/order/create-order', req.body, {
+      Authorization: req.headers.authorization,
+    });
     res.status(response.status).json(response.data);
   } catch (error) {
     errorHandler(error, res);

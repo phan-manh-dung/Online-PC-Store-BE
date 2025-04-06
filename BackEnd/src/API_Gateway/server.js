@@ -5,9 +5,7 @@ const rateLimit = require('express-rate-limit');
 const serviceRegistry = require('./src/services/serviceRegistry');
 const path = require('path');
 const app = express();
-
-// Middleware verify token
-const authenticateToken = require('./src/middleware/authenMiddleware');
+require('dotenv').config();
 
 // Routes
 const userRoutes = require('./src/routes/userRouter');
@@ -44,15 +42,6 @@ app.use('/api/product', productRoutes);
 app.use('/api/order', orderRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/payment', paymentRoutes);
-
-// áp dụng cho tất cả các route kể cả API Gateway
-// app.use((req, res, next) => {
-//   // Bỏ qua xác thực cho API đăng nhập
-//   if (req.path === '/sign-in' || req.path === '/sign-up' || req.path === 'get-all' || req.path === '/register') {
-//     return next();
-//   }
-//   authenticateToken(req, res, next);
-// });
 
 // Đăng ký API Gateway cho các service
 serviceRegistry.register({

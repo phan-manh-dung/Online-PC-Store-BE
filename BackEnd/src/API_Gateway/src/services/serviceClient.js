@@ -270,6 +270,7 @@ class ServiceClient {
     return this._sendPostRequest(endpoint, data, token.trim(), headers);
   }
 
+  // gửi token về cho service con để xác thực
   async _sendPostRequest(endpoint, data = {}, token, headers = {}) {
     const instance = await this._getServiceInstance();
     if (!instance) {
@@ -322,6 +323,7 @@ class ServiceClient {
     }
   }
 
+  // put
   async _sendPutRequest(endpoint, data = {}, token, headers = {}) {
     const instance = await this._getServiceInstance();
     if (!instance) {

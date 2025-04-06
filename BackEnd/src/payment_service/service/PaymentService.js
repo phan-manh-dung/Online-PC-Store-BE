@@ -8,7 +8,7 @@ const partnerCode = 'MOMO' || process.env.MOMO_PARTNER_CODE;
 const accessKey = 'F8BBA842ECF85' || process.env.MOMO_ACCESS_KEY;
 const secretKey = 'K951B6PE1waDMi640xX08PD3vg6EkVlz' || process.env.MOMO_SECRET_KEY;
 const ipnUrl =
-  'https://dace-2001-ee0-5006-50a0-f5aa-e833-a591-bda3.ngrok-free.app/api/payment/callback' || process.env.MOMO_IPN_URL;
+  'https://0064-2001-ee0-5006-50a0-b003-5ba0-7840-9e64.ngrok-free.app/api/payment/callback' || process.env.MOMO_IPN_URL;
 // thanh toán xong nó sẽ trở về đây
 const redirectUrl = 'https://webhook.site/cb7c3ef2-df12-482d-97bf-f76b1a4ead27' || process.env.MOMO_REDIRECT_URL;
 const requestType = 'captureWallet';

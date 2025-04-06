@@ -4,20 +4,43 @@ const OrderService = require('../service/OrderService');
 const createOrder = async (req, res) => {
   try {
     const { userId, products, shippingPrice = 0, totalPrice, statusOrder = '', paymentMethod = '' } = req.body;
+    const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+    let access_token = null;
 
-    // Kiểm tra user
+    if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
+      access_token = authHeader.slice(7).trim();
+    }
+    if (!access_token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Access token is required in Authorization header',
+      });
+    }
+
     let userData;
     try {
-      const userResponse = await axios.get(`${process.env.GATEWAY_URL}/api/user/get-detail/${userId}`);
+      const userResponse = await axios.get(`${process.env.GATEWAY_URL}/api/user/get-detail/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      });
       userData = userResponse.data;
+
+      // Kiểm tra cấu trúc response từ API Gateway
+      if (!userData || (!userData.data && !userData.success)) {
+        throw new Error('Invalid response structure from user API');
+      }
+
+      // API Gateway có thể trả về { success: true, data: {...} }
+      userData = userData.success ? userData.data : userData;
     } catch (error) {
+      console.log('er', error);
       console.error(`Error fetching user: ${error.message}`);
       return res.status(404).json({ message: 'User not found from API' });
     }
 
     // Check user and get address
     const user = userData.data;
-    console.log('user', user);
     const userAddress = user.address && user.address.length > 0 ? user.address[0] : null;
 
     const customerInformation = [];
