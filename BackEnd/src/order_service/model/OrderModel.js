@@ -28,14 +28,14 @@ const orderSchema = new mongoose.Schema(
         country: { type: String, require: true },
       },
     ],
-    statusPayment: {
+    paymentMethod: {
       type: String,
       enum: ['CASH', 'CREDIT_CARD', 'INTERNET_BANKING', 'MOMO'],
       default: 'CASH',
     },
     statusOrder: {
       type: String,
-      enum: ['wait_pay', 'pending', 'deliver', 'completed', 'cancelled'],
+      enum: ['pending', 'completed', 'cancelled'],
       default: 'pending',
     },
     totalPrice: { type: Number },

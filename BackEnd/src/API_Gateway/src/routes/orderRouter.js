@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const ServiceClient = require('../services/serviceClient');
 const orderServiceClient = new ServiceClient('order_service');
+// Middleware verify token
+const authenticateToken = require('../middleware/authenMiddleware');
 
 const { readData, createData } = require('../../../redis/v1/service/redisService');
 
@@ -12,9 +14,19 @@ const errorHandler = (error, res) => {
   res.status(status).json({ success: false, message, error: error.message });
 };
 
+router.use((req, res, next) => {
+  // Bỏ qua xác thực cho API đăng nhập
+  if (req.path === '/update-status') {
+    return next();
+  }
+  authenticateToken(req, res, next);
+});
+
 router.post('/create-order', async (req, res) => {
   try {
-    const response = await orderServiceClient.post('/api/order/create-order', req.body);
+    const response = await orderServiceClient.postAuth('/api/order/create-order', req.body, {
+      Authorization: req.headers.authorization,
+    });
     res.status(response.status).json(response.data);
   } catch (error) {
     errorHandler(error, res);
@@ -60,21 +72,6 @@ router.get('/admin/get-all-order', async (req, res) => {
   }
 });
 
-// router.delete('/cancel-order/:id', async (req, res) => {
-//   try {
-//     const response = await orderServiceClient.delete(`/api/order/cancel-order/${req.params.id}`);
-//     res.status(response.status).json(response.data);
-//   } catch (error) {
-//     console.log('Error when calling order service:', error.response?.data || error.message);
-//     res.status(error.response?.status || 500).json({
-//       message: error.response?.data?.message || 'Internal server error at API Gateway',
-//       status: 'ERROR',
-//     });
-//   }
-// });
-
-// all order của 1 user có redis
-
 router.patch('/cancel-order/:id', async (req, res) => {
   try {
     const response = await orderServiceClient.patch(`/api/order/cancel-order/${req.params.id}`);
@@ -110,6 +107,19 @@ router.get('/get-all-order-user/:id', async (req, res) => {
     res.status(response.status).json(response.data);
   } catch (error) {
     errorHandler(error, res);
+  }
+});
+
+router.put('/update-status', async (req, res) => {
+  try {
+    const response = await orderServiceClient.put(`/api/order/update-status`, req.body);
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('Error when calling order service:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Internal server error at API Gateway',
+      status: 'ERROR',
+    });
   }
 });
 

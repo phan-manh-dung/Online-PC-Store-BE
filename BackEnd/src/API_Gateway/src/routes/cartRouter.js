@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const ServiceClient = require('../services/serviceClient');
 const cartServiceClient = new ServiceClient('cart_service');
+// Middleware verify token
+const authenticateToken = require('../middleware/authenMiddleware');
 
 const { readData, createData } = require('../../../redis/v1/service/redisService');
 // lỗi
@@ -11,6 +13,8 @@ const errorHandler = (error, res) => {
   const message = error.response?.data?.message || 'Internal Server Error';
   res.status(status).json({ success: false, message, error: error.message });
 };
+
+router.use(authenticateToken);
 
 router.post('/create-cart', async (req, res) => {
   try {

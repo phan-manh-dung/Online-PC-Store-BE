@@ -1,6 +1,5 @@
 // const http = require('http');
 const router = require('./router');
-const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
@@ -8,44 +7,79 @@ const express = require('express');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const axios = require('axios');
-dotenv.config();
-const app = express();
 // import redis
 const redisClient = require('../../src/redis/v1/init/redisClient');
-// cấu hình kafka
 const { Kafka } = require('kafkajs');
 
 // Cấu hình Kafka
 const kafka = new Kafka({
-  clientId: 'order-service',
-  brokers: ['localhost:9092'], // Địa chỉ Kafka server
+  clientId: 'payment-service',
+  brokers: ['localhost:9092'],
 });
-const producer = kafka.producer();
+const consumer = kafka.consumer({ groupId: 'payment-group' });
 
-// Kết nối producer
-const connectProducer = async () => {
+// Kết nối consumer và lắng nghe message
+const connectConsumer = async () => {
   try {
-    await producer.connect();
-    console.log('Kafka Producer connected');
+    await consumer.connect();
+    await consumer.subscribe({ topic: 'order-payment', fromBeginning: true });
+
+    await consumer.run({
+      eachMessage: async ({ topic, partition, message }) => {
+        const orderData = JSON.parse(message.value.toString());
+        console.log('Received order from Kafka:', orderData);
+
+        // Xử lý thanh toán với MoMo (gọi API create-payment)
+        await processMoMoPayment(orderData);
+      },
+    });
+    console.log('Kafka Consumer connected');
   } catch (error) {
-    console.error('Error connecting Kafka Producer:', error);
+    console.error('Error connecting Kafka Consumer:', error);
   }
 };
-connectProducer();
-// Đưa producer vào app.locals để các router/controller có thể sử dụng
-app.locals.producer = producer;
+connectConsumer();
+
+// Hàm xử lý thanh toán MoMo (sẽ gọi API create-payment)
+const processMoMoPayment = async (orderData) => {
+  try {
+    // Gọi API create-payment trong payment_service
+    const response = await fetch('http://localhost:5555/api/payment/create-payment-momo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orderData),
+    });
+    const result = await response.json();
+    console.log('MoMo payment created:', result);
+  } catch (error) {
+    console.error('Error processing MoMo payment:', error);
+  }
+};
+
+dotenv.config();
+const app = express();
+// Thêm middleware để parse JSON
+app.use(express.json());
+app.use(cookieParser());
+
+app.use(
+  cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'OPTIONS'], // Thêm 'OPTIONS' để hỗ trợ preflight request
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true, // Nếu có dùng cookies hoặc token
+  }),
+);
 
 const SERVICE_INFO = {
-  name: 'order_service',
+  name: 'payment_service',
   host: 'localhost',
-  port: process.env.PORT || 5003,
+  port: process.env.PORT || 5005,
   endpoints: [
-    '/api/order/create-order',
-    '/api/order/get-detail-order/:id',
-    '/api/order/admin/get-all-order',
-    '/api/order/cancel-order/:id',
-    '/api/order/get-all-order-user/:id',
-    '/api/order/update-status',
+    '/api/payment/create-payment-momo',
+    '/api/payment/callback',
+    '/api/payment/status',
+    'api/payment/transaction-status-momo',
   ],
 };
 
@@ -81,9 +115,8 @@ function startHeartbeat() {
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-  // of kafka
-  await producer.disconnect();
-  console.log('Kafka Producer disconnected');
+  await consumer.disconnect();
+  console.log('Kafka Consumer disconnected');
   if (serviceId) {
     try {
       await axios.post(`${process.env.GATEWAY_URL}/unregister/${serviceId}`);
@@ -100,15 +133,6 @@ app.use((req, res, next) => {
   next();
 });
 
-const PORT = process.env.PORT_ORDER_SERVICE || 5003;
-
-app.use(bodyParser.json());
-app.use(cors());
-// app.use(express.json({ limit: '50mb' }));
-// app.use(express.urlencoded({ limit: '50mb' }));
-
-app.use(cookieParser());
-
 router(app);
 
 mongoose
@@ -122,7 +146,7 @@ mongoose
 
 // port 4000
 app.listen(SERVICE_INFO.port, () => {
-  console.log(`Order Service running on http://localhost:${SERVICE_INFO.port}`);
+  console.log(`Cart Service running on http://localhost:${SERVICE_INFO.port}`);
   setTimeout(registerWithGateway, 1000);
 });
 
