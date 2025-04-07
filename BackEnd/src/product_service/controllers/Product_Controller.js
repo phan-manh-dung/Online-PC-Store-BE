@@ -44,6 +44,9 @@ const createProduct = async (req, res) => {
             supplier: req.body.supplier,
         };
 
+        console.log(productData);
+        
+
         // Gọi service để tạo sản phẩm
         const newProduct = await productService.createProduct(productData, req.file.path);
 

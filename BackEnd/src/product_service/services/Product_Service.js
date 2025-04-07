@@ -1,60 +1,97 @@
 const Product = require('../models/Product_Model');
-const cloudinary = require('../config/cloudinaryConfig')
+const cloudinary = require('../config/cloudinaryConfig');
+const redisService = require('../services/Redis_Service');
 
-// Lấy tất cả sản phẩm
 const getAllProducts = async () => {
-    return await Product.find();
+    const cacheKey = 'products:all';
+    const cachedProducts = await redisService.getCache(cacheKey);
+    if (cachedProducts) {
+        console.log('All Products retrieved from Redis cache');
+        return cachedProducts;
+    }
+    try {
+        const products = await Product.find();
+        await redisService.setCache(cacheKey, products, 3600); 
+        console.log('All Products retrieved from MongoDB and cached in Redis');
+        return products;
+    } catch (error) {
+        throw new Error('Error retrieving all products: ' + error.message);
+    }
 };
 
-// Lấy sản phẩm theo ID
 const getProductById = async (productId) => {
-    return await Product.findById(productId);
+    const cacheKey = `product:${productId}`;
+    const cachedProduct = await redisService.getCache(cacheKey);
+    if (cachedProduct) {
+        return cachedProduct;
+    }
+    try {
+        const product = await Product.findById(productId);
+        if (!product) {
+            throw new Error('Product not found');
+        }
+        await redisService.setCache(cacheKey, product, 3600); 
+        return product;
+    } catch (error) {
+        throw new Error('Error retrieving product by id: ' + error.message);
+    }
 };
 
-// Tạo mới sản phẩm
 const createProduct = async (productData, filePath) => {
     try {
-        // Upload file lên Cloudinary và lưu vào thư mục "products"
         const cloudinaryResponse = await cloudinary.uploader.upload(filePath, {
             folder: 'products',
         });
 
-        // Tạo sản phẩm mới với link ảnh từ Cloudinary
         const newProduct = new Product({
             ...productData,
-            image: cloudinaryResponse.secure_url, // Lưu URL ảnh vào database
+            image: cloudinaryResponse.secure_url,
         });
 
+        console.log(newProduct);
+        
         await newProduct.save();
+
+        await redisService.deleteCache('products:all');
+        
         return newProduct;
     } catch (error) {
-        throw new Error(error.message);
+        throw new Error('Error creating product: ' + error.message);
     }
 };
 
-// Cập nhật sản phẩm theo ID
 const updateProduct = async (productId, updateData) => {
     try {
         const updatedProduct = await Product.findByIdAndUpdate(productId, updateData, { new: true });
         if (!updatedProduct) {
             throw new Error('Product not found');
         }
+
+        const cacheKey = `product:${productId}`;
+        await redisService.setCache(cacheKey, updatedProduct, 3600); 
+        await redisService.deleteCache('products:all');
+
         return updatedProduct;
     } catch (error) {
-        throw new Error(`Error updating product: ${error.message}`);
+        throw new Error('Error updating product: ' + error.message);
     }
 };
 
-// Xóa sản phẩm theo ID
 const deleteProduct = async (productId) => {
     try {
         const deletedProduct = await Product.findByIdAndDelete(productId);
         if (!deletedProduct) {
             throw new Error('Product not found');
         }
+
+        const cacheKey = `product:${productId}`;
+        await redisService.deleteCache(cacheKey); 
+
+        await redisService.deleteCache('products:all');
+
         return deletedProduct;
     } catch (error) {
-        throw new Error(`Error deleting product: ${error.message}`);
+        throw new Error('Error deleting product: ' + error.message);
     }
 };
 
