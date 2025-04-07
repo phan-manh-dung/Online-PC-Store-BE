@@ -13,7 +13,12 @@ const getCache = (key) => {
   });
 };
 
+const delCache = (key) => {
+  return redis.del(key);  
+};
+
 module.exports = {
   setCache,
-  getCache
+  getCache,
+  delCache
 };
