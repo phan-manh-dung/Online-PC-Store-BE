@@ -1,3 +1,13 @@
 .env
  
 node_modules/
+
+# Redis data files (dữ liệu Redis cục bộ)
+/var/lib/redis/
+
+
+redis.conf
+# Redis log files
+redis.log
+# Redis dump file (dữ liệu Redis cục bộ)
+dump.rdb    
