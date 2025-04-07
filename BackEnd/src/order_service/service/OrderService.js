@@ -10,7 +10,7 @@ const createOrder = (
   orderDetails,
   totalPrice,
   statusOrder,
-  statusPayment,
+  paymentMethod,
 ) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -21,11 +21,19 @@ const createOrder = (
         !orderDetails ||
         !totalPrice ||
         !statusOrder ||
-        !statusPayment
+        !paymentMethod
       ) {
         return resolve({
           status: 400,
           message: 'Missing required fields',
+        });
+      }
+
+      // Kiểm tra totalPrice hợp lệ
+      if (!totalPrice || typeof totalPrice !== 'number' || totalPrice <= 0) {
+        return resolve({
+          status: 400,
+          message: 'Total price is required and must be a positive number',
         });
       }
 
@@ -36,7 +44,7 @@ const createOrder = (
         orderDetails,
         totalPrice,
         statusOrder: statusOrder || 'pending',
-        statusPayment: statusPayment || 'CASH',
+        paymentMethod: paymentMethod || 'CASH',
       });
 
       await newOrder.save();
@@ -82,7 +90,7 @@ const createOrder = (
         data: newOrder,
       });
     } catch (e) {
-      console.error('Error in createOrder:', e);
+      console.error('Error in createOrder service:', e);
       reject({
         status: 500,
         message: 'Internal Server Error',
@@ -286,4 +294,61 @@ const getAllOrderOfUser = (id, statusOrder) => {
   });
 };
 
-module.exports = { createOrder, getOrderDetail, getAllOrder, deleteOrderToCancelled, getAllOrderOfUser };
+const updateStatusOrder = (orderId, statusOrder) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Kiểm tra orderId và statusOrder
+      if (!orderId || !statusOrder) {
+        return resolve({
+          status: 400,
+          message: 'orderId and statusOrder are required',
+        });
+      }
+
+      // Kiểm tra statusOrder hợp lệ
+      const validStatuses = ['wait_pay', 'pending', 'deliver', 'completed', 'cancelled'];
+      if (!validStatuses.includes(statusOrder)) {
+        return resolve({
+          status: 400,
+          message: 'Invalid statusOrder value',
+        });
+      }
+
+      // Tìm và update order
+      const updatedOrder = await Order.findByIdAndUpdate(
+        orderId,
+        { statusOrder, updatedAt: new Date() },
+        { new: true }, // Trả về document đã update
+      );
+
+      if (!updatedOrder) {
+        return resolve({
+          status: 404,
+          message: 'Order not found',
+        });
+      }
+
+      resolve({
+        status: 200,
+        message: 'Order status updated successfully',
+        data: updatedOrder,
+      });
+    } catch (e) {
+      console.error('Error in updateStatusOrder service:', e);
+      reject({
+        status: 500,
+        message: 'Internal Server Error',
+        error: e.message || e,
+      });
+    }
+  });
+};
+
+module.exports = {
+  createOrder,
+  getOrderDetail,
+  getAllOrder,
+  deleteOrderToCancelled,
+  getAllOrderOfUser,
+  updateStatusOrder,
+};

@@ -4,9 +4,10 @@ const router = express.Router();
 const { StatusCodes } = require('http-status-codes');
 const ServiceClient = require('../services/serviceClient');
 const userServiceClient = new ServiceClient('user_service');
-
 // redis
 const { readData, createData } = require('../../../redis/v1/service/redisService');
+// Middleware verify token
+const authenticateToken = require('../middleware/authenMiddleware');
 
 const errorHandler = (error, res) => {
   console.error('Service Error:', error);
@@ -18,6 +19,14 @@ const errorHandler = (error, res) => {
     error: error.message,
   });
 };
+
+router.use((req, res, next) => {
+  // Bỏ qua xác thực cho API đăng nhập
+  if (req.path === '/sign-in' || req.path === '/sign-up') {
+    return next();
+  }
+  authenticateToken(req, res, next);
+});
 
 //redis
 router.post('/sign-in', async (req, res) => {

@@ -10,5 +10,7 @@ router.patch('/cancel-order/:id', orderController.deleteOrderToCancelled);
 router.get('/get-all-order-user/:id', orderController.getAllOrderOfUser);
 // get order of all user(lấy tất cả order của all user)
 router.get('/admin/get-all-order', authMiddlewareOrder, orderController.getAllOrder);
+// update status order
+router.put('/update-status', orderController.updateStatusOrder);
 
 module.exports = router;

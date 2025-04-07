@@ -43,7 +43,6 @@ const userSchema = new mongoose.Schema(
   },
 );
 // Chỉ mục phức hợp này có thể được sử dụng nếu bạn có các truy vấn mà lọc dựa trên cả name và email.
-// userSchema.index({ name: 1, email: 1 });
 const User = mongoose.model('User', userSchema);
 const Role = mongoose.model('Role', roleSchema);
 const Account = mongoose.model('Account', accountSchema);
