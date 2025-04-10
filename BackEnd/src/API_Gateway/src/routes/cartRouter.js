@@ -5,7 +5,7 @@ const cartServiceClient = new ServiceClient('cart_service');
 // Middleware verify token
 const authenticateToken = require('../middleware/authenMiddleware');
 
-const { readData, createData } = require('../../../redis/v1/service/redisService');
+const { readData, createData } = require('../../redis/v1/service/redisService');
 // lỗi
 const errorHandler = (error, res) => {
   console.error('Service Error:', error);

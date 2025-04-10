@@ -5,7 +5,7 @@ const { StatusCodes } = require('http-status-codes');
 const ServiceClient = require('../services/serviceClient');
 const userServiceClient = new ServiceClient('user_service');
 // redis
-const { readData, createData } = require('../../../redis/v1/service/redisService');
+const { readData, createData } = require('../../redis/v1/service/redisService');
 // Middleware verify token
 const authenticateToken = require('../middleware/authenMiddleware');
 

@@ -5,7 +5,6 @@ const authenticateToken = (req, res, next) => {
   // Lấy token từ header Authorization
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-  console.log('Token authen api gateway:', token); // In ra token để kiểm tra
 
   if (!token) {
     return res.status(401).json({ success: false, message: 'No token provided' });
@@ -13,7 +12,6 @@ const authenticateToken = (req, res, next) => {
 
   // Kiểm tra token (thay JWT_SECRET bằng secret key từ user-service)
   const JWT_SECRET = process.env.ACCESS_TOKEN;
-  console.log('JWT_SECRET:', JWT_SECRET);
 
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) {

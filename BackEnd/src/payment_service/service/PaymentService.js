@@ -60,7 +60,7 @@ const handleCallback = async (data) => {
     // Nếu thanh toán thành công, gọi API update-status của order_service
     if (data.resultCode === 0) {
       try {
-        await axios.put('http://localhost:5555/api/order/update-status', {
+        await axios.put('http://api-gateway:5555/api/order/update-status', {
           orderId: data.orderId,
           statusOrder: 'completed',
         });

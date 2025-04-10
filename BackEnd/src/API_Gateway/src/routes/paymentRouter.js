@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const ServiceClient = require('../services/serviceClient');
 const paymentServiceClient = new ServiceClient('payment_service');
-const { readData, createData } = require('../../../redis/v1/service/redisService');
 // Middleware verify token
 const authenticateToken = require('../middleware/authenMiddleware');
 // lỗi

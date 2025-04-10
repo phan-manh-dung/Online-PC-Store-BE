@@ -7,9 +7,9 @@ class ServiceClient {
     this.serviceName = serviceName;
 
     this.breaker = new CircuitBreaker(this._sendRequest.bind(this), {
-      timeout: 5000, // chờ tối đa 5s từ phản hồi của sendRequest
+      timeout: 7000, // chờ tối đa 5s từ phản hồi của sendRequest
       errorThresholdPercentage: 50, // lỗi vượt quá 50% (mở) tạm dừng gửi yêu cầu đến service.
-      resetTimeout: 4000, // chờ 4s xem chuyển sang half open kiểm tra xem service đã ổn định chưa.
+      resetTimeout: 2000, // chờ 4s xem chuyển sang half open kiểm tra xem service đã ổn định chưa.
       maxFailures: 5, // số lần thất bại tối đa
     });
 

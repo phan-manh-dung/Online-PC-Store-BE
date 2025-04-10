@@ -1,4 +1,3 @@
-// const http = require('http');
 const router = require('./router');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
@@ -10,15 +9,14 @@ const mongoose = require('mongoose');
 const axios = require('axios');
 dotenv.config();
 const app = express();
-// import redis
-const redisClient = require('../../src/redis/v1/init/redisClient');
 // cấu hình kafka
 const { Kafka } = require('kafkajs');
 
 // Cấu hình Kafka
 const kafka = new Kafka({
-  clientId: 'order-service',
-  brokers: ['localhost:9092'], // Địa chỉ Kafka server
+  clientId: 'order_service',
+  // brokers: ['localhost:9092'], // Địa chỉ Kafka server
+  brokers: ['kafka:9092'],
 });
 const producer = kafka.producer();
 
@@ -37,7 +35,7 @@ app.locals.producer = producer;
 
 const SERVICE_INFO = {
   name: 'order_service',
-  host: 'localhost',
+  host: 'order_service',
   port: process.env.PORT || 5003,
   endpoints: [
     '/api/order/create-order',
@@ -96,9 +94,9 @@ process.on('SIGINT', async () => {
 });
 
 // Middleware để truyền io vào req
-app.use((req, res, next) => {
-  next();
-});
+// app.use((req, res, next) => {
+//   next();
+// });
 
 const PORT = process.env.PORT_ORDER_SERVICE || 5003;
 

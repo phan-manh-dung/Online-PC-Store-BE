@@ -1,11 +1,11 @@
 {
-  "name": "user_service",
+  "name": "payment_service",
   "version": "1.0.0",
-  "main": "src/user_service/index.js",
+  "main": "src/payment_service/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js",
-    "dev": "nodemon index.js"
+    "start": "node index.js",
+    "dev": "node index.js"
   },
   "author": "",
   "license": "ISC",
@@ -22,6 +22,7 @@
     "jsonwebtoken": "^9.0.2",
     "kafkajs": "^2.2.4",
     "mongodb": "^6.13.0",
-    "mongoose": "^8.10.0"
+    "mongoose": "^8.10.0",
+    "redis": "^4.7.0"
   }
 }

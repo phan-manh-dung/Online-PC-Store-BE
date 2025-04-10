@@ -1,7 +1,7 @@
 const { Cart } = require('../model/CartModel');
 const { ObjectId } = require('mongoose').Types;
 
-const { readData, updateData, deleteData, createData } = require('../../redis/v1/service/redisService');
+const { readData, updateData, deleteData } = require('../redis/v1/service/redisService');
 
 const createCart = async ({
   userId,
@@ -96,53 +96,7 @@ const createCart = async ({
   }
 };
 
-// const deleteCart = (id) => {
-//   return new Promise(async (resolve, reject) => {
-//     try {
-//       const cart = await Cart.findOne({ 'cartItems._id': id });
-//       if (!cart) {
-//         return resolve({
-//           status: 'ERR',
-//           message: 'Cart or cart item does not exist',
-//         });
-//       }
-
-//       const initialLength = cart.cartItems.length; // 1.lấy độ dài của cart
-//       // 2.filter() để tạo một mảng mới chỉ chứa những phần tử có _id khác với id được truyền vào.
-//       cart.cartItems = cart.cartItems.filter((item) => item._id.toString() !== id);
-
-//       if (initialLength === cart.cartItems.length) {
-//         return resolve({
-//           status: 'ERR',
-//           message: 'Cart item not found in cart',
-//         });
-//       }
-//       // 3. có mảng mới lọc bằng filter rồi thì save lại các id được chọn chừa id đã lọc ra
-//       await cart.save();
-//       // Chỉ xóa document nếu cartItems rỗng
-//       if (cart.cartItems.length === 0) {
-//         await Cart.deleteOne({ _id: cart._id });
-//         return resolve({
-//           status: 'OK',
-//           message: 'Cart and all items deleted',
-//           data: null,
-//         });
-//       }
-
-//       return resolve({
-//         status: 'OK',
-//         message: 'Delete cart item success',
-//         data: cart,
-//       });
-//     } catch (e) {
-//       console.error('Error in deleteCart service:', e);
-//       reject(e);
-//     }
-//   });
-// };
-
 const deleteCart = (id) => {
-  console.log('id', id);
   return new Promise(async (resolve, reject) => {
     try {
       const cart = await Cart.findOne({ 'cartItems._id': id });
@@ -252,7 +206,18 @@ const deleteCart = (id) => {
 const getCartUser = async (userId) => {
   try {
     const userCarts = await Cart.find({ userId });
-    return userCarts;
+    if (!userCarts || userCarts.length === 0) {
+      return {
+        status: 'ERR',
+        message: 'No carts found for this user',
+      };
+    } else {
+      return {
+        status: 'OK',
+        message: 'Success',
+        data: userCarts,
+      };
+    }
   } catch (error) {
     throw error;
   }

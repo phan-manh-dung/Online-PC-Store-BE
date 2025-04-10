@@ -1,4 +1,3 @@
-const { deleteModel } = require('mongoose');
 const CartService = require('../service/CartService');
 
 const createCart = async (req, res) => {
@@ -55,6 +54,9 @@ const deleteCart = async (req, res) => {
 const getCartUser = async (req, res) => {
   try {
     const userId = req.params.id;
+    if (userId === undefined || userId === null) {
+      return res.status(400).json({ status: 'ERR', message: 'userId is required' });
+    }
     const userCarts = await CartService.getCartUser(userId);
     return res.status(200).json(userCarts);
   } catch (e) {
