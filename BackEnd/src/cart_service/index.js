@@ -14,7 +14,7 @@ const app = express();
 
 const SERVICE_INFO = {
   name: 'cart_service',
-  // host: 'localhost',
+  //host: 'localhost',
   host: 'cart_service',
   port: process.env.PORT || 5004,
   endpoints: [

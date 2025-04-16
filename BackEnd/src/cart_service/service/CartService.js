@@ -13,10 +13,16 @@ const createCart = async ({
   colorProduct,
   discount,
   type,
+  totalPrice,
 }) => {
   // Validation logic nghiệp vụ
   if (amountProduct <= 0) throw new Error('amountProduct must be greater than 0');
   if (priceProduct < 0) throw new Error('priceProduct cannot be negative');
+
+  const totalPriceBe = Number(priceProduct) * Number(amountProduct);
+  if (totalPriceBe !== totalPrice) {
+    console.warn(`Client totalPrice lệch. Ghi đè bằng BE: ${totalPriceBe}`);
+  }
 
   const newCartItem = {
     productId,
@@ -27,8 +33,8 @@ const createCart = async ({
     colorProduct,
     discount,
     type,
+    totalPrice: totalPriceBe,
   };
-
   try {
     let cart = await Cart.findOne({ userId });
 
@@ -100,7 +106,6 @@ const deleteCart = (id) => {
   return new Promise(async (resolve, reject) => {
     try {
       const cart = await Cart.findOne({ 'cartItems._id': id });
-      console.log('cart', cart);
       if (!cart) {
         return resolve({
           status: 'ERR',
@@ -254,4 +259,34 @@ const deleteManyCart = (ids) => {
   });
 };
 
-module.exports = { createCart, deleteCart, getCartUser, deleteManyCart };
+const updateCart = async (userId, productId, amountProduct, clientTotalPrice) => {
+  const cart = await Cart.findOne({ userId });
+  if (!cart) throw new Error('Cart not found');
+
+  const itemIndex = cart.cartItems.findIndex((item) => item.productId.toString() === productId.toString());
+  if (itemIndex === -1) throw new Error('Product not found in cart');
+
+  const item = cart.cartItems[itemIndex];
+
+  // Tính lại totalPrice ở BE
+  const calculatedTotal = item.priceProduct * amountProduct;
+
+  // So sánh nếu client gửi sai giá thì dùng giá đúng của BE
+  if (clientTotalPrice !== calculatedTotal) {
+    console.warn(`Client totalPrice lệch. Ghi đè bằng BE: ${calculatedTotal}`);
+  }
+
+  cart.cartItems[itemIndex].amountProduct = amountProduct;
+  cart.cartItems[itemIndex].totalPrice = calculatedTotal;
+  cart.markModified('cartItems'); // đảm bảo Mongoose nhận biết mảng thay đổi
+
+  await cart.save();
+
+  return {
+    status: 'OK',
+    message: 'Cart updated successfully',
+    data: cart,
+  };
+};
+
+module.exports = { createCart, deleteCart, getCartUser, deleteManyCart, updateCart };

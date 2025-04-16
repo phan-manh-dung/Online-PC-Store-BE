@@ -15,7 +15,7 @@ app.use(express.json());
 
 const SERVICE_INFO = {
   name: 'user_service',
-  // host: 'localhost',
+  //host: 'localhost',
   host: 'user_service',
   port: process.env.PORT || 5001,
   endpoints: [

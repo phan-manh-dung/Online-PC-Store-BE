@@ -2,8 +2,18 @@ const CartService = require('../service/CartService');
 
 const createCart = async (req, res) => {
   try {
-    const { userId, productId, nameProduct, amountProduct, imageProduct, priceProduct, colorProduct, discount, type } =
-      req.body;
+    const {
+      userId,
+      productId,
+      nameProduct,
+      amountProduct,
+      imageProduct,
+      priceProduct,
+      colorProduct,
+      discount,
+      type,
+      totalPrice,
+    } = req.body;
 
     if (!userId) return res.status(400).json({ status: 'ERR', message: 'userId is required' });
     if (!productId) return res.status(400).json({ status: 'ERR', message: 'productId is required' });
@@ -23,6 +33,7 @@ const createCart = async (req, res) => {
       colorProduct,
       discount,
       type,
+      totalPrice,
     };
     const response = await CartService.createCart(cartData);
     return res.status(200).json(response);
@@ -67,7 +78,6 @@ const getCartUser = async (req, res) => {
 const deleteManyCart = async (req, res) => {
   try {
     const cartIdObjects = req.body;
-    console.log('cartIdObjects', cartIdObjects);
 
     // Kiểm tra xem cartIdObjects có phải mảng không
     if (!cartIdObjects || !Array.isArray(cartIdObjects)) {
@@ -97,4 +107,26 @@ const deleteManyCart = async (req, res) => {
   }
 };
 
-module.exports = { createCart, deleteCart, getCartUser, deleteManyCart };
+const updateCart = async (req, res) => {
+  try {
+    const { userId, productId } = req.params;
+    const { amountProduct, totalPrice } = req.body;
+    console.log('productId', productId);
+    console.log('userId', userId);
+
+    if (!amountProduct || amountProduct <= 0) {
+      return res.status(400).json({ status: 'ERR', message: 'Invalid amountProduct' });
+    }
+    console.log('amountProduct', amountProduct);
+    console.log('totalPrice', totalPrice);
+
+    const response = await CartService.updateCart(userId, productId, amountProduct, totalPrice);
+    return res.status(200).json(response);
+  } catch (e) {
+    return res.status(500).json({
+      message: e.message || 'Internal server error at updateCart controller',
+    });
+  }
+};
+
+module.exports = { createCart, deleteCart, getCartUser, deleteManyCart, updateCart };
