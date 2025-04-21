@@ -1,7 +1,7 @@
 const { Cart } = require('../model/CartModel');
 const { ObjectId } = require('mongoose').Types;
 
-const { readData, updateData, deleteData, createData } = require('../../redis/v1/service/redisService');
+const { readData, updateData, deleteData } = require('../redis/v1/service/redisService');
 
 const createCart = async ({
   userId,
@@ -13,10 +13,16 @@ const createCart = async ({
   colorProduct,
   discount,
   type,
+  totalPrice,
 }) => {
   // Validation logic nghiệp vụ
   if (amountProduct <= 0) throw new Error('amountProduct must be greater than 0');
   if (priceProduct < 0) throw new Error('priceProduct cannot be negative');
+
+  const totalPriceBe = Number(priceProduct) * Number(amountProduct);
+  if (totalPriceBe !== totalPrice) {
+    console.warn(`Client totalPrice lệch. Ghi đè bằng BE: ${totalPriceBe}`);
+  }
 
   const newCartItem = {
     productId,
@@ -27,8 +33,8 @@ const createCart = async ({
     colorProduct,
     discount,
     type,
+    totalPrice: totalPriceBe,
   };
-
   try {
     let cart = await Cart.findOne({ userId });
 
@@ -96,57 +102,10 @@ const createCart = async ({
   }
 };
 
-// const deleteCart = (id) => {
-//   return new Promise(async (resolve, reject) => {
-//     try {
-//       const cart = await Cart.findOne({ 'cartItems._id': id });
-//       if (!cart) {
-//         return resolve({
-//           status: 'ERR',
-//           message: 'Cart or cart item does not exist',
-//         });
-//       }
-
-//       const initialLength = cart.cartItems.length; // 1.lấy độ dài của cart
-//       // 2.filter() để tạo một mảng mới chỉ chứa những phần tử có _id khác với id được truyền vào.
-//       cart.cartItems = cart.cartItems.filter((item) => item._id.toString() !== id);
-
-//       if (initialLength === cart.cartItems.length) {
-//         return resolve({
-//           status: 'ERR',
-//           message: 'Cart item not found in cart',
-//         });
-//       }
-//       // 3. có mảng mới lọc bằng filter rồi thì save lại các id được chọn chừa id đã lọc ra
-//       await cart.save();
-//       // Chỉ xóa document nếu cartItems rỗng
-//       if (cart.cartItems.length === 0) {
-//         await Cart.deleteOne({ _id: cart._id });
-//         return resolve({
-//           status: 'OK',
-//           message: 'Cart and all items deleted',
-//           data: null,
-//         });
-//       }
-
-//       return resolve({
-//         status: 'OK',
-//         message: 'Delete cart item success',
-//         data: cart,
-//       });
-//     } catch (e) {
-//       console.error('Error in deleteCart service:', e);
-//       reject(e);
-//     }
-//   });
-// };
-
 const deleteCart = (id) => {
-  console.log('id', id);
   return new Promise(async (resolve, reject) => {
     try {
       const cart = await Cart.findOne({ 'cartItems._id': id });
-      console.log('cart', cart);
       if (!cart) {
         return resolve({
           status: 'ERR',
@@ -252,7 +211,18 @@ const deleteCart = (id) => {
 const getCartUser = async (userId) => {
   try {
     const userCarts = await Cart.find({ userId });
-    return userCarts;
+    if (!userCarts || userCarts.length === 0) {
+      return {
+        status: 'ERR',
+        message: 'No carts found for this user',
+      };
+    } else {
+      return {
+        status: 'OK',
+        message: 'Success',
+        data: userCarts,
+      };
+    }
   } catch (error) {
     throw error;
   }
@@ -289,4 +259,34 @@ const deleteManyCart = (ids) => {
   });
 };
 
-module.exports = { createCart, deleteCart, getCartUser, deleteManyCart };
+const updateCart = async (userId, productId, amountProduct, clientTotalPrice) => {
+  const cart = await Cart.findOne({ userId });
+  if (!cart) throw new Error('Cart not found');
+
+  const itemIndex = cart.cartItems.findIndex((item) => item.productId.toString() === productId.toString());
+  if (itemIndex === -1) throw new Error('Product not found in cart');
+
+  const item = cart.cartItems[itemIndex];
+
+  // Tính lại totalPrice ở BE
+  const calculatedTotal = item.priceProduct * amountProduct;
+
+  // So sánh nếu client gửi sai giá thì dùng giá đúng của BE
+  if (clientTotalPrice !== calculatedTotal) {
+    console.warn(`Client totalPrice lệch. Ghi đè bằng BE: ${calculatedTotal}`);
+  }
+
+  cart.cartItems[itemIndex].amountProduct = amountProduct;
+  cart.cartItems[itemIndex].totalPrice = calculatedTotal;
+  cart.markModified('cartItems'); // đảm bảo Mongoose nhận biết mảng thay đổi
+
+  await cart.save();
+
+  return {
+    status: 'OK',
+    message: 'Cart updated successfully',
+    data: cart,
+  };
+};
+
+module.exports = { createCart, deleteCart, getCartUser, deleteManyCart, updateCart };

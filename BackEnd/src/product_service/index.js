@@ -16,7 +16,8 @@ app.use(express.json());
 
 const SERVICE_INFO = {
   name: 'product_service',
-  host: 'localhost',
+  //host: 'localhost',
+  host: 'product_service',
   port: process.env.PORT || 5002,
   endpoints: [
     '/api/product/get-all',
@@ -29,7 +30,7 @@ const SERVICE_INFO = {
     '/api/supplier/get-by-id/:id',
     '/api/inventory/get-all',
     '/api/inventory/get-by-id/:id',
-    
+
     //Create with auth  Admin-------------------
     '/api/product/admin/create',
     '/api/category/admin/create',
@@ -42,15 +43,16 @@ const SERVICE_INFO = {
     '/api/category/admin/update/:id',
     '/api/inventory/admin/update/:id',
 
-     //Delete with auth Admin-------------------
-     '/api/product/admin/delete/:id',
-     '/api/supplier/admin/delete/:id',
-     '/api/category/admin/delete/:id',
-     '/api/inventory/admin/delete/:id'
+    //Delete with auth Admin-------------------
+    '/api/product/admin/delete/:id',
+    '/api/supplier/admin/delete/:id',
+    '/api/category/admin/delete/:id',
+    '/api/inventory/admin/delete/:id',
   ],
 };
 
-const GATEWAY_URL = 'http://localhost:5555';
+// const GATEWAY_URL = 'http://localhost:5555';
+
 let serviceId = null;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -63,7 +65,7 @@ router(app);
 // Register with API Gateway
 async function registerWithGateway() {
   try {
-    const response = await axios.post(`${GATEWAY_URL}/register`, SERVICE_INFO);
+    const response = await axios.post(`${process.env.GATEWAY_URL}/register`, SERVICE_INFO);
     serviceId = response.data.serviceId;
     console.log('Registered with API Gateway, serviceId:', serviceId);
     startHeartbeat();
@@ -78,7 +80,7 @@ async function registerWithGateway() {
 function startHeartbeat() {
   setInterval(async () => {
     try {
-      await axios.post(`${GATEWAY_URL}/heartbeat/${serviceId}`);
+      await axios.post(`${process.env.GATEWAY_URL}/heartbeat/${serviceId}`);
     } catch (error) {
       console.error('Heartbeat failed:', error.message);
       // Thử đăng ký lại nếu heartbeat thất bại
@@ -92,7 +94,7 @@ function startHeartbeat() {
 process.on('SIGINT', async () => {
   if (serviceId) {
     try {
-      await axios.post(`${GATEWAY_URL}/unregister/${serviceId}`);
+      await axios.post(`${process.env.GATEWAY_URL}/unregister/${serviceId}`);
       console.log('Unregistered from API Gateway');
     } catch (error) {
       console.error('Failed to unregister:', error.message);

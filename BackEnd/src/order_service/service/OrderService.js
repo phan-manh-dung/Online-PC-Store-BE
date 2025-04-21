@@ -1,7 +1,7 @@
 const { Order } = require('../model/OrderModel');
 const mongoose = require('mongoose');
 
-const { readData, updateData, deleteData, createData } = require('../../redis/v1/service/redisService');
+const { readData, updateData, deleteData } = require('../redis/v1/service/redisService');
 
 const createOrder = (
   userId,

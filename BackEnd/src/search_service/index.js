@@ -21,7 +21,7 @@ const SERVICE_INFO = {
   endpoints: [
     '/api/product/get-all',
     '/api/product/get-by-id/:id',
-  
+
     //Filter
     '/api/product/get-type',
     '/api/product/get-sorted',
@@ -29,11 +29,9 @@ const SERVICE_INFO = {
     '/api/product/get-products-by-category-supplier',
     '/api/product/brands/:categoryId',
 
-
     //For menu filter:
     '/api/get-list-by-category/:categoryId',
     '/api/series/:brand',
-
 
     //----------------------------------------
     '/api/category/get-all',

@@ -5,7 +5,7 @@ const cartServiceClient = new ServiceClient('cart_service');
 // Middleware verify token
 const authenticateToken = require('../middleware/authenMiddleware');
 
-const { readData, createData } = require('../../../redis/v1/service/redisService');
+const { readData, createData } = require('../../redis/v1/service/redisService');
 // lỗi
 const errorHandler = (error, res) => {
   console.error('Service Error:', error);
@@ -61,6 +61,35 @@ router.post('/delete-many-cart', async (req, res) => {
     console.log('res', response);
     res.status(response.status).json(response.data);
   } catch (error) {
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Internal server error at API Gateway',
+      status: 'ERROR',
+    });
+  }
+});
+
+router.put('/update-cart/:userId/:productId', async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ status: 'ERROR', message: 'Unauthorized: Missing user ID' });
+    }
+
+    console.log(`Calling cart service with userId: ${userId}, productId: ${productId}`);
+    const response = await cartServiceClient.put(`/api/cart/update-cart/${userId}/${productId}`, req.body);
+
+    if (!response.data) {
+      return res.status(500).json({
+        message: 'Invalid response from cart service',
+        status: 'ERROR',
+      });
+    }
+
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.log('Error when calling cart service:', error.response?.data || error.message);
     res.status(error.response?.status || 500).json({
       message: error.response?.data?.message || 'Internal server error at API Gateway',
       status: 'ERROR',

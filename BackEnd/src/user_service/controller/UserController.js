@@ -1,6 +1,6 @@
 const UserService = require('../service/UserService');
 const JwtServices = require('../service/JwtServices');
-const { readData, createData, deleteData, updateData } = require('../../redis/v1/service/redisService');
+const { readData, createData, deleteData, updateData } = require('../redis/v1/service/redisService');
 
 const createUser = async (req, res) => {
   try {

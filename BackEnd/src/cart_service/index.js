@@ -8,14 +8,14 @@ const express = require('express');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const axios = require('axios');
-const redisClient = require('../../src/redis/v1/init/redisClient');
 
 dotenv.config();
 const app = express();
 
 const SERVICE_INFO = {
   name: 'cart_service',
-  host: 'localhost',
+  //host: 'localhost',
+  host: 'cart_service',
   port: process.env.PORT || 5004,
   endpoints: [
     '/api/cart/create-cart',

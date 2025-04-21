@@ -138,32 +138,6 @@ const deleteUser = (id) => {
   });
 };
 
-// const updateUser = (id, data) => {
-//   return new Promise(async (resolve, reject) => {
-//     try {
-//       const checkUser = await User.findOne({
-//         _id: id,
-//       });
-//       if (checkUser === null) {
-//         resolve({
-//           status: 'ERR',
-//           message: 'The user is not exists',
-//         });
-//       }
-
-//       const updatedUser = await User.findByIdAndUpdate(id, data, { new: true, runValidators: true });
-//       console.log('updatedUser', updatedUser);
-//       resolve({
-//         status: 'OK',
-//         message: 'SUCCESS',
-//         data: updatedUser,
-//       });
-//     } catch (e) {
-//       reject(e);
-//     }
-//   });
-// };
-
 const updateUser = async (id, data) => {
   try {
     // Kiểm tra nếu data trống thì không cập nhật

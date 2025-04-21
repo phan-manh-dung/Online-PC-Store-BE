@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
-const { User, Account } = require('../../user_service/model/UserModel');
 const dotenv = require('dotenv');
 dotenv.config();
 

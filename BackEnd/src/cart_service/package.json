@@ -1,11 +1,11 @@
 {
-  "name": "user_service",
+  "name": "cart_service",
   "version": "1.0.0",
-  "main": "src/user_service/index.js",
+  "main": "src/cart_service/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js",
-    "dev": "nodemon index.js"
+    "start": "node index.js",
+    "dev": "node index.js"
   },
   "author": "",
   "license": "ISC",
@@ -21,6 +21,7 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.13.0",
-    "mongoose": "^8.10.0"
+    "mongoose": "^8.10.0",
+    "redis": "^4.7.0"
   }
 }
