@@ -14,10 +14,14 @@ dotenv.config();
 
 app.use(express.json());
 
+let host = "product_service";
+if(process.env.NODE_ENV === "localhost"){
+  host = "localhost";
+}
+
 const SERVICE_INFO = {
   name: 'product_service',
-  //host: 'localhost',
-  host: 'product_service',
+  host: host,
   port: process.env.PORT || 5002,
   endpoints: [
     '/api/product/get-all',

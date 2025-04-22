@@ -1,4 +1,6 @@
 const Promotion = require('../models/Promotion_Model');
+const Product = require('../models/Product_Model')
+const { applyPromotion } = require('../utils/promotionUtils');
 
 // Create promotion
 async function createPromotion(data) {
@@ -26,17 +28,19 @@ async function deletePromotion(id) {
   return await Promotion.findByIdAndDelete(id);
 }
 
-// Apply promotion logic (calculate price)
-function applyPromotion(originalPrice, promotion) {
-  if (!promotion) return originalPrice;
+const calculateDiscountedPrice = async (productId) => {
+  const product = await Product.findById(productId).populate('promotion');
 
-  if (promotion.discountType === 'percentage') {
-    return originalPrice * (1 - promotion.discountValue / 100);
-  } else if (promotion.discountType === 'fixed') {
-    return originalPrice - promotion.discountValue;
-  }
-  return originalPrice;
-}
+  if (!product) throw new Error('Product not found');
+
+  const finalPrice = applyPromotion(product.price, product.promotion);
+
+  return {
+    originalPrice: product.price,
+    finalPrice,
+    promotion: product.promotion,
+  };
+};
 
 module.exports = {
   createPromotion,
@@ -44,5 +48,4 @@ module.exports = {
   getPromotionById,
   updatePromotion,
   deletePromotion,
-  applyPromotion
 };
