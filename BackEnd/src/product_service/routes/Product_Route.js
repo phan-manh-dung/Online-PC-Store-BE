@@ -28,9 +28,11 @@ const upload = multer({ storage: storage });
 
 router.get('/get-all', productController.getAllProducts);
 router.get('/get-by-id/:id', productController.getProductById);
+router.get('/get-by-id/with-discount/:id', productController.getProductWithDiscount);
 
 router.delete('/admin/delete/:id', authMiddleware, productController.deleteProduct);
 router.post('/admin/create', authMiddleware, upload.single('image'), productController.createProduct);
 router.put('/admin/update/:id', authMiddleware, productController.updateProduct);
+router.put('/admin/add-promotion', authMiddleware, productController.addPromotion);
 
 module.exports = router;

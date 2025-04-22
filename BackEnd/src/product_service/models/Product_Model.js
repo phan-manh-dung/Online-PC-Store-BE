@@ -18,9 +18,15 @@ const productSchema = new mongoose.Schema(
       battery_life: { type: Number },
       os: { type: String, required: true },
     },
+    color:{type: String},
     inventory: { type: mongoose.Schema.Types.ObjectId, ref: 'Inventory', required: false },
     category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
     supplier: { type: mongoose.Schema.Types.ObjectId, ref: 'Supplier', required: true },
+    promotion: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Promotion',
+      default: null,
+    },
   },
   { timestamps: true },
 );
