@@ -10,7 +10,7 @@ const getAllProducts = async () => {
         return cachedProducts;
     }
     try {
-        const products = await Product.find();
+        const products = await Product.find().populate('promotion');
         await redisService.setCache(cacheKey, products, 3600); 
         console.log('All Products retrieved from MongoDB and cached in Redis');
         return products;
@@ -95,10 +95,22 @@ const deleteProduct = async (productId) => {
     }
 };
 
+async function addPromotionToProduct(productId, promotionId) {
+    const product = await Product.findById(productId);
+    
+    if (!product) {
+      throw new Error('Product not found');
+    }
+    product.promotion = promotionId;
+
+    return await product.save();
+  }
+  
 module.exports = {
     getAllProducts,
     getProductById,
     createProduct,
     updateProduct,
     deleteProduct,
+    addPromotionToProduct
 };

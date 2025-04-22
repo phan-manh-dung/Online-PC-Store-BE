@@ -14,10 +14,14 @@ dotenv.config();
 
 app.use(express.json());
 
+let host = "product_service";
+if(process.env.NODE_ENV === "localhost"){
+  host = "localhost";
+}
+
 const SERVICE_INFO = {
   name: 'product_service',
-  //host: 'localhost',
-  host: 'product_service',
+  host: host,
   port: process.env.PORT || 5002,
   endpoints: [
     '/api/product/get-all',
@@ -30,24 +34,30 @@ const SERVICE_INFO = {
     '/api/supplier/get-by-id/:id',
     '/api/inventory/get-all',
     '/api/inventory/get-by-id/:id',
+    '/api/promotion/get-all',
+    '/api/promotion/get-by-id/:id',
+
 
     //Create with auth  Admin-------------------
     '/api/product/admin/create',
     '/api/category/admin/create',
     '/api/supplier/admin/create',
     '/api/inventory/admin/create',
+    '/api/promotion/admin/create',
 
     //Update with auth Admin-------------------
     '/api/product/admin/update/:id',
     '/api/supplier/admin/update/:id',
     '/api/category/admin/update/:id',
     '/api/inventory/admin/update/:id',
+    '/api/promotion/admin/update/:id',
 
     //Delete with auth Admin-------------------
     '/api/product/admin/delete/:id',
     '/api/supplier/admin/delete/:id',
     '/api/category/admin/delete/:id',
     '/api/inventory/admin/delete/:id',
+    '/api/promotion/admin/delete/:id',
   ],
 };
 
