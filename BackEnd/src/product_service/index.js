@@ -21,7 +21,8 @@ if(process.env.NODE_ENV === "localhost"){
 
 const SERVICE_INFO = {
   name: 'product_service',
-  host: host,
+  host: 'localhost',
+  //host: 'product_service',
   port: process.env.PORT || 5002,
   endpoints: [
     '/api/product/get-all',

@@ -13,29 +13,30 @@ const app = express();
 const { Kafka } = require('kafkajs');
 
 // Cấu hình Kafka
-const kafka = new Kafka({
-  clientId: 'order_service',
-  // brokers: ['localhost:9092'], // Địa chỉ Kafka server
-  brokers: ['kafka:9092'],
-});
-const producer = kafka.producer();
+// const kafka = new Kafka({
+//   clientId: 'order_service',
+//   // brokers: ['localhost:9092'], // Địa chỉ Kafka server
+//   brokers: ['kafka:9092'],
+// });
+// const producer = kafka.producer();
 
 // Kết nối producer
-const connectProducer = async () => {
-  try {
-    await producer.connect();
-    console.log('Kafka Producer connected');
-  } catch (error) {
-    console.error('Error connecting Kafka Producer:', error);
-  }
-};
-connectProducer();
-// Đưa producer vào app.locals để các router/controller có thể sử dụng
-app.locals.producer = producer;
+// const connectProducer = async () => {
+//   try {
+//     await producer.connect();
+//     console.log('Kafka Producer connected');
+//   } catch (error) {
+//     console.error('Error connecting Kafka Producer:', error);
+//   }
+// };
+// connectProducer();
+// // Đưa producer vào app.locals để các router/controller có thể sử dụng
+// app.locals.producer = producer;
 
 const SERVICE_INFO = {
   name: 'order_service',
-  host: 'order_service',
+  //host: 'order_service',
+  host: 'localhost',
   port: process.env.PORT || 5003,
   endpoints: [
     '/api/order/create-order',

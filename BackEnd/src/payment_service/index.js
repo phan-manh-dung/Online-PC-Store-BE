@@ -72,7 +72,8 @@ app.use(
 
 const SERVICE_INFO = {
   name: 'payment_service',
-  host: 'payment_service',
+  //host: 'payment_service',
+  host: 'localhost',
   port: process.env.PORT_PAYMENT_SERVICE || 5005,
   endpoints: [
     '/api/payment/create-payment-momo',

@@ -1,26 +1,29 @@
 const axios = require('axios');
 const CircuitBreaker = require('opossum');
 const serviceRegistry = require('./serviceRegistry');
+const logger = require('../../utils/logger');
 
 class ServiceClient {
   constructor(serviceName) {
     this.serviceName = serviceName;
 
     this.breaker = new CircuitBreaker(this._sendRequest.bind(this), {
-      timeout: 7000, // chờ tối đa 5s từ phản hồi của sendRequest
-      errorThresholdPercentage: 50, // lỗi vượt quá 50% (mở) tạm dừng gửi yêu cầu đến service.
-      resetTimeout: 2000, // chờ 4s xem chuyển sang half open kiểm tra xem service đã ổn định chưa.
-      maxFailures: 5, // số lần thất bại tối đa
+      timeout: 4000, // time out: time chờ tối da (time limit client)
+      errorThresholdPercentage: 50, // tỷ lệ lỗi cho phép (50%)
+      resetTimeout: 2000, // time chờ trước khi kiểm tra lại mạch
+      maxFailures: 3, // cho phép tối đa 3 lần thất bại trước khi mở mạch
     });
 
     this.breaker.on('open', () => {
-      console.log(`Circuit Breaker OPEN for ${this.serviceName}: Too many failures`);
+      logger.warn(`Circuit Breaker OPEN for ${this.serviceName}: Too many failures`);
     });
+
     this.breaker.on('halfOpen', () => {
-      console.log(`Circuit Breaker HALF-OPEN for ${this.serviceName}: Attempting to recover`);
+      logger.info(`Circuit Breaker HALF-OPEN for ${this.serviceName}: Attempting to recover`);
     });
+
     this.breaker.on('close', () => {
-      console.log(`Circuit Breaker CLOSED for ${this.serviceName}: Service recovered`);
+      logger.info(`Circuit Breaker CLOSED for ${this.serviceName}: Service recovered`);
     });
   }
 
@@ -28,16 +31,16 @@ class ServiceClient {
     return serviceRegistry.getInstance(this.serviceName);
   }
 
-  // Hàm delay với exponential backoff
   _delay(retryCount) {
-    const baseDelay = 1000; // Thời gian cơ bản: 1 giây
-    const maxDelay = 8000; // Giới hạn tối đa: 8 giây
-    const delay = Math.min(maxDelay, baseDelay * Math.pow(2, retryCount)); // Tính delay theo cấp số nhân
-    console.log(`Waiting ${delay / 1000} seconds before retrying...`);
+    const baseDelay = 1000; // time gian cơ bản giữa các lần thử lại
+    const maxDelay = 2000; // thời gian tối đa giữa các lần thử lại
+    const delay = Math.min(maxDelay, baseDelay * Math.pow(2, retryCount)); // tính time delay cấp nhân
+    logger.debug(`Waiting ${delay / 1000}s before retry #${retryCount}`);
     return new Promise((resolve) => setTimeout(resolve, delay));
   }
 
   async _sendRequest({ method, url, data, headers }) {
+    const start = Date.now();
     const response = await axios({
       method,
       url,
@@ -46,47 +49,53 @@ class ServiceClient {
         'Content-Type': 'application/json',
         ...headers,
       },
-      timeout: 5000,
+      timeout: 5000, // Time Limiter(thời gian chờ tối đa cho request)
     });
+    const duration = Date.now() - start;
+    logger.info(`Request to ${url} succeeded in ${duration}ms`);
+    logger.debug(`Response data from ${url}: ${JSON.stringify(response.data, ['status', 'message'])}`);
     return response;
   }
 
-  // các request service gửi vào đây (viết logic retry thủ công)
   async _makeRequest(method, endpoint, data = null, headers = {}) {
+    logger.info('----------------------------- New Request -----------------------------');
     const instance = await this._getServiceInstance();
     if (!instance) {
-      throw new Error(`No available instances for ${this.serviceName}`);
+      const msg = `No available instances for ${this.serviceName}`;
+      logger.error(msg);
+      throw new Error(msg);
     }
-    const url = `http://${instance.host}:${instance.port}${endpoint}`;
 
-    const maxRetries = 3; // Thử tối đa 3 lần
-    let retryCount = 0;
+    const url = `http://${instance.host}:${instance.port}${endpoint}`;
+    const maxRetries = 2; // số lần thử tối đa nếu request thất bại
+    let retryCount = 0; // đếm số lần thử lại
 
     while (retryCount < maxRetries) {
       try {
+        logger.debug(`Sending request to ${url} (Attempt ${retryCount + 1})`);
         const response = await this.breaker.fire({ method, url, data, headers });
-        console.log(`[DEBUG] Request to ${url} succeeded on attempt ${retryCount + 1}`);
+        logger.debug(`Request to ${url} succeeded on attempt ${retryCount + 1}`);
         return response;
       } catch (error) {
-        console.error(`[ERROR] Request to ${url} failed on attempt ${retryCount + 1}:`, error.message);
+        logger.error(`Request to ${url} failed on attempt ${retryCount + 1}: ${error.message}`);
+
         if (error.response) {
-          // Nếu lỗi từ service (401, 403, 500), không retry mà ném lỗi ngay
-          console.error(`[ERROR] Status: ${error.response.status}, Data:`, error.response.data);
+          logger.error(`Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
           throw error;
         }
 
         retryCount++;
+
         if (retryCount === maxRetries) {
-          // Hết số lần thử, kiểm tra Circuit Breaker
-          if (this.breaker.opened) {
-            throw new Error(`Service ${this.serviceName} temporarily unavailable due to repeated failures`);
-          }
-          //  serviceRegistry.unregister(instance.id);
-          throw new Error(`Service ${this.serviceName} unavailable after ${maxRetries} retries`);
+          const msg = this.breaker.opened
+            ? `Circuit breaker OPEN – ${this.serviceName} temporarily unavailable after ${retryCount} retries`
+            : `${this.serviceName} unavailable after ${maxRetries} retries`;
+          logger.error(msg);
+          throw new Error(msg);
         }
-        // sử dụng delay backoff
+
         await this._delay(retryCount);
-        console.log(`Retrying request to ${url} (Attempt ${retryCount + 1}/${maxRetries})`);
+        logger.info(`Retrying request to ${url} (Attempt ${retryCount + 1}/${maxRetries})`);
       }
     }
   }

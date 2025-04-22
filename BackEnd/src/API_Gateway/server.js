@@ -6,6 +6,7 @@ const serviceRegistry = require('./src/services/serviceRegistry');
 const path = require('path');
 const app = express();
 require('dotenv').config();
+const logger = require('../../src/API_Gateway/utils/logger');
 
 // Routes
 const userRoutes = require('./src/routes/userRouter');
@@ -15,10 +16,26 @@ const cartRoutes = require('./src/routes/cartRouter');
 const paymentRoutes = require('./src/routes/paymentRouter');
 const searchRoutes = require('./src/routes/searchRouter')
 
-// Rate limiting nếu vượt quá nó báo lỗi To many request
+/* Rate Limit Client: nếu vượt quá nó báo lỗi To many request, tất cả các request gửi đến API Gateway, không phân
+ biệt service. status(429) là mã HTTP Too Many Requests
+ khỏi bị spam, DDOS, abuse
+*/
+let requestCounter = {};
+
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 1000, // request
+  windowMs: 15 * 60 * 1000, // 15 phút
+  max: 1000, // tối da 1000 request trong 15 phút
+  handler: (req, res) => {
+    logger.warn(`IP ${req.ip} đã bị rate limit sau ${requestCounter[req.ip] || 'unknown'} requests`);
+    res.status(429).json({ message: 'Too many requests. Please try again later.' });
+  },
+  onLimitReached: (req, res, options) => {
+    logger.warn(`Rate limit hit for ${req.ip} on ${req.originalUrl}`);
+  },
+  keyGenerator: (req) => {
+    requestCounter[req.ip] = (requestCounter[req.ip] || 0) + 1;
+    return req.ip;
+  },
 });
 
 // Middleware

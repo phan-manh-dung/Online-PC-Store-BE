@@ -1,33 +1,34 @@
 const mongoose = require('mongoose');
 
-const orderDetailSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  amount: { type: Number, required: true },
-  image: { type: String, required: true },
-  description: { type: String },
-  productId: { type: mongoose.Schema.Types.ObjectId, required: true },
-  discount: { type: Number, required: true },
-  color: { type: String },
-  total_price: { type: Number, require: true },
-});
+const orderDetailSchema = new mongoose.Schema(
+  {
+    orderId: { type: mongoose.Schema.Types.ObjectId, required: false, ref: 'Order' },
+    productId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    name: { type: String, required: true },
+    amount: { type: Number, required: true },
+    price: { type: Number, required: true },
+    image: { type: String, required: true },
+    description: { type: String },
+    discount: { type: Number, required: true },
+    color: { type: String },
+    totalPrice: { type: Number, required: true },
+  },
+  { timestamps: true },
+);
 
 const orderSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, required: true },
-    customerInformation: [
-      {
-        name: { type: String, require: true },
-        phone: { type: Number, require: true },
-      },
-    ],
-    shippingAddress: [
-      {
-        ward: { type: String, require: true },
-        district: { type: String, required: true },
-        city: { type: String, require: true },
-        country: { type: String, require: true },
-      },
-    ],
+    customerInformation: {
+      name: { type: String, require: true },
+      phone: { type: String, require: true },
+    },
+    shippingAddress: {
+      ward: { type: String, require: true },
+      district: { type: String, required: true },
+      city: { type: String, require: true },
+      country: { type: String, require: true },
+    },
     paymentMethod: {
       type: String,
       enum: ['CASH', 'CREDIT_CARD', 'INTERNET_BANKING', 'MOMO'],
@@ -38,8 +39,8 @@ const orderSchema = new mongoose.Schema(
       enum: ['pending', 'completed', 'cancelled'],
       default: 'pending',
     },
-    totalPrice: { type: Number },
-    orderDetails: [orderDetailSchema],
+    totalPrice: { type: Number, required: true },
+    orderDetailIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'OrderDetail' }],
     isDelivered: { type: Boolean, default: false },
     deliveredAt: { type: Date },
   },
@@ -47,5 +48,6 @@ const orderSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
-const Order = mongoose.model('Order', orderSchema); // tạo bảng
-module.exports = { Order };
+const Order = mongoose.model('Order', orderSchema);
+const OrderDetail = mongoose.model('OrderDetail', orderDetailSchema);
+module.exports = { Order, OrderDetail };
