@@ -13,6 +13,7 @@ const productRoutes = require('./src/routes/productRouter');
 const orderRoutes = require('./src/routes/orderRouter');
 const cartRoutes = require('./src/routes/cartRouter');
 const paymentRoutes = require('./src/routes/paymentRouter');
+const searchRoutes = require('./src/routes/searchRouter')
 
 // Rate limiting nếu vượt quá nó báo lỗi To many request
 const limiter = rateLimit({
@@ -42,13 +43,14 @@ app.use('/api/product', productRoutes);
 app.use('/api/order', orderRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/search', searchRoutes);
 
 // Đăng ký API Gateway cho các service
 serviceRegistry.register({
   name: 'api-gateway',
   host: process.env.HOST || 'localhost',
   port: process.env.PORT || 5555,
-  endpoints: ['/api/user/*', '/api/product/*', '/api/order/*', '/api/cart/*', '/api/payment/*'],
+  endpoints: ['/api/user/*', '/api/product/*', '/api/order/*', '/api/cart/*', '/api/payment/*', '/api/search/*'],
 });
 
 app.get('/health', (req, res) => {
