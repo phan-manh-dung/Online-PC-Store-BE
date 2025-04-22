@@ -22,6 +22,11 @@ const productSchema = new mongoose.Schema(
     inventory: { type: mongoose.Schema.Types.ObjectId, ref: 'Inventory', required: false },
     category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
     supplier: { type: mongoose.Schema.Types.ObjectId, ref: 'Supplier', required: true },
+    promotion: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Promotion',
+      default: null,
+    },
   },
   { timestamps: true },
 );
