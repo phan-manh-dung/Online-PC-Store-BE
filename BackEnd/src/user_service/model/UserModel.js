@@ -18,13 +18,13 @@ const accountSchema = new mongoose.Schema({
 
 const userSchema = new mongoose.Schema(
   {
-    // họ và tên
     name: { type: String, unique: true, required: true, index: true },
-    email: { type: String, unique: true, index: true },
-    // ngày sinh
+    email: { type: String, unique: true, index: true }, // user name
+
+    gender: { type: String, required: true },
     dateOfBirth: { type: Date, required: false },
     password: { type: String, required: true },
-    phone: { type: Number, index: true },
+    phone: { type: String, index: true },
     avatar: { type: String },
     loginType: { type: String },
     account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: false },

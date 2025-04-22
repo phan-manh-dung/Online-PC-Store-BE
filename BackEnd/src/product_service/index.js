@@ -16,8 +16,8 @@ app.use(express.json());
 
 const SERVICE_INFO = {
   name: 'product_service',
-  //host: 'localhost',
-  host: 'product_service',
+  host: 'localhost',
+  //host: 'product_service',
   port: process.env.PORT || 5002,
   endpoints: [
     '/api/product/get-all',

@@ -8,9 +8,9 @@ class ServiceClient {
     this.serviceName = serviceName;
 
     this.breaker = new CircuitBreaker(this._sendRequest.bind(this), {
-      timeout: 2000, // time out: time chờ tối da (time limit client)
+      timeout: 4000, // time out: time chờ tối da (time limit client)
       errorThresholdPercentage: 50, // tỷ lệ lỗi cho phép (50%)
-      resetTimeout: 1500, // time chờ trước khi kiểm tra lại mạch
+      resetTimeout: 2000, // time chờ trước khi kiểm tra lại mạch
       maxFailures: 3, // cho phép tối đa 3 lần thất bại trước khi mở mạch
     });
 
@@ -32,8 +32,8 @@ class ServiceClient {
   }
 
   _delay(retryCount) {
-    const baseDelay = 500; // time gian cơ bản giữa các lần thử lại (nửa giây)
-    const maxDelay = 1000; // thời gian tối đa giữa các lần thử lại (1 giây)
+    const baseDelay = 1000; // time gian cơ bản giữa các lần thử lại
+    const maxDelay = 2000; // thời gian tối đa giữa các lần thử lại
     const delay = Math.min(maxDelay, baseDelay * Math.pow(2, retryCount)); // tính time delay cấp nhân
     logger.debug(`Waiting ${delay / 1000}s before retry #${retryCount}`);
     return new Promise((resolve) => setTimeout(resolve, delay));
@@ -49,7 +49,7 @@ class ServiceClient {
         'Content-Type': 'application/json',
         ...headers,
       },
-      timeout: 1000, // Time Limiter(thời gian chờ tối đa cho request)
+      timeout: 5000, // Time Limiter(thời gian chờ tối đa cho request)
     });
     const duration = Date.now() - start;
     logger.info(`Request to ${url} succeeded in ${duration}ms`);

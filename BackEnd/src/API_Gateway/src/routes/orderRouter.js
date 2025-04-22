@@ -36,7 +36,7 @@ router.post('/create-order', async (req, res) => {
 // có redis
 router.get('/get-detail-order/:id', async (req, res) => {
   try {
-    const cacheKey = `cart-user-detail:${req.params.id}`;
+    const cacheKey = `order-user-detail:${req.params.id}`;
     const cachedData = await readData(cacheKey).catch(() => null);
     if (cachedData) {
       return res.status(200).json(cachedData);
@@ -93,7 +93,7 @@ router.patch('/cancel-order/:id', async (req, res) => {
 
 router.get('/get-all-order-user/:id', async (req, res) => {
   try {
-    const cacheKey = `cart-all-one-user:${req.params.id}:${req.query.statusOrder || ''}`;
+    const cacheKey = `order-all-one-user:${req.params.id}:${req.query.statusOrder || ''}`;
     const cachedData = await readData(cacheKey).catch(() => null);
     if (cachedData) {
       return res.status(200).json(cachedData);

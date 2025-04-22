@@ -41,10 +41,20 @@ const createOrder = async (req, res) => {
 
     // Check user and get address
     const user = userData.data;
-    const userAddress = user.address && user.address.length > 0 ? user.address[0] : null;
+    const userAddress = user?.address?.[0] || null;
 
-    const customerInformation = [];
-    const shippingAddress = [];
+    const customerInformation = {
+      name: user?.name,
+      phone: user?.phone,
+    };
+
+    const shippingAddress = {
+      ward: userAddress?.ward,
+      district: userAddress?.district,
+      city: userAddress?.city,
+      country: userAddress?.country,
+    };
+
     if (!userData) {
       return res.status(404).json({ message: 'User not found controller' });
     } else if (!user?.phone && !userAddress) {
@@ -56,16 +66,7 @@ const createOrder = async (req, res) => {
     } else if (!statusOrder || !paymentMethod) {
       return res.status(400).json({ message: 'Status Order or payment method is required' });
     } else {
-      customerInformation.push({
-        name: user?.name,
-        phone: user?.phone,
-      });
-      shippingAddress.push({
-        ward: userAddress?.ward,
-        district: userAddress?.district,
-        city: userAddress?.city,
-        country: userAddress?.country,
-      });
+      console.log('');
     }
 
     // Kiểm tra totalPrice từ request
@@ -91,31 +92,43 @@ const createOrder = async (req, res) => {
       }
       const product = productData.data;
 
-      // Tính totalItemPrice để hiển thị trong orderDetails (không ảnh hưởng đến totalPrice)
-      const totalItemPrice = (totalPrice - shippingPrice) / products.length; // Chia đều cho các sản phẩm
+      // Tính totalItemPrice để hiển thị trong orderDetails (không ảnh hưởng đến totalPrice của order)
+      const totalItemPrice = product.price * products[index].quantity * (1 - (products[index].discount || 0) / 100);
 
       orderDetails.push({
         order_detail_id: orderDetailIdCounter++,
         name: product.name,
         amount: products[index].quantity,
+        price: product.price,
+        description: product.description,
         image: product.image,
         productId: products[index].productId,
         discount: products[index].discount || 0,
         color: product.color || null,
-        total_price: totalItemPrice, // Giá hiển thị, không dùng để tính totalPrice
+        total_price: totalItemPrice,
       });
     });
 
     // Tạo order với totalPrice từ request
-    const response = await OrderService.createOrder(
-      userId,
-      customerInformation,
-      shippingAddress,
-      orderDetails,
-      totalPrice, // Sử dụng totalPrice từ request
-      statusOrder,
-      paymentMethod,
-    );
+    let response;
+    try {
+      response = await OrderService.createOrder(
+        userId,
+        customerInformation,
+        shippingAddress,
+        orderDetails,
+        totalPrice,
+        statusOrder,
+        paymentMethod,
+      );
+    } catch (e) {
+      console.error('Error calling OrderService.createOrder:', e);
+      return res.status(500).json({
+        success: false,
+        message: 'Order service failed',
+        error: e.message || e,
+      });
+    }
 
     // Kiểm tra response từ service
     if (response.status !== 200) {
