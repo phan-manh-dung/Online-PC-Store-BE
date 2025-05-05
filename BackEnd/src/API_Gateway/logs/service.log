@@ -2150,3 +2150,8 @@
 [2025-05-05 11:21:58] INFO: 💓Heartbeat received from: product_service-localhost-5002
 [2025-05-05 11:22:13] INFO: 💓Heartbeat received from: cart_service-localhost-5004
 [2025-05-05 11:22:47] INFO: 💓Heartbeat received from: user_service-localhost-5001
+[2025-05-05 11:22:58] INFO: 💓Heartbeat received from: product_service-localhost-5002
+[2025-05-05 11:23:13] INFO: 💓Heartbeat received from: cart_service-localhost-5004
+[2025-05-05 11:23:47] INFO: 💓Heartbeat received from: user_service-localhost-5001
+[2025-05-05 11:23:58] INFO: 💓Heartbeat received from: product_service-localhost-5002
+[2025-05-05 11:24:13] INFO: 💓Heartbeat received from: cart_service-localhost-5004
