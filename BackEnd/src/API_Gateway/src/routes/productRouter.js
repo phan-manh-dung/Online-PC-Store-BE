@@ -127,6 +127,32 @@ router.get('/inventory/get-by-id/:id', async (req, res) => {
 });
 
 
+router.get('/promotion/get-all', async (req, res) => {
+  try {
+    const response = await productServiceClient.get('/api/promotion/get-all', {
+      params: req.query,
+    });
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    errorHandler(error, res);
+  }
+});
+
+
+router.get('/promotion/get-by-id/:id', async (req, res) => {
+  try {
+    const {id} = req.params;
+    const response = await productServiceClient.get(`/api/promotion/get-by-id/${id}`, {
+      params: req.query,
+    });
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    errorHandler(error, res);
+  }
+});
+
+
+
 router.post('/product/admin/create', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
@@ -237,6 +263,37 @@ router.post('/inventory/admin/create', async (req, res) => {
 });
 
 
+//===============
+router.post('/promotion/admin/create', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    console.log('token gateway', token);
+    if (!token) {
+      return res.status(401).json({
+        message: 'Token is missing at API Gateway router',
+        status: 'ERROR',
+      });
+    }
+
+    const response = await productServiceClient.postAuth(
+      '/api/promotion/admin/create', 
+      req.body, 
+      { Authorization: `Bearer ${token}` }, 
+    );
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('Error when calling product service:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Internal server error at API Gateway',
+      status: 'ERROR',
+    });
+  }
+});
+
+//=============
+
+
 
 router.put('/product/admin/update/:id', async (req, res) => {
   try {
@@ -261,6 +318,34 @@ router.put('/product/admin/update/:id', async (req, res) => {
     console.error('Error when calling product service:', error.response?.data || error.message);
     res.status(error.response?.status || 500).json({
       message: error.response?.data?.message || 'Internal server error at API Gateway ',
+      status: 'ERROR',
+    });
+  }
+});
+
+router.put('/product/admin/add-promotion', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    console.log('token gateway', token);
+    if (!token) {
+      return res.status(401).json({
+        message: 'Token is missing at API Gateway router',
+        status: 'ERROR',
+      });
+    }
+
+    const {productId, promotionId} = req.body;
+    const response = await productServiceClient.putAuth(
+      `/api/product/admin/add-promotion`, 
+      {productId, promotionId}, 
+      { Authorization: `Bearer ${token}` }, 
+    );
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('Error when calling product service:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Internal server error at API Gateway',
       status: 'ERROR',
     });
   }
@@ -352,6 +437,37 @@ router.put('/inventory/admin/update/:id', async (req, res) => {
     });
   }
 });
+
+//======
+
+router.put('/promotion/admin/update/:id', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    console.log('token gateway', token);
+    if (!token) {
+      return res.status(401).json({
+        message: 'Token is missing at API Gateway router',
+        status: 'ERROR',
+      });
+    }
+
+    const supplierId = req.params.id;
+    const response = await productServiceClient.putAuth(
+      `/api/promotion/admin/update/${supplierId}`, 
+      req.body, 
+      { Authorization: `Bearer ${token}` }, 
+    );
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('Error when calling product service:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Internal server error at API Gateway',
+      status: 'ERROR',
+    });
+  }
+});
+//======
 
 router.delete('/product/admin/delete/:id', async (req, res) => {
   try {
@@ -467,6 +583,36 @@ router.delete('/inventory/admin/delete/:id', async (req, res) => {
   }
 })
 
+
+//===
+router.delete('/promotion/admin/delete/:id', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    console.log('token gateway', token);
+    if (!token) {
+      return res.status(401).json({
+        message: 'Token is missing at API Gateway router',
+        status: 'ERROR',
+      });
+    }
+
+    const promotionId = req.params.id;
+    const response = await productServiceClient.deleteAuth(
+      `/api/promotion/admin/delete/${promotionId}`, 
+      token,
+      { Authorization: `Bearer ${token}` }, 
+    );
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('Error when calling product service:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Internal server error at API Gateway',
+      status: 'ERROR',
+    });
+  }
+})
+//===
 
 
 

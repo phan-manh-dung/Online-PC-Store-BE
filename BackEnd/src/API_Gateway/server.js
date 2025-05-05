@@ -14,6 +14,7 @@ const productRoutes = require('./src/routes/productRouter');
 const orderRoutes = require('./src/routes/orderRouter');
 const cartRoutes = require('./src/routes/cartRouter');
 const paymentRoutes = require('./src/routes/paymentRouter');
+const searchRoutes = require('./src/routes/searchRouter')
 
 /* Rate Limit Client: nếu vượt quá nó báo lỗi To many request, tất cả các request gửi đến API Gateway, không phân
  biệt service. status(429) là mã HTTP Too Many Requests
@@ -59,13 +60,14 @@ app.use('/api/product', productRoutes);
 app.use('/api/order', orderRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/search', searchRoutes);
 
 // Đăng ký API Gateway cho các service
 serviceRegistry.register({
   name: 'api-gateway',
   host: process.env.HOST || 'localhost',
   port: process.env.PORT || 5555,
-  endpoints: ['/api/user/*', '/api/product/*', '/api/order/*', '/api/cart/*', '/api/payment/*'],
+  endpoints: ['/api/user/*', '/api/product/*', '/api/order/*', '/api/cart/*', '/api/payment/*', '/api/search/*'],
 });
 
 app.get('/health', (req, res) => {
