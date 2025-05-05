@@ -195,6 +195,25 @@ const getDetailsUser = async (req, res) => {
   }
 };
 
+const checkDeletableUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    console.log('UserController checkDeletableUser - userId:', userId);
+    const result = await UserService.checkDeletableUser(userId);
+    res.status(200).json({
+      status: 'OK',
+      message: 'Check user deletable status successfully',
+      data: result,
+    });
+  } catch (error) {
+    console.error('UserController checkDeletableUser - Error:', error.message);
+    res.status(400).json({
+      status: 'ERR',
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   createUser,
   loginUser,
@@ -204,4 +223,5 @@ module.exports = {
   logUotUser,
   updateUser,
   getDetailsUser,
+  checkDeletableUser,
 };
