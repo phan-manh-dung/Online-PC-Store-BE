@@ -28,6 +28,7 @@ const SERVICE_INFO = {
     '/refresh-token',
     '/log-out',
     '/api/user/verify-token',
+    '/api/user/check-deletable/:id',
   ],
 };
 

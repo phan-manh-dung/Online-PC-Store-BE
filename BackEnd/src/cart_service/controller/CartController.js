@@ -111,8 +111,6 @@ const updateCart = async (req, res) => {
   try {
     const { userId, productId } = req.params;
     const { amountProduct, totalPrice } = req.body;
-    console.log('productId', productId);
-    console.log('userId', userId);
 
     if (!amountProduct || amountProduct <= 0) {
       return res.status(400).json({ status: 'ERR', message: 'Invalid amountProduct' });

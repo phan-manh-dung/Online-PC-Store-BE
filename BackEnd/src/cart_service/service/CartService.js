@@ -208,21 +208,42 @@ const deleteCart = (id) => {
   });
 };
 
+// const getCartUser = async (userId) => {
+//   try {
+//     const userCarts = await Cart.find({ userId });
+//     if (!userCarts || userCarts.length === 0) {
+//       return {
+//         status: 'ERR',
+//         message: 'No carts found for this user',
+//       };
+//     } else {
+//       return {
+//         status: 'OK',
+//         message: 'Success',
+//         data: userCarts,
+//       };
+//     }
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
 const getCartUser = async (userId) => {
   try {
-    const userCarts = await Cart.find({ userId });
-    if (!userCarts || userCarts.length === 0) {
+    // Tìm giỏ hàng duy nhất của userId
+    const userCart = await Cart.findOne({ userId });
+    if (!userCart) {
       return {
         status: 'ERR',
-        message: 'No carts found for this user',
-      };
-    } else {
-      return {
-        status: 'OK',
-        message: 'Success',
-        data: userCarts,
+        message: 'No cart found for this user',
       };
     }
+
+    return {
+      status: 'OK',
+      message: 'Success',
+      data: userCart,
+    };
   } catch (error) {
     throw error;
   }
