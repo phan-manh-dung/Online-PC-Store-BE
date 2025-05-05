@@ -10,7 +10,7 @@ router.post('/sign-in', userController.loginUser);
 router.post('/refresh-token', userController.refreshToken);
 router.post('/log-out', userController.logUotUser);
 
-// api check user có cart không
+// api check data user
 router.get('/check-deletable/:id', userController.checkDeletableUser);
 
 router.delete('/admin/delete-user/:id', authMiddleware, userController.deleteUser);

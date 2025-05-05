@@ -255,6 +255,23 @@ const updateStatusOrder = async (req, res) => {
   }
 };
 
+const countOrderByUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const count = await OrderService.countOrderByUser(userId);
+    res.status(200).json({
+      status: 'OK',
+      message: 'Order count retrieved successfully',
+      count: count,
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: 'ERR',
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   getDetailOrder,
@@ -262,4 +279,5 @@ module.exports = {
   deleteOrderToCancelled,
   getAllOrderOfUser,
   updateStatusOrder,
+  countOrderByUser,
 };
