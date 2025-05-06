@@ -38,12 +38,17 @@ const SERVICE_INFO = {
     '/api/promotion/get-all',
     '/api/promotion/get-by-id/:id',
 
+    '/api/computerOption/admin/get-all',
+    '/api/computerOption/admin/get-by-key/:key',
+    '/api/computerOption/admin/get-grouped',
+
     //Create with auth  Admin-------------------
     '/api/product/admin/create',
     '/api/category/admin/create',
     '/api/supplier/admin/create',
     '/api/inventory/admin/create',
     '/api/promotion/admin/create',
+    '/api/computerOption/admin/create',
 
     //Update with auth Admin-------------------
     '/api/product/admin/update/:id',
@@ -51,6 +56,7 @@ const SERVICE_INFO = {
     '/api/category/admin/update/:id',
     '/api/inventory/admin/update/:id',
     '/api/promotion/admin/update/:id',
+    '/api/computerOption/admin/update/:id',
 
     //Delete with auth Admin-------------------
     '/api/product/admin/delete/:id',
@@ -58,6 +64,7 @@ const SERVICE_INFO = {
     '/api/category/admin/delete/:id',
     '/api/inventory/admin/delete/:id',
     '/api/promotion/admin/delete/:id',
+    '/api/computerOption/admin/delete/:id',
   ],
 };
 

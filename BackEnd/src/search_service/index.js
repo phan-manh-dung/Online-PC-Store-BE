@@ -14,9 +14,9 @@ dotenv.config();
 
 app.use(express.json());
 
-let host = "search_service";
-if(process.env.NODE_ENV === "localhost"){
-  host = "localhost"
+let host = 'search_service';
+if (process.env.NODE_ENV === 'localhost') {
+  host = 'localhost';
 }
 
 const SERVICE_INFO = {
@@ -33,6 +33,11 @@ const SERVICE_INFO = {
     '/api/product/get-products-by-type-supplier',
     '/api/product/get-products-by-category-supplier',
     '/api/product/brands/:categoryId',
+    '/api/filter/get-all',
+    '/api/filter/get-by-id/:id',
+    '/api/filter/admin/create',
+    '/api/filter/admin/update',
+    '/api/filter/admin/delete',
 
     //For menu filter:
     '/api/get-list-by-category/:categoryId',

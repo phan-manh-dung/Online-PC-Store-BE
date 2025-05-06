@@ -1,11 +1,6 @@
 const Redis = require('ioredis');
 require('dotenv').config();
-const redis = new Redis({
-  host: process.env.REDIS_HOST, 
-  port: process.env.REDIS_PORT,       
-  //password: process.env.REDIS_PASSWORD, 
-  db: process.env.REDIS_DB,            
-});
+const redis = new Redis('redis://:HxYilmEbMtWoNFit7zEe7MDhsBBW7Nkd@redis-11521.c292.ap-southeast-1-1.ec2.redns.redis-cloud.com:11521/0');
 
 redis.on('connect', () => {
   console.log('Connected to Redis');
