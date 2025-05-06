@@ -210,7 +210,16 @@ const deleteCart = (id) => {
 
 const getCartUser = async (userId) => {
   try {
-    // Tìm giỏ hàng duy nhất của userId
+    // Kiểm tra Redis trước
+    const cacheKey = `get-cart-user:${userId}`;
+    const cachedData = await readData(cacheKey).catch(() => null);
+
+    if (cachedData) {
+      console.log('Serving from Redis:', cacheKey);
+      return cachedData; // Trả về trực tiếp dữ liệu từ Redis (chỉ chứa data)
+    }
+
+    // Nếu không có trong Redis, lấy từ DB
     const userCart = await Cart.findOne({ userId });
     if (!userCart) {
       return {
@@ -219,11 +228,13 @@ const getCartUser = async (userId) => {
       };
     }
 
-    return {
+    const response = {
       status: 'OK',
       message: 'Success',
       data: userCart,
     };
+
+    return response;
   } catch (error) {
     throw error;
   }
@@ -279,9 +290,35 @@ const updateCart = async (userId, productId, amountProduct, clientTotalPrice) =>
 
   cart.cartItems[itemIndex].amountProduct = amountProduct;
   cart.cartItems[itemIndex].totalPrice = calculatedTotal;
-  cart.markModified('cartItems'); // đảm bảo Mongoose nhận biết mảng thay đổi
+  cart.markModified('cartItems');
 
   await cart.save();
+
+  // Cập nhật Redis
+  const cacheKey = `get-cart-user:${userId}`;
+  const cachedData = await readData(cacheKey).catch(() => null);
+
+  if (cachedData) {
+    const updatedCart = {
+      status: 'OK',
+      message: 'Success',
+      data: {
+        _id: cart._id,
+        userId: cart.userId,
+        cartItems: cart.cartItems, // Chỉ dùng một mảng cartItems
+        createdAt: cart.createdAt,
+        updatedAt: new Date().toISOString(),
+        __v: cart.__v,
+      },
+    };
+
+    try {
+      await updateData(cacheKey, updatedCart, 3600);
+      console.log(`Cache updated for key: ${cacheKey}`);
+    } catch (redisError) {
+      console.error('Error updating Redis:', redisError);
+    }
+  }
 
   return {
     status: 'OK',
