@@ -115,8 +115,6 @@ const updateCart = async (req, res) => {
     if (!amountProduct || amountProduct <= 0) {
       return res.status(400).json({ status: 'ERR', message: 'Invalid amountProduct' });
     }
-    console.log('amountProduct', amountProduct);
-    console.log('totalPrice', totalPrice);
 
     const response = await CartService.updateCart(userId, productId, amountProduct, totalPrice);
     return res.status(200).json(response);

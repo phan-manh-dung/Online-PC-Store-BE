@@ -208,9 +208,39 @@ const deleteCart = (id) => {
   });
 };
 
+// const getCartUser = async (userId) => {
+//   try {
+//     // Tìm giỏ hàng duy nhất của userId
+//     const userCart = await Cart.findOne({ userId });
+//     if (!userCart) {
+//       return {
+//         status: 'ERR',
+//         message: 'No cart found for this user',
+//       };
+//     }
+
+//     return {
+//       status: 'OK',
+//       message: 'Success',
+//       data: userCart,
+//     };
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
 const getCartUser = async (userId) => {
   try {
-    // Tìm giỏ hàng duy nhất của userId
+    // Kiểm tra Redis trước
+    const cacheKey = `get-cart-user:${userId}`;
+    const cachedData = await readData(cacheKey).catch(() => null);
+
+    if (cachedData) {
+      console.log('Serving from Redis:', cacheKey);
+      return cachedData; // Trả về trực tiếp dữ liệu từ Redis (chỉ chứa data)
+    }
+
+    // Nếu không có trong Redis, lấy từ DB
     const userCart = await Cart.findOne({ userId });
     if (!userCart) {
       return {
@@ -219,11 +249,13 @@ const getCartUser = async (userId) => {
       };
     }
 
-    return {
+    const response = {
       status: 'OK',
       message: 'Success',
       data: userCart,
     };
+
+    return response;
   } catch (error) {
     throw error;
   }
@@ -260,6 +292,36 @@ const deleteManyCart = (ids) => {
   });
 };
 
+// const updateCart = async (userId, productId, amountProduct, clientTotalPrice) => {
+//   const cart = await Cart.findOne({ userId });
+//   if (!cart) throw new Error('Cart not found');
+
+//   const itemIndex = cart.cartItems.findIndex((item) => item.productId.toString() === productId.toString());
+//   if (itemIndex === -1) throw new Error('Product not found in cart');
+
+//   const item = cart.cartItems[itemIndex];
+
+//   // Tính lại totalPrice ở BE
+//   const calculatedTotal = item.priceProduct * amountProduct;
+
+//   // So sánh nếu client gửi sai giá thì dùng giá đúng của BE
+//   if (clientTotalPrice !== calculatedTotal) {
+//     console.warn(`Client totalPrice lệch. Ghi đè bằng BE: ${calculatedTotal}`);
+//   }
+
+//   cart.cartItems[itemIndex].amountProduct = amountProduct;
+//   cart.cartItems[itemIndex].totalPrice = calculatedTotal;
+//   cart.markModified('cartItems'); // đảm bảo Mongoose nhận biết mảng thay đổi
+
+//   await cart.save();
+
+//   return {
+//     status: 'OK',
+//     message: 'Cart updated successfully',
+//     data: cart,
+//   };
+// };
+
 const updateCart = async (userId, productId, amountProduct, clientTotalPrice) => {
   const cart = await Cart.findOne({ userId });
   if (!cart) throw new Error('Cart not found');
@@ -279,9 +341,35 @@ const updateCart = async (userId, productId, amountProduct, clientTotalPrice) =>
 
   cart.cartItems[itemIndex].amountProduct = amountProduct;
   cart.cartItems[itemIndex].totalPrice = calculatedTotal;
-  cart.markModified('cartItems'); // đảm bảo Mongoose nhận biết mảng thay đổi
+  cart.markModified('cartItems');
 
   await cart.save();
+
+  // Cập nhật Redis
+  const cacheKey = `get-cart-user:${userId}`;
+  const cachedData = await readData(cacheKey).catch(() => null);
+
+  if (cachedData) {
+    const updatedCart = {
+      status: 'OK',
+      message: 'Success',
+      data: {
+        _id: cart._id,
+        userId: cart.userId,
+        cartItems: cart.cartItems, // Chỉ dùng một mảng cartItems
+        createdAt: cart.createdAt,
+        updatedAt: new Date().toISOString(),
+        __v: cart.__v,
+      },
+    };
+
+    try {
+      await updateData(cacheKey, updatedCart, 3600);
+      console.log(`Cache updated for key: ${cacheKey}`);
+    } catch (redisError) {
+      console.error('Error updating Redis:', redisError);
+    }
+  }
 
   return {
     status: 'OK',
