@@ -180,4 +180,13 @@ router.get('/verify-token', async (req, res) => {
   }
 });
 
+router.get('/check-deletable/:id', async (req, res) => {
+  try {
+    const response = await userServiceClient.get(`/api/user/check-deletable/${req.params.id}`);
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    errorHandler(error, res);
+  }
+});
+
 module.exports = router;

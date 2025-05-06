@@ -210,19 +210,20 @@ const deleteCart = (id) => {
 
 const getCartUser = async (userId) => {
   try {
-    const userCarts = await Cart.find({ userId });
-    if (!userCarts || userCarts.length === 0) {
+    // Tìm giỏ hàng duy nhất của userId
+    const userCart = await Cart.findOne({ userId });
+    if (!userCart) {
       return {
         status: 'ERR',
-        message: 'No carts found for this user',
-      };
-    } else {
-      return {
-        status: 'OK',
-        message: 'Success',
-        data: userCarts,
+        message: 'No cart found for this user',
       };
     }
+
+    return {
+      status: 'OK',
+      message: 'Success',
+      data: userCart,
+    };
   } catch (error) {
     throw error;
   }
@@ -289,4 +290,15 @@ const updateCart = async (userId, productId, amountProduct, clientTotalPrice) =>
   };
 };
 
-module.exports = { createCart, deleteCart, getCartUser, deleteManyCart, updateCart };
+const countCartByUser = async (userId) => {
+  try {
+    const cart = await Cart.findOne({ userId });
+    if (!cart) return 0;
+    return cart.cartItems ? cart.cartItems.length : 0;
+  } catch (error) {
+    console.error('Error counting cart items:', error.message);
+    throw new Error('Failed to count cart items: ' + error.message);
+  }
+};
+
+module.exports = { createCart, deleteCart, getCartUser, deleteManyCart, updateCart, countCartByUser };

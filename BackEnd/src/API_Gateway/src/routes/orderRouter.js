@@ -36,7 +36,7 @@ router.post('/create-order', async (req, res) => {
 // có redis
 router.get('/get-detail-order/:id', async (req, res) => {
   try {
-    const cacheKey = `cart-user-detail:${req.params.id}`;
+    const cacheKey = `order-user-detail:${req.params.id}`;
     const cachedData = await readData(cacheKey).catch(() => null);
     if (cachedData) {
       return res.status(200).json(cachedData);
@@ -93,7 +93,7 @@ router.patch('/cancel-order/:id', async (req, res) => {
 
 router.get('/get-all-order-user/:id', async (req, res) => {
   try {
-    const cacheKey = `cart-all-one-user:${req.params.id}:${req.query.statusOrder || ''}`;
+    const cacheKey = `order-all-one-user:${req.params.id}:${req.query.statusOrder || ''}`;
     const cachedData = await readData(cacheKey).catch(() => null);
     if (cachedData) {
       return res.status(200).json(cachedData);
@@ -116,6 +116,18 @@ router.put('/update-status', async (req, res) => {
     res.status(response.status).json(response.data);
   } catch (error) {
     console.error('Error when calling order service:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Internal server error at API Gateway',
+      status: 'ERROR',
+    });
+  }
+});
+
+router.get('/order-count/:id', async (req, res) => {
+  try {
+    const response = await orderServiceClient.get(`/api/order/order-count/${req.params.id}`);
+    res.status(response.status).json(response.data);
+  } catch (error) {
     res.status(error.response?.status || 500).json({
       message: error.response?.data?.message || 'Internal server error at API Gateway',
       status: 'ERROR',

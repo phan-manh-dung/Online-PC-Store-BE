@@ -111,8 +111,6 @@ const updateCart = async (req, res) => {
   try {
     const { userId, productId } = req.params;
     const { amountProduct, totalPrice } = req.body;
-    console.log('productId', productId);
-    console.log('userId', userId);
 
     if (!amountProduct || amountProduct <= 0) {
       return res.status(400).json({ status: 'ERR', message: 'Invalid amountProduct' });
@@ -129,4 +127,21 @@ const updateCart = async (req, res) => {
   }
 };
 
-module.exports = { createCart, deleteCart, getCartUser, deleteManyCart, updateCart };
+const countCartByUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const count = await CartService.countCartByUser(userId);
+    res.status(200).json({
+      status: 'OK',
+      message: 'Cart count retrieved successfully',
+      count: count,
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: 'ERR',
+      message: error.message,
+    });
+  }
+};
+
+module.exports = { createCart, deleteCart, getCartUser, deleteManyCart, updateCart, countCartByUser };

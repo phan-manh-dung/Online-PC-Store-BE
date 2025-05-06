@@ -12,8 +12,8 @@ const { Kafka } = require('kafkajs');
 // Cấu hình Kafka
 const kafka = new Kafka({
   clientId: 'payment-service',
-  // brokers: ['localhost:9092'],
-  brokers: ['kafka:9092'],
+  brokers: ['localhost:9092'],
+  //brokers: ['kafka:9092'],
 });
 const consumer = kafka.consumer({ groupId: 'payment-group' });
 
@@ -72,7 +72,8 @@ app.use(
 
 const SERVICE_INFO = {
   name: 'payment_service',
-  host: 'payment_service',
+  //host: 'payment_service',
+  host: 'localhost',
   port: process.env.PORT_PAYMENT_SERVICE || 5005,
   endpoints: [
     '/api/payment/create-payment-momo',

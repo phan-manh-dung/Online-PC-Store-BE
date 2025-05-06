@@ -15,12 +15,12 @@ const { Kafka } = require('kafkajs');
 // Cấu hình Kafka
 const kafka = new Kafka({
   clientId: 'order_service',
-  // brokers: ['localhost:9092'], // Địa chỉ Kafka server
-  brokers: ['kafka:9092'],
+  brokers: ['localhost:9092'], // Địa chỉ Kafka server
+  //brokers: ['kafka:9092'],
 });
 const producer = kafka.producer();
 
-// Kết nối producer
+//Kết nối producer
 const connectProducer = async () => {
   try {
     await producer.connect();
@@ -35,7 +35,8 @@ app.locals.producer = producer;
 
 const SERVICE_INFO = {
   name: 'order_service',
-  host: 'order_service',
+  //host: 'order_service',
+  host: 'localhost',
   port: process.env.PORT || 5003,
   endpoints: [
     '/api/order/create-order',
@@ -44,6 +45,7 @@ const SERVICE_INFO = {
     '/api/order/cancel-order/:id',
     '/api/order/get-all-order-user/:id',
     '/api/order/update-status',
+    '/api/order/order-count/:id',
   ],
 };
 

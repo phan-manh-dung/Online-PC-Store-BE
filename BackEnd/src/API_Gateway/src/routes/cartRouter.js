@@ -97,4 +97,16 @@ router.put('/update-cart/:userId/:productId', async (req, res) => {
   }
 });
 
+router.get('/cart-count/:id', async (req, res) => {
+  try {
+    const response = await cartServiceClient.get(`/api/cart/cart-count/${req.params.id}`);
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Internal server error at API Gateway',
+      status: 'ERROR',
+    });
+  }
+});
+
 module.exports = router;

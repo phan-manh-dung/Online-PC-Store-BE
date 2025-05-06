@@ -1,3 +1,6 @@
 .env
 
 node_modules/
+
+BackEnd/src/API_Gateway/logs/service.log
+BackEnd/src/API_Gateway/logs/error.log

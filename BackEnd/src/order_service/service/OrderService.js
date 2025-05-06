@@ -1,4 +1,4 @@
-const { Order } = require('../model/OrderModel');
+const { Order, OrderDetail } = require('../model/OrderModel');
 const mongoose = require('mongoose');
 
 const { readData, updateData, deleteData } = require('../redis/v1/service/redisService');
@@ -29,7 +29,6 @@ const createOrder = (
         });
       }
 
-      // Kiểm tra totalPrice hợp lệ
       if (!totalPrice || typeof totalPrice !== 'number' || totalPrice <= 0) {
         return resolve({
           status: 400,
@@ -37,11 +36,26 @@ const createOrder = (
         });
       }
 
+      const createdOrderDetails = await OrderDetail.insertMany(
+        orderDetails.map((item) => ({
+          orderId: null, // sẽ cập nhật sau
+          productId: item.productId,
+          name: item.name,
+          amount: item.amount,
+          price: item.price || 0,
+          image: item.image,
+          description: item.description || '',
+          discount: item.discount || 0,
+          color: item.color || '',
+          totalPrice: item.total_price,
+        })),
+      );
+
       const newOrder = new Order({
         userId,
         customerInformation,
         shippingAddress,
-        orderDetails,
+        orderDetailIds: createdOrderDetails.map((detail) => detail._id),
         totalPrice,
         statusOrder: statusOrder || 'pending',
         paymentMethod: paymentMethod || 'CASH',
@@ -49,40 +63,9 @@ const createOrder = (
 
       await newOrder.save();
 
-      // Xử lý Redis
-      const cacheKey = `cart-all-one-user:${userId}:${statusOrder}`;
-      const cachedData = await readData(cacheKey).catch((err) => {
-        console.error('Error reading Redis:', err);
-        return null;
-      });
-
-      if (cachedData && cachedData.data) {
-        let updatedOrders = cachedData.data.orders || cachedData.data;
-        if (Array.isArray(updatedOrders)) {
-          updatedOrders.push(newOrder.toObject());
-        } else {
-          updatedOrders = [updatedOrders, newOrder.toObject()];
-        }
-
-        try {
-          await updateData(
-            cacheKey,
-            {
-              ...cachedData,
-              data: {
-                ...cachedData.data,
-                orders: updatedOrders,
-              },
-            },
-            3600,
-          );
-          console.log(`Cache updated for key: ${cacheKey}`);
-        } catch (redisError) {
-          console.error('Error updating Redis:', redisError);
-        }
-      } else {
-        console.log('No cache found or invalid cache data, skipping update');
-      }
+      await Promise.all(
+        createdOrderDetails.map((detail) => OrderDetail.findByIdAndUpdate(detail._id, { orderId: newOrder._id })),
+      );
 
       resolve({
         status: 200,
@@ -105,7 +88,7 @@ const getOrderDetail = (id) => {
     try {
       const order = await Order.findOne({
         _id: id,
-      });
+      }).populate('orderDetailIds');
       if (order === null) {
         resolve({
           status: 'ERR',
@@ -344,6 +327,22 @@ const updateStatusOrder = (orderId, statusOrder) => {
   });
 };
 
+const countOrderByUser = async (userId) => {
+  try {
+    const orders = await Order.find({ userId }); // Lấy tất cả document
+    if (!orders || orders.length === 0) return 0;
+    // Tổng số orderDetailIds từ tất cả document
+    const totalOrderDetails = orders.reduce(
+      (sum, order) => sum + (order.orderDetailIds ? order.orderDetailIds.length : 0),
+      0,
+    );
+    return totalOrderDetails;
+  } catch (error) {
+    console.error('Error counting order items:', error.message);
+    throw new Error('Failed to count order items: ' + error.message);
+  }
+};
+
 module.exports = {
   createOrder,
   getOrderDetail,
@@ -351,4 +350,5 @@ module.exports = {
   deleteOrderToCancelled,
   getAllOrderOfUser,
   updateStatusOrder,
+  countOrderByUser,
 };
