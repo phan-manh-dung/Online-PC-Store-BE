@@ -1,4 +1,6 @@
 const { User, Account, Role } = require('../model/UserModel');
+const { Order } = require('../../order_service/model/OrderModel');
+const { Cart } = require('../../cart_service/model/CartModel');
 const bcrypt = require('bcryptjs');
 const { generalAccessToken, refreshAccessToken } = require('../service/JwtServices');
 
@@ -184,6 +186,45 @@ const getDetailsUser = (id) => {
   });
 };
 
+const checkDeletableUser = async (userId) => {
+  try {
+    // Check if user exists
+    const user = await User.findById(userId);
+    console.log('UserService checkDeletableUser - user:', user);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Check if user has any orders
+    const orderCount = await Order.countDocuments({ userId });
+    console.log('UserService checkDeletableUser - orderCount:', orderCount);
+    if (orderCount > 0) {
+      return {
+        isDeletable: false,
+        reason: 'User has existing orders',
+      };
+    }
+
+    // Check if user has any cart items
+    const cartCount = await Cart.countDocuments({ userId });
+    console.log('UserService checkDeletableUser - cartCount:', cartCount);
+    if (cartCount > 0) {
+      return {
+        isDeletable: false,
+        reason: 'User has items in cart',
+      };
+    }
+
+    return {
+      isDeletable: true,
+      reason: 'User can be deleted',
+    };
+  } catch (error) {
+    console.error('UserService checkDeletableUser - Error:', error.message);
+    throw new Error(error.message);
+  }
+};
+
 module.exports = {
   createUser,
   loginUser,
@@ -191,4 +232,5 @@ module.exports = {
   deleteUser,
   updateUser,
   getDetailsUser,
+  checkDeletableUser,
 };
