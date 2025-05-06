@@ -12,8 +12,8 @@ const { Kafka } = require('kafkajs');
 // Cấu hình Kafka
 const kafka = new Kafka({
   clientId: 'payment-service',
-  // brokers: ['localhost:9092'],
-  brokers: ['kafka:9092'],
+  brokers: ['localhost:9092'],
+  //brokers: ['kafka:9092'],
 });
 const consumer = kafka.consumer({ groupId: 'payment-group' });
 

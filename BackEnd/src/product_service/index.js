@@ -14,9 +14,9 @@ dotenv.config();
 
 app.use(express.json());
 
-let host = "product_service";
-if(process.env.NODE_ENV === "localhost"){
-  host = "localhost";
+let host = 'product_service';
+if (process.env.NODE_ENV === 'localhost') {
+  host = 'localhost';
 }
 
 const SERVICE_INFO = {
@@ -37,7 +37,6 @@ const SERVICE_INFO = {
     '/api/inventory/get-by-id/:id',
     '/api/promotion/get-all',
     '/api/promotion/get-by-id/:id',
-
 
     //Create with auth  Admin-------------------
     '/api/product/admin/create',
