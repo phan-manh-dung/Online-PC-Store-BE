@@ -208,27 +208,6 @@ const deleteCart = (id) => {
   });
 };
 
-// const getCartUser = async (userId) => {
-//   try {
-//     // Tìm giỏ hàng duy nhất của userId
-//     const userCart = await Cart.findOne({ userId });
-//     if (!userCart) {
-//       return {
-//         status: 'ERR',
-//         message: 'No cart found for this user',
-//       };
-//     }
-
-//     return {
-//       status: 'OK',
-//       message: 'Success',
-//       data: userCart,
-//     };
-//   } catch (error) {
-//     throw error;
-//   }
-// };
-
 const getCartUser = async (userId) => {
   try {
     // Kiểm tra Redis trước
@@ -291,36 +270,6 @@ const deleteManyCart = (ids) => {
     }
   });
 };
-
-// const updateCart = async (userId, productId, amountProduct, clientTotalPrice) => {
-//   const cart = await Cart.findOne({ userId });
-//   if (!cart) throw new Error('Cart not found');
-
-//   const itemIndex = cart.cartItems.findIndex((item) => item.productId.toString() === productId.toString());
-//   if (itemIndex === -1) throw new Error('Product not found in cart');
-
-//   const item = cart.cartItems[itemIndex];
-
-//   // Tính lại totalPrice ở BE
-//   const calculatedTotal = item.priceProduct * amountProduct;
-
-//   // So sánh nếu client gửi sai giá thì dùng giá đúng của BE
-//   if (clientTotalPrice !== calculatedTotal) {
-//     console.warn(`Client totalPrice lệch. Ghi đè bằng BE: ${calculatedTotal}`);
-//   }
-
-//   cart.cartItems[itemIndex].amountProduct = amountProduct;
-//   cart.cartItems[itemIndex].totalPrice = calculatedTotal;
-//   cart.markModified('cartItems'); // đảm bảo Mongoose nhận biết mảng thay đổi
-
-//   await cart.save();
-
-//   return {
-//     status: 'OK',
-//     message: 'Cart updated successfully',
-//     data: cart,
-//   };
-// };
 
 const updateCart = async (userId, productId, amountProduct, clientTotalPrice) => {
   const cart = await Cart.findOne({ userId });
