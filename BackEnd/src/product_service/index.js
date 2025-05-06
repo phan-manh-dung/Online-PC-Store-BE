@@ -14,9 +14,9 @@ dotenv.config();
 
 app.use(express.json());
 
-let host = "product_service";
-if(process.env.NODE_ENV === "localhost"){
-  host = "localhost";
+let host = 'product_service';
+if (process.env.NODE_ENV === 'localhost') {
+  host = 'localhost';
 }
 
 const SERVICE_INFO = {
@@ -37,7 +37,9 @@ const SERVICE_INFO = {
     '/api/inventory/get-by-id/:id',
     '/api/promotion/get-all',
     '/api/promotion/get-by-id/:id',
-
+    '/api/computerOption/admin/get-all',
+    '/api/computerOption/admin/get-by-key/:key',
+    '/api/computerOption/admin/get-grouped',
 
     //Create with auth  Admin-------------------
     '/api/product/admin/create',
@@ -45,6 +47,7 @@ const SERVICE_INFO = {
     '/api/supplier/admin/create',
     '/api/inventory/admin/create',
     '/api/promotion/admin/create',
+    '/api/computerOption/admin/create',
 
     //Update with auth Admin-------------------
     '/api/product/admin/update/:id',
@@ -52,6 +55,7 @@ const SERVICE_INFO = {
     '/api/category/admin/update/:id',
     '/api/inventory/admin/update/:id',
     '/api/promotion/admin/update/:id',
+    '/api/computerOption/admin/update/:id',
 
     //Delete with auth Admin-------------------
     '/api/product/admin/delete/:id',
@@ -59,6 +63,7 @@ const SERVICE_INFO = {
     '/api/category/admin/delete/:id',
     '/api/inventory/admin/delete/:id',
     '/api/promotion/admin/delete/:id',
+    '/api/computerOption/admin/delete/:id',
   ],
 };
 

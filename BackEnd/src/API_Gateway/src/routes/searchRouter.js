@@ -151,4 +151,15 @@ router.get('/inventory/get-by-id/:id', async (req, res) => {
   }
 });
 
+router.get('/filter/get-all', async (req, res) => {
+  try {
+    const response = await searchServiceClient.get('/api/filter/get-all', {
+      params: req.query,
+    });
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    errorHandler(error, res);
+  }
+});
+
 module.exports = router;
