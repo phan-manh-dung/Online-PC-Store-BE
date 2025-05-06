@@ -1,6 +1,5 @@
 const { User, Account, Role } = require('../model/UserModel');
-const { Order } = require('../../order_service/model/OrderModel');
-const { Cart } = require('../../cart_service/model/CartModel');
+const axios = require('axios');
 const bcrypt = require('bcryptjs');
 const { generalAccessToken, refreshAccessToken } = require('../service/JwtServices');
 
@@ -188,36 +187,21 @@ const getDetailsUser = (id) => {
 
 const checkDeletableUser = async (userId) => {
   try {
-    // Check if user exists
     const user = await User.findById(userId);
-    console.log('UserService checkDeletableUser - user:', user);
     if (!user) {
       throw new Error('User not found');
     }
 
-    // Check if user has any orders
-    const orderCount = await Order.countDocuments({ userId });
-    console.log('UserService checkDeletableUser - orderCount:', orderCount);
-    if (orderCount > 0) {
-      return {
-        isDeletable: false,
-        reason: 'User has existing orders',
-      };
-    }
+    const [cartCount, orderCount] = await Promise.all([
+      axios.get(`${process.env.CART_SERVICE_URL}/api/cart/cart-count/${userId}`).then((res) => res.data.count),
+      axios.get(`${process.env.ORDER_SERVICE_URL}/api/order/order-count/${userId}`).then((res) => res.data.count),
+    ]);
 
-    // Check if user has any cart items
-    const cartCount = await Cart.countDocuments({ userId });
-    console.log('UserService checkDeletableUser - cartCount:', cartCount);
-    if (cartCount > 0) {
-      return {
-        isDeletable: false,
-        reason: 'User has items in cart',
-      };
-    }
+    const isDeletable = cartCount === 0 && orderCount === 0;
 
     return {
-      isDeletable: true,
-      reason: 'User can be deleted',
+      isDeletable: isDeletable,
+      reason: isDeletable ? 'Allowed to delete this user' : 'User has cart or orders',
     };
   } catch (error) {
     console.error('UserService checkDeletableUser - Error:', error.message);

@@ -112,9 +112,23 @@ const deleteUser = async (req, res) => {
         message: 'The userId do not exist delete',
       });
     }
-    const response = await UserService.deleteUser(userId); // nếu k rơi vào trường hợp nào thì cho
-    //userId qua thằng UserService
-    return res.status(200).json(response);
+
+    // Kiểm tra xem user có thể xóa không
+    const checkResult = await UserService.checkDeletableUser(userId);
+    if (!checkResult.isDeletable) {
+      return res.status(200).json({
+        status: 'ERR',
+        message: checkResult.reason,
+        isDeletable: false,
+      });
+    }
+
+    // Thực hiện xóa nếu có thể
+    const response = await UserService.deleteUser(userId);
+    return res.status(200).json({
+      ...response,
+      isDeletable: true, // Xác nhận xóa thành công
+    });
   } catch (e) {
     return res.status(404).json({
       message: e,
@@ -198,7 +212,6 @@ const getDetailsUser = async (req, res) => {
 const checkDeletableUser = async (req, res) => {
   try {
     const userId = req.params.id;
-    console.log('UserController checkDeletableUser - userId:', userId);
     const result = await UserService.checkDeletableUser(userId);
     res.status(200).json({
       status: 'OK',

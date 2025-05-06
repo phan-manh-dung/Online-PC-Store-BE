@@ -2,7 +2,7 @@ const Product = require('../models/Product_Model');
 const productService = require('../services/Product_Service');
 const { calculateDiscountedPrice } = require('../services/Promotion_Service');
 const fs = require('fs');
-
+const { producer } = require('../index');
 // Lấy tất cả sản phẩm
 const getAllProducts = async (req, res) => {
   try {
@@ -70,6 +70,7 @@ const updateProduct = async (req, res) => {
     if (!updatedProduct) {
       return res.status(404).json({ message: 'Product not found' });
     }
+
     res.status(200).json(updatedProduct);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -102,7 +103,7 @@ const getProductWithDiscount = async (req, res) => {
 
 const addPromotion = async (req, res) => {
   try {
-    const { productId, promotionId } = req.body; 
+    const { productId, promotionId } = req.body;
     const updatedProduct = await productService.addPromotionToProduct(productId, promotionId);
 
     res.status(200).json(updatedProduct);
@@ -111,7 +112,6 @@ const addPromotion = async (req, res) => {
   }
 };
 
-
 module.exports = {
   getAllProducts,
   getProductById,
@@ -119,5 +119,5 @@ module.exports = {
   createProduct,
   updateProduct,
   deleteProduct,
-  addPromotion
+  addPromotion,
 };

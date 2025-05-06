@@ -22,6 +22,7 @@ const SERVICE_INFO = {
     '/apt/cart/delete-cart/:id',
     '/api/cart/get-cart/:id',
     '/api/cart/delete-many-cart',
+    '/api/cart/cart-count/:id',
   ],
 };
 

@@ -290,4 +290,15 @@ const updateCart = async (userId, productId, amountProduct, clientTotalPrice) =>
   };
 };
 
-module.exports = { createCart, deleteCart, getCartUser, deleteManyCart, updateCart };
+const countCartByUser = async (userId) => {
+  try {
+    const cart = await Cart.findOne({ userId });
+    if (!cart) return 0;
+    return cart.cartItems ? cart.cartItems.length : 0;
+  } catch (error) {
+    console.error('Error counting cart items:', error.message);
+    throw new Error('Failed to count cart items: ' + error.message);
+  }
+};
+
+module.exports = { createCart, deleteCart, getCartUser, deleteManyCart, updateCart, countCartByUser };

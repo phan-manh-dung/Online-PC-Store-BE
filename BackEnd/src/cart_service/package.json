@@ -4,7 +4,7 @@
   "main": "src/cart_service/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
+    "start": "nodemon index.js",
     "dev": "node index.js"
   },
   "author": "",
@@ -20,6 +20,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
+    "kafkajs": "^2.2.4",
     "mongodb": "^6.13.0",
     "mongoose": "^8.10.0",
     "redis": "^4.7.0"

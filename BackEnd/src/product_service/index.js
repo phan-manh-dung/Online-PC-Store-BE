@@ -37,6 +37,7 @@ const SERVICE_INFO = {
     '/api/inventory/get-by-id/:id',
     '/api/promotion/get-all',
     '/api/promotion/get-by-id/:id',
+
     '/api/computerOption/admin/get-all',
     '/api/computerOption/admin/get-by-key/:key',
     '/api/computerOption/admin/get-grouped',

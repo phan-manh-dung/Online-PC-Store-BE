@@ -327,6 +327,22 @@ const updateStatusOrder = (orderId, statusOrder) => {
   });
 };
 
+const countOrderByUser = async (userId) => {
+  try {
+    const orders = await Order.find({ userId }); // Lấy tất cả document
+    if (!orders || orders.length === 0) return 0;
+    // Tổng số orderDetailIds từ tất cả document
+    const totalOrderDetails = orders.reduce(
+      (sum, order) => sum + (order.orderDetailIds ? order.orderDetailIds.length : 0),
+      0,
+    );
+    return totalOrderDetails;
+  } catch (error) {
+    console.error('Error counting order items:', error.message);
+    throw new Error('Failed to count order items: ' + error.message);
+  }
+};
+
 module.exports = {
   createOrder,
   getOrderDetail,
@@ -334,4 +350,5 @@ module.exports = {
   deleteOrderToCancelled,
   getAllOrderOfUser,
   updateStatusOrder,
+  countOrderByUser,
 };

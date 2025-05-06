@@ -123,4 +123,16 @@ router.put('/update-status', async (req, res) => {
   }
 });
 
+router.get('/order-count/:id', async (req, res) => {
+  try {
+    const response = await orderServiceClient.get(`/api/order/order-count/${req.params.id}`);
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Internal server error at API Gateway',
+      status: 'ERROR',
+    });
+  }
+});
+
 module.exports = router;
