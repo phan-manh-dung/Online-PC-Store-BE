@@ -15,7 +15,7 @@ const createCart = async ({
   type,
   totalPrice,
 }) => {
-  // Validation logic nghiệp vụ
+  // Validation logic
   if (amountProduct <= 0) throw new Error('amountProduct must be greater than 0');
   if (priceProduct < 0) throw new Error('priceProduct cannot be negative');
 
@@ -35,6 +35,7 @@ const createCart = async ({
     type,
     totalPrice: totalPriceBe,
   };
+
   try {
     let cart = await Cart.findOne({ userId });
 
@@ -44,7 +45,7 @@ const createCart = async ({
         throw new Error('Product already exists in the cart');
       }
       cart.cartItems.push(newCartItem);
-      await cart.save(); // Lưu thay đổi
+      await cart.save();
     } else {
       cart = await Cart.create({
         userId,
@@ -52,51 +53,22 @@ const createCart = async ({
       });
     }
 
-    // Xử lý Redis
+    // Luôn cập nhật Redis với cấu trúc nhất quán
     const cacheKey = `get-cart-user:${userId}`;
-    const cachedData = await readData(cacheKey).catch(() => null);
-
-    if (cachedData) {
-      let updatedCart;
-
-      // Kiểm tra và bỏ "0" nếu tồn tại
-      if (cachedData['0']) {
-        updatedCart = cachedData['0'];
-      } else {
-        updatedCart = cachedData;
-      }
-
-      // Lấy cartItems từ updatedCart
-      let updatedCartItems = updatedCart.cartItems || [];
-
-      // Đảm bảo updatedCartItems là mảng
-      if (!Array.isArray(updatedCartItems)) {
-        updatedCartItems = [updatedCartItems];
-      }
-
-      // Thêm newCartItem vào mảng
-      updatedCartItems.push(newCartItem);
-
-      updatedCart.cartItems = updatedCartItems;
-      updatedCart.updatedAt = new Date().toISOString(); // Cập nhật thời gian
-      updatedCart.__v = (updatedCart.__v || 0) + 1; // Tăng version
-
-      // Lưu trực tiếp object
-      try {
-        await updateData(cacheKey, updatedCart, 3600);
-        console.log(`Cache updated for key: ${cacheKey}`);
-      } catch (redisError) {
-        console.error('Error updating Redis:', redisError);
-      }
-    } else {
-      console.log('No cache found for key, skipping cache creation as per request');
-    }
-
-    return {
+    const responseData = {
       status: 'OK',
-      message: 'Success Create Cart',
+      message: 'Success',
       data: cart,
     };
+
+    try {
+      await updateData(cacheKey, responseData, 3600);
+      console.log(`Cache updated for key: ${cacheKey}`);
+    } catch (redisError) {
+      console.error('Error updating Redis:', redisError);
+    }
+
+    return responseData;
   } catch (error) {
     throw new Error(`Failed to create cart: ${error.message}`);
   }
@@ -212,14 +184,17 @@ const getCartUser = async (userId) => {
   try {
     // Kiểm tra Redis trước
     const cacheKey = `get-cart-user:${userId}`;
-    const cachedData = await readData(cacheKey).catch(() => null);
+    const cachedData = await readData(cacheKey).catch((err) => {
+      console.error('Redis read error:', err);
+      return null;
+    });
 
-    if (cachedData) {
+    if (cachedData && cachedData.status === 'OK') {
       console.log('Serving from Redis:', cacheKey);
-      return cachedData; // Trả về trực tiếp dữ liệu từ Redis (chỉ chứa data)
+      return cachedData; // Trả về dữ liệu đã có cấu trúc
     }
 
-    // Nếu không có trong Redis, lấy từ DB
+    // Nếu không có trong Redis hoặc dữ liệu không hợp lệ, lấy từ DB
     const userCart = await Cart.findOne({ userId });
     if (!userCart) {
       return {
@@ -234,8 +209,17 @@ const getCartUser = async (userId) => {
       data: userCart,
     };
 
+    // Cập nhật Redis sau khi lấy từ DB
+    try {
+      await updateData(cacheKey, response, 3600);
+      console.log(`Cache created/updated for key: ${cacheKey}`);
+    } catch (redisError) {
+      console.error('Error updating Redis:', redisError);
+    }
+
     return response;
   } catch (error) {
+    console.error('getCartUser error:', error);
     throw error;
   }
 };
