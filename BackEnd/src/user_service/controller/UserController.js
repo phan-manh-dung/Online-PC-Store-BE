@@ -4,8 +4,8 @@ const { readData, createData, deleteData, updateData } = require('../redis/v1/se
 
 const createUser = async (req, res) => {
   try {
-    const { name, password, confirmPassword } = req.body;
-    if (!name) {
+    const { username, password, confirmPassword } = req.body;
+    if (!username) {
       return res.status(200).json({
         status: 'ERR_NAME',
         message: 'Name is required',
@@ -40,13 +40,13 @@ const createUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
   try {
-    const { name, password } = req.body;
-    if (!name && !password) {
+    const { username, password } = req.body;
+    if (!username && !password) {
       return res.status(200).json({
         status: 'ERR_ALL',
-        message: 'Both name and password are required',
+        message: 'Both username and password are required',
       });
-    } else if (!name) {
+    } else if (!username) {
       return res.status(200).json({
         status: 'ERR_NAME',
         message: 'Name is required',

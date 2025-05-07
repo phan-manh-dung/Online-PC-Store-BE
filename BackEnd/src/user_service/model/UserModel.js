@@ -18,7 +18,8 @@ const accountSchema = new mongoose.Schema({
 
 const userSchema = new mongoose.Schema(
   {
-    name: { type: String, unique: true, required: true, index: true },
+    username: { type: String, unique: true, required: true, index: true }, // dùng login
+    fullname: { type: String, unique: true, index: true },
     email: { type: String, unique: true, index: true }, // user name
 
     gender: { type: String },

@@ -5,9 +5,9 @@ const { generalAccessToken, refreshAccessToken } = require('../service/JwtServic
 
 const createUser = async (newUser) => {
   return new Promise(async (resolve, reject) => {
-    const { name, password } = newUser;
+    const { username, password } = newUser;
     try {
-      const checkUser = await User.findOne({ name });
+      const checkUser = await User.findOne({ username });
       if (checkUser) {
         return resolve({
           status: 'ERR_USER',
@@ -27,7 +27,7 @@ const createUser = async (newUser) => {
       }
 
       // **Tạo User trước**
-      const user = new User({ name, password: hash });
+      const user = new User({ username, password: hash });
       await user.save(); // Lưu user vào database
 
       // **Tạo Account với `user_id`**
@@ -56,9 +56,10 @@ const createUser = async (newUser) => {
 
 const loginUser = (userLogin) => {
   return new Promise(async (resolve, reject) => {
-    const { name, password } = userLogin;
+    const { username, password } = userLogin;
+    console.log('userLogin', userLogin);
     try {
-      const checkUser = await User.findOne({ name }).populate('account');
+      const checkUser = await User.findOne({ username }).populate('account');
       if (!checkUser) {
         return resolve({
           status: 'ERR USER NOT IN THE DATABASE',
