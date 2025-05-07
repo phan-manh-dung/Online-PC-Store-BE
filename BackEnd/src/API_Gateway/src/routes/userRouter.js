@@ -28,24 +28,10 @@ router.use((req, res, next) => {
   authenticateToken(req, res, next);
 });
 
-//redis
 router.post('/sign-in', async (req, res) => {
   try {
-    // Tạo key cache dựa trên name duy nhất
-    const cacheKey = `sign-in:${req.body.name}`;
-    // Kiểm tra cache, bỏ qua lỗi nếu có
-    const cachedData = await readData(cacheKey).catch(() => null);
-    if (cachedData) {
-      // Trả về dữ liệu từ cache ngay lập tức nếu có
-      return res.status(200).json(cachedData);
-    }
-    // Nếu không có cache, gọi service
     const response = await userServiceClient.post('/api/user/sign-in', req.body);
     const data = response.data;
-    // Lưu vào Redis với TTL là 3600 giây (1 giờ)
-    await createData(cacheKey, data, 3600);
-    console.log(`Cache created for key: ${cacheKey}`);
-
     res.status(response.status).json(data);
   } catch (error) {
     errorHandler(error, res);

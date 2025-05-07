@@ -28,6 +28,7 @@ const userSchema = new mongoose.Schema(
     avatar: { type: String },
     loginType: { type: String },
     account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: false },
+    status: { type: String, enum: ['ACTIVE', 'INACTIVE'], default: 'ACTIVE' },
     address: [
       {
         ward: { type: String },
