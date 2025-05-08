@@ -4,6 +4,7 @@
 [2025-05-05 20:53:44] ERROR: 🚨 No instances available for service: user_service
 [2025-05-05 20:54:04] ERROR: 🚨 No instances available for service: user_service
 [2025-05-05 21:12:16] ERROR: 🚨 No instances available for service: user_service
+
 [2025-05-07 22:52:52] ERROR: Request to http://localhost:5001/api/user/sign-in failed on attempt 1: Request failed with status code 500
 [2025-05-07 22:52:52] ERROR: Status: 500, Data: {"message":"name is not defined"}
 [2025-05-08 15:03:01] ERROR: Request to http://localhost:5001/api/user/sign-up failed on attempt 1: Request failed with status code 404
@@ -28,3 +29,7 @@
 [2025-05-08 15:14:51] ERROR: Status: 404, Data: {"message":{"errorLabelSet":{},"errorResponse":{"index":0,"code":11000,"errmsg":"E11000 duplicate key error collection: KTTKPM_USER_SERVICE.users index: name_1 dup key: { name: null }","keyPattern":{"name":1},"keyValue":{"name":null}},"index":0,"code":11000,"keyPattern":{"name":1},"keyValue":{"name":null}}}
 [2025-05-08 15:17:46] ERROR: Request to http://localhost:5001/api/user/sign-up failed on attempt 1: Request failed with status code 404
 [2025-05-08 15:17:46] ERROR: Status: 404, Data: {"message":{"errorLabelSet":{},"errorResponse":{"index":0,"code":11000,"errmsg":"E11000 duplicate key error collection: KTTKPM_USER_SERVICE.users index: name_1 dup key: { name: null }","keyPattern":{"name":1},"keyValue":{"name":null}},"index":0,"code":11000,"keyPattern":{"name":1},"keyValue":{"name":null}}}
+
+[2025-05-08 14:55:38] ERROR: Request to http://localhost:5001/api/user/sign-up failed on attempt 1: Request failed with status code 404
+[2025-05-08 14:55:38] ERROR: Status: 404, Data: {"message":{"errorLabelSet":{},"errorResponse":{"index":0,"code":11000,"errmsg":"E11000 duplicate key error collection: KTTKPM_USER_SERVICE.users index: name_1 dup key: { name: null }","keyPattern":{"name":1},"keyValue":{"name":null}},"index":0,"code":11000,"keyPattern":{"name":1},"keyValue":{"name":null}}}
+
