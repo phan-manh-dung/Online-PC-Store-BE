@@ -19,23 +19,24 @@ const accountSchema = new mongoose.Schema({
 const userSchema = new mongoose.Schema(
   {
     username: { type: String, unique: true, required: true, index: true }, // dùng login
-    fullname: { type: String, unique: true, index: true },
-    email: { type: String, unique: true, index: true }, // user name
+    fullname: { type: String, index: true, default: null },
+    email: { type: String, unique: true, index: true, default: null }, // user name
 
-    gender: { type: String },
-    dateOfBirth: { type: Date, required: false },
+    gender: { type: String, default: null },
+    dateOfBirth: { type: Date, required: false, default: null },
     password: { type: String, required: true },
-    phone: { type: String, index: true },
-    avatar: { type: String },
-    loginType: { type: String },
+    phone: { type: String, index: true, default: null },
+    avatar: { type: String, default: null },
+    loginType: { type: String, default: 'BASIC' },
     account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: false },
     status: { type: String, enum: ['ACTIVE', 'INACTIVE'], default: 'ACTIVE' },
     address: [
       {
-        ward: { type: String },
-        district: { type: String },
-        city: { type: String },
-        country: { type: String },
+        ward: { type: String, default: null },
+        district: { type: String, default: null },
+        city: { type: String, default: null },
+        country: { type: String, default: null },
+        _id: false,
       },
     ],
   },

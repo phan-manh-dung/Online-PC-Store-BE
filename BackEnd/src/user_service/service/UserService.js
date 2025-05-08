@@ -37,7 +37,6 @@ const createUser = async (newUser) => {
         roles: [{ _id: customerRole._id, name: customerRole.name }],
       });
       await account.save(); // Lưu account vào database
-
       // **Cập nhật User với Account**
       user.account = account._id;
       await user.save(); // Lưu lại user với account mới
@@ -57,7 +56,6 @@ const createUser = async (newUser) => {
 const loginUser = (userLogin) => {
   return new Promise(async (resolve, reject) => {
     const { username, password } = userLogin;
-    console.log('userLogin', userLogin);
     try {
       const checkUser = await User.findOne({ username }).populate('account');
       if (!checkUser) {
@@ -140,6 +138,29 @@ const deleteUser = (id) => {
   });
 };
 
+// const updateUser = async (id, data) => {
+//   try {
+//     // Kiểm tra nếu data trống thì không cập nhật
+//     if (!Object.keys(data).length) {
+//       return { status: 'ERROR', message: 'No data to update' };
+//     }
+
+//     const updatedUser = await User.findByIdAndUpdate(id, data, {
+//       new: true, // Trả về dữ liệu sau khi update
+//       runValidators: true, // Kiểm tra validation khi update
+//     });
+
+//     if (!updatedUser) {
+//       return { status: 'ERROR', message: 'User not found' };
+//     }
+
+//     return { status: 'OK', message: 'SUCCESS', data: updatedUser };
+//   } catch (error) {
+//     console.error('Error updating user:', error);
+//     return { status: 'ERROR', message: 'Internal server error' };
+//   }
+// };
+
 const updateUser = async (id, data) => {
   try {
     // Kiểm tra nếu data trống thì không cập nhật
@@ -147,9 +168,17 @@ const updateUser = async (id, data) => {
       return { status: 'ERROR', message: 'No data to update' };
     }
 
-    const updatedUser = await User.findByIdAndUpdate(id, data, {
-      new: true, // Trả về dữ liệu sau khi update
-      runValidators: true, // Kiểm tra validation khi update
+    // Nếu có address trong data, sử dụng $push để thêm vào mảng
+    let updateData = { ...data };
+    if (data.address) {
+      updateData = {
+        $push: { address: { $each: data.address } }, // Thêm từng phần tử vào mảng
+      };
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
     });
 
     if (!updatedUser) {
