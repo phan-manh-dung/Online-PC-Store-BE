@@ -239,7 +239,6 @@ const getUserStats = async (userId) => {
     } else if (ordersData && !Array.isArray(ordersData)) {
       orders = [ordersData]; // Trường hợp 1 đơn hàng
     } else {
-      console.log('Orders data is invalid:', ordersData);
       orders = [];
     }
 

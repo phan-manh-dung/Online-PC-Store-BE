@@ -14,5 +14,7 @@ router.get('/admin/get-all-order', authMiddlewareOrder, orderController.getAllOr
 router.put('/update-status', orderController.updateStatusOrder);
 // đếm số đơn hàng
 router.get('/order-count/:id', orderController.countOrderByUser);
+// thống kê doanh thu
+router.get('/admin/sales-stats', authMiddlewareOrder, orderController.getSalesStats);
 
 module.exports = router;

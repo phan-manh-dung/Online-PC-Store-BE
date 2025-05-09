@@ -46,6 +46,7 @@ const SERVICE_INFO = {
     '/api/order/get-all-order-user/:id',
     '/api/order/update-status',
     '/api/order/order-count/:id',
+    '/api/order/admin/sales-stats',
   ],
 };
 

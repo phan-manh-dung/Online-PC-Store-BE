@@ -20,11 +20,18 @@ const authMiddlewareOrder = async (req, res, next) => {
       return res.status(401).json({ message: 'Invalid token' });
     }
 
+    // Kiểm tra quyền admin
+    const roles = userData.data.roles || [];
+    const isAdmin = roles.some((role) => role.toUpperCase() === 'ADMIN');
+    if (!isAdmin) {
+      return res.status(403).json({ message: 'Access denied: Admin role required' });
+    }
+
     req.user = userData.data; // Lưu thông tin user vào req
     next();
   } catch (error) {
     console.error('Error verifying token:', error.message, error.response?.data);
-    return res.status(401).json({ message: 'Token verification failed' });
+    return res.status(401).json({ message: 'Token verification failed', error: error.message });
   }
 };
 

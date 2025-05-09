@@ -272,6 +272,20 @@ const countOrderByUser = async (req, res) => {
   }
 };
 
+const getSalesStats = async (req, res) => {
+  try {
+    const result = await OrderService.getSalesStats(req);
+    return res.status(result.status).json(result);
+  } catch (error) {
+    console.error('Error in getSalesStats controller:', error);
+    return res.status(500).json({
+      status: 'ERR',
+      message: 'Internal server error',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   getDetailOrder,
@@ -280,4 +294,5 @@ module.exports = {
   getAllOrderOfUser,
   updateStatusOrder,
   countOrderByUser,
+  getSalesStats,
 };

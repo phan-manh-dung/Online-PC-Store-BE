@@ -36,7 +36,7 @@ const authMiddleware = async (req, res, next) => {
     // Lấy thông tin account và kiểm tra quyền ADMIN
     const account = await Account.findById(user.account);
     const isAdmin = account.roles.some((role) => role.name === 'ADMIN');
-    if (isAdmin || decoded.id === req.params.id) {
+    if (isAdmin) {
       req.user = user; // Gán thông tin user vào req để dùng trong các middleware khác nếu cần
       next();
     } else {
