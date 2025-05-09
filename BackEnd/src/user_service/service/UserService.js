@@ -138,29 +138,6 @@ const deleteUser = (id) => {
   });
 };
 
-// const updateUser = async (id, data) => {
-//   try {
-//     // Kiểm tra nếu data trống thì không cập nhật
-//     if (!Object.keys(data).length) {
-//       return { status: 'ERROR', message: 'No data to update' };
-//     }
-
-//     const updatedUser = await User.findByIdAndUpdate(id, data, {
-//       new: true, // Trả về dữ liệu sau khi update
-//       runValidators: true, // Kiểm tra validation khi update
-//     });
-
-//     if (!updatedUser) {
-//       return { status: 'ERROR', message: 'User not found' };
-//     }
-
-//     return { status: 'OK', message: 'SUCCESS', data: updatedUser };
-//   } catch (error) {
-//     console.error('Error updating user:', error);
-//     return { status: 'ERROR', message: 'Internal server error' };
-//   }
-// };
-
 const updateUser = async (id, data) => {
   try {
     // Kiểm tra nếu data trống thì không cập nhật
@@ -239,6 +216,87 @@ const checkDeletableUser = async (userId) => {
   }
 };
 
+const getUserStats = async (userId) => {
+  try {
+    if (!userId) {
+      return {
+        status: 400,
+        message: 'User ID is required',
+      };
+    }
+
+    // Gọi Order Service để lấy số lượng đơn hàng
+    const orderCountResponse = await axios.get(`${process.env.ORDER_SERVICE_URL}/api/order/order-count/${userId}`);
+    const orderCount = orderCountResponse.data.count || 0;
+
+    // Gọi Order Service để lấy tất cả đơn hàng của user
+    const ordersResponse = await axios.get(`${process.env.ORDER_SERVICE_URL}/api/order/get-all-order-user/${userId}`);
+    // Lấy mảng orders từ response
+    let orders = [];
+    const ordersData = ordersResponse.data?.data;
+    if (ordersData?.orders && Array.isArray(ordersData.orders)) {
+      orders = ordersData.orders;
+    } else if (ordersData && !Array.isArray(ordersData)) {
+      orders = [ordersData]; // Trường hợp 1 đơn hàng
+    } else {
+      console.log('Orders data is invalid:', ordersData);
+      orders = [];
+    }
+
+    // Tính toán tổng tiền và phân loại theo trạng thái
+    let totalAmount = 0;
+    let pendingAmount = 0;
+    let successfulAmount = 0;
+    let cancelledAmount = 0;
+
+    const statusCounts = {
+      pending: 0,
+      successful: 0,
+      cancelled: 0,
+    };
+
+    if (orders.length > 0) {
+      orders.forEach((order) => {
+        const orderTotal = order.totalPrice || 0;
+        totalAmount += orderTotal;
+
+        if (order.statusOrder === 'successful') {
+          successfulAmount += orderTotal;
+          statusCounts.successful += 1;
+        } else if (order.statusOrder === 'pending') {
+          pendingAmount += orderTotal;
+          statusCounts.pending += 1;
+        } else if (order.statusOrder === 'cancelled') {
+          cancelledAmount += orderTotal;
+          statusCounts.cancelled += 1;
+        }
+      });
+    } else {
+      console.log('No orders found to process');
+    }
+
+    return {
+      status: 200,
+      message: 'User order statistics retrieved successfully',
+      data: {
+        totalOrders: orderCount,
+        totalAmount,
+        pendingAmount,
+        successfulAmount,
+        cancelledAmount,
+        statusCounts,
+      },
+    };
+  } catch (error) {
+    console.error('Error in getUserStats service:', error.message);
+    return {
+      status: 500,
+      message: 'Error retrieving order data',
+      error: error.message,
+    };
+  }
+};
+
 module.exports = {
   createUser,
   loginUser,
@@ -247,4 +305,5 @@ module.exports = {
   updateUser,
   getDetailsUser,
   checkDeletableUser,
+  getUserStats,
 };

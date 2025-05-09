@@ -24,11 +24,12 @@ const SERVICE_INFO = {
     '/api/user/admin/get-all',
     '/api/user/get-detail/:id',
     '/api/user/admin/delete-user/:id',
-    '/api/user/update-user/:',
+    '/api/user/update-user/:id',
     '/refresh-token',
     '/log-out',
     '/api/user/verify-token',
     '/api/user/check-deletable/:id',
+    '/api/user/admin/stats/:id',
   ],
 };
 
