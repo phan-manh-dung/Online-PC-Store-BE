@@ -1,7 +1,7 @@
 const axios = require('axios');
 const CircuitBreaker = require('opossum');
 const serviceRegistry = require('./serviceRegistry');
-const logger = require('../../utils/logger');
+// const logger = require('../../utils/logger');
 
 class ServiceClient {
   constructor(serviceName) {
@@ -15,15 +15,15 @@ class ServiceClient {
     });
 
     this.breaker.on('open', () => {
-      logger.warn(`Circuit Breaker OPEN for ${this.serviceName}: Too many failures`);
+      //  logger.warn(`Circuit Breaker OPEN for ${this.serviceName}: Too many failures`);
     });
 
     this.breaker.on('halfOpen', () => {
-      logger.info(`Circuit Breaker HALF-OPEN for ${this.serviceName}: Attempting to recover`);
+      //  logger.info(`Circuit Breaker HALF-OPEN for ${this.serviceName}: Attempting to recover`);
     });
 
     this.breaker.on('close', () => {
-      logger.info(`Circuit Breaker CLOSED for ${this.serviceName}: Service recovered`);
+      //  logger.info(`Circuit Breaker CLOSED for ${this.serviceName}: Service recovered`);
     });
   }
 
@@ -35,7 +35,7 @@ class ServiceClient {
     const baseDelay = 1000; // time gian cơ bản giữa các lần thử lại
     const maxDelay = 2000; // thời gian tối đa giữa các lần thử lại
     const delay = Math.min(maxDelay, baseDelay * Math.pow(2, retryCount)); // tính time delay cấp nhân
-    logger.debug(`Waiting ${delay / 1000}s before retry #${retryCount}`);
+    //  logger.debug(`Waiting ${delay / 1000}s before retry #${retryCount}`);
     return new Promise((resolve) => setTimeout(resolve, delay));
   }
 
@@ -52,17 +52,17 @@ class ServiceClient {
       timeout: 5000, // Time Limiter(thời gian chờ tối đa cho request)
     });
     const duration = Date.now() - start;
-    logger.info(`Request to ${url} succeeded in ${duration}ms`);
-    logger.debug(`Response data from ${url}: ${JSON.stringify(response.data, ['status', 'message'])}`);
+    //  logger.info(`Request to ${url} succeeded in ${duration}ms`);
+    //  logger.debug(`Response data from ${url}: ${JSON.stringify(response.data, ['status', 'message'])}`);
     return response;
   }
 
   async _makeRequest(method, endpoint, data = null, headers = {}) {
-    logger.info('----------------------------- New Request -----------------------------');
+    //  logger.info('----------------------------- New Request -----------------------------');
     const instance = await this._getServiceInstance();
     if (!instance) {
       const msg = `No available instances for ${this.serviceName}`;
-      logger.error(msg);
+      //  logger.error(msg);
       throw new Error(msg);
     }
 
@@ -72,15 +72,15 @@ class ServiceClient {
 
     while (retryCount < maxRetries) {
       try {
-        logger.debug(`Sending request to ${url} (Attempt ${retryCount + 1})`);
+        //  logger.debug(`Sending request to ${url} (Attempt ${retryCount + 1})`);
         const response = await this.breaker.fire({ method, url, data, headers });
-        logger.debug(`Request to ${url} succeeded on attempt ${retryCount + 1}`);
+        //  logger.debug(`Request to ${url} succeeded on attempt ${retryCount + 1}`);
         return response;
       } catch (error) {
-        logger.error(`Request to ${url} failed on attempt ${retryCount + 1}: ${error.message}`);
+        //  logger.error(`Request to ${url} failed on attempt ${retryCount + 1}: ${error.message}`);
 
         if (error.response) {
-          logger.error(`Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+          //  logger.error(`Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
           throw error;
         }
 
@@ -90,12 +90,12 @@ class ServiceClient {
           const msg = this.breaker.opened
             ? `Circuit breaker OPEN – ${this.serviceName} temporarily unavailable after ${retryCount} retries`
             : `${this.serviceName} unavailable after ${maxRetries} retries`;
-          logger.error(msg);
+          //  logger.error(msg);
           throw new Error(msg);
         }
 
         await this._delay(retryCount);
-        logger.info(`Retrying request to ${url} (Attempt ${retryCount + 1}/${maxRetries})`);
+        //  logger.info(`Retrying request to ${url} (Attempt ${retryCount + 1}/${maxRetries})`);
       }
     }
   }

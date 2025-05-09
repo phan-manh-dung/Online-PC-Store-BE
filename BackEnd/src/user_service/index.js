@@ -16,7 +16,7 @@ app.use(express.json());
 const SERVICE_INFO = {
   name: 'user_service',
   host: 'localhost',
-  // host: 'user_service',
+  //host: 'user_service',
   port: process.env.PORT || 5001,
   endpoints: [
     '/api/user/sign-in',
