@@ -1,5 +1,6 @@
 const { Order, OrderDetail } = require('../model/OrderModel');
 const mongoose = require('mongoose');
+const axios = require('axios');
 
 const { readData, updateData, deleteData } = require('../redis/v1/service/redisService');
 
@@ -348,6 +349,91 @@ const countOrderByUser = async (userId) => {
   }
 };
 
+const getSalesStats = async (req) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      throw new Error('Token not found in request headers');
+    }
+
+    // Gọi Product Service để lấy danh sách sản phẩm
+    const productsResponse = await axios.get(`${process.env.PRODUCT_SERVICE_URL}/api/product/get-all`);
+    const products = productsResponse.data.data;
+
+    // Gọi Inventory Service để lấy trạng thái hàng
+    const inventoryResponse = await axios.get(`${process.env.PRODUCT_SERVICE_URL}/api/inventory/get-all`);
+    const inventoryData = inventoryResponse.data.data;
+
+    // Lấy tất cả đơn hàng từ Order Service
+    const ordersResponse = await axios.get(`${process.env.GATEWAY_URL}/api/order/admin/get-all-order`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const orders = ordersResponse.data.data || [];
+
+    // Lấy tất cả chi tiết đơn hàng từ collection OrderDetails
+    const orderDetailIds = orders.flatMap((order) => order.orderDetailIds);
+    const orderDetails = await OrderDetail.find({ _id: { $in: orderDetailIds } });
+
+    // Tính toán thống kê
+    const salesStats = products.map((product) => {
+      // Tìm các chi tiết đơn hàng liên quan đến sản phẩm này
+      const productOrderDetails = orderDetails.filter(
+        (detail) => detail.productId.toString() === product._id.toString(),
+      );
+
+      // Tìm các đơn hàng chứa chi tiết đơn hàng của sản phẩm này
+      const productOrders = orders.filter((order) =>
+        order.orderDetailIds.some((detailId) =>
+          productOrderDetails.some((detail) => detail._id.toString() === detailId.toString()),
+        ),
+      );
+
+      // Chỉ tính các đơn hàng đã giao (hoặc điều chỉnh theo yêu cầu)
+      const deliveredOrders = productOrders.filter(
+        (order) => order.isDelivered === true && order.statusOrder === 'successful',
+      );
+      const totalOrders = deliveredOrders.length;
+
+      // Tính revenue từ orderDetails
+      const revenue = productOrderDetails
+        .filter((detail) => deliveredOrders.some((order) => order._id.toString() === detail.orderId.toString()))
+        .reduce((sum, detail) => sum + detail.totalPrice, 0);
+
+      const avgOrderValue = totalOrders > 0 ? revenue / totalOrders : 0;
+      const processingTime = totalOrders > 0 ? '1d' : 'N/A';
+
+      // Lấy trạng thái từ inventory
+      const inventory = inventoryData.find((inv) => inv._id === product.inventory);
+      const status = inventory ? (inventory.quantity === 0 ? 'Low Stock' : 'In Stock') : 'Unknown';
+
+      return {
+        productId: product._id,
+        productName: product.name,
+        status,
+        totalOrders,
+        revenue: `$${revenue.toFixed(2)}`,
+        avgOrderValue: `$${avgOrderValue.toFixed(2)}`,
+        processingTime,
+      };
+    });
+
+    return {
+      status: 200,
+      message: 'Sales statistics retrieved successfully',
+      data: salesStats,
+    };
+  } catch (error) {
+    console.error('Error in getSalesStats service:', error.message);
+    return {
+      status: 500,
+      message: 'Error retrieving sales data',
+      error: error.message,
+    };
+  }
+};
+
 module.exports = {
   createOrder,
   getOrderDetail,
@@ -356,4 +442,5 @@ module.exports = {
   getAllOrderOfUser,
   updateStatusOrder,
   countOrderByUser,
+  getSalesStats,
 };

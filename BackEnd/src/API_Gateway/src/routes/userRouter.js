@@ -177,7 +177,17 @@ router.get('/check-deletable/:id', async (req, res) => {
 
 router.get('/admin/stats/:id', async (req, res) => {
   try {
-    const response = await userServiceClient.get(`/api/user/admin/stats/${req.params.id}`);
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({
+        message: 'Token is missing at API Gateway',
+        status: 'ERROR',
+      });
+    }
+
+    const response = await userServiceClient.getAuth(`/api/user/admin/stats/${req.params.id}`, token);
     console.log('Gateway stats - Response from user_service:', response.data);
     res.status(response.status).json(response.data);
   } catch (error) {

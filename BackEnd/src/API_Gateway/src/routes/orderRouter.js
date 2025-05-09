@@ -135,4 +135,25 @@ router.get('/order-count/:id', async (req, res) => {
   }
 });
 
+router.get('/admin/sales-stats', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({
+        message: 'Token is missing at API Gateway router',
+        status: 'ERROR',
+      });
+    }
+    const response = await orderServiceClient.getAuth('/api/order/admin/sales-stats', token);
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('Error when calling user service:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Internal server error at API Gateway',
+      status: 'ERROR',
+    });
+  }
+});
+
 module.exports = router;
