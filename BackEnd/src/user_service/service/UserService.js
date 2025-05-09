@@ -145,12 +145,33 @@ const updateUser = async (id, data) => {
       return { status: 'ERROR', message: 'No data to update' };
     }
 
-    // Nếu có address trong data, sử dụng $push để thêm vào mảng
+    // Tạo object updateData chứa các trường cần cập nhật
     let updateData = { ...data };
+
+    // Xóa trường address khỏi updateData để tránh xung đột với $push
     if (data.address) {
-      updateData = {
-        $push: { address: { $each: data.address } }, // Thêm từng phần tử vào mảng
-      };
+      // Lấy thông tin người dùng hiện tại
+      const existingUser = await User.findById(id);
+      if (!existingUser) {
+        return { status: 'ERROR', message: 'User not found' };
+      }
+
+      // Lấy mảng address hiện tại
+      const existingAddresses = existingUser.address || [];
+
+      // Lọc các địa chỉ mới, loại bỏ những địa chỉ đã tồn tại
+      const newAddresses = data.address.filter((newAddr) => {
+        return !existingAddresses.some((existingAddr) => JSON.stringify(existingAddr) === JSON.stringify(newAddr));
+      });
+
+      // Nếu có địa chỉ mới không trùng lặp, thực hiện $push
+      if (newAddresses.length > 0) {
+        delete updateData.address;
+        updateData.$push = { address: { $each: newAddresses } };
+      } else {
+        // Nếu không có địa chỉ mới nào không trùng lặp, xóa address khỏi updateData
+        delete updateData.address;
+      }
     }
 
     const updatedUser = await User.findByIdAndUpdate(id, updateData, {
