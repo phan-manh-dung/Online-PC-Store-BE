@@ -227,6 +227,29 @@ const checkDeletableUser = async (req, res) => {
   }
 };
 
+const getUserStats = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    console.log('userId controller', userId);
+    if (!userId) {
+      return res.status(400).json({
+        status: 'ERR',
+        message: 'User ID is required',
+      });
+    }
+
+    const result = await UserService.getUserStats(userId);
+    return res.status(result.status).json(result);
+  } catch (error) {
+    console.error('Error in getUserStats controller:', error);
+    return res.status(500).json({
+      status: 'ERR',
+      message: 'Internal server error',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createUser,
   loginUser,
@@ -237,4 +260,5 @@ module.exports = {
   updateUser,
   getDetailsUser,
   checkDeletableUser,
+  getUserStats,
 };

@@ -20,8 +20,8 @@ const errorHandler = (error, res) => {
   });
 };
 
+// Bỏ qua xác thực cho API đăng nhập
 router.use((req, res, next) => {
-  // Bỏ qua xác thực cho API đăng nhập
   if (req.path === '/sign-in' || req.path === '/sign-up') {
     return next();
   }
@@ -169,6 +169,16 @@ router.get('/verify-token', async (req, res) => {
 router.get('/check-deletable/:id', async (req, res) => {
   try {
     const response = await userServiceClient.get(`/api/user/check-deletable/${req.params.id}`);
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    errorHandler(error, res);
+  }
+});
+
+router.get('/admin/stats/:id', async (req, res) => {
+  try {
+    const response = await userServiceClient.get(`/api/user/admin/stats/${req.params.id}`);
+    console.log('Gateway stats - Response from user_service:', response.data);
     res.status(response.status).json(response.data);
   } catch (error) {
     errorHandler(error, res);

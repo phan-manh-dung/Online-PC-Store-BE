@@ -17,7 +17,8 @@ router.delete('/admin/delete-user/:id', authMiddleware, userController.deleteUse
 router.get('/admin/get-all', authMiddleware, userController.getAllUser);
 router.get('/get-detail/:id', userController.getDetailsUser);
 router.put('/update-user/:id', userController.updateUser);
-
+// API để lấy thống kê đơn hàng của người dùng
+router.get('/admin/stats/:id', userController.getUserStats);
 router.get('/verify-token', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;

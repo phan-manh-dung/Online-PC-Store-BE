@@ -204,10 +204,10 @@ const getAllOrderOfUser = (id, statusOrder) => {
           message: 'User ID is required',
         });
       }
-      // Tạo query object để tìm kiếm theo user và status (nếu có)
+
       let query = { userId: new mongoose.Types.ObjectId(id) };
       if (statusOrder) {
-        query.statusOrder = statusOrder; // Thêm điều kiện lọc theo statusOrder
+        query.statusOrder = statusOrder;
       }
 
       const order = await Order.find(query).sort({ createdAt: -1, updatedAt: -1 });
@@ -217,29 +217,39 @@ const getAllOrderOfUser = (id, statusOrder) => {
           message: 'No orders found',
         });
       } else {
-        // Tạo response mới
         let responseData = {};
-        // Nếu chỉ có 1 order, không cần kiểm tra trùng lặp
         if (order.length === 1) {
           responseData = order[0].toObject();
         } else {
-          // Lấy order đầu tiên làm tham chiếu
-          const firstOrder = order[0];
-          // Kiểm tra trùng lặp mà không dùng JSON.stringify
-          const isCustomerInfoSame = order.every((order) => {
-            const firstInfo = firstOrder.customerInformation[0];
-            const currentInfo = order.customerInformation[0];
-            return firstInfo.name === currentInfo.name && firstInfo.phone === currentInfo.phone;
+          const firstOrder = order[0].toObject();
+
+          // Kiểm tra customerInformation
+          const isCustomerInfoSame = order.every((orderItem) => {
+            const firstInfo = firstOrder.customerInformation;
+            const currentInfo = orderItem.customerInformation;
+            if (!firstInfo || !currentInfo) return false;
+            return (
+              (Array.isArray(firstInfo) ? firstInfo[0]?.name : firstInfo?.name) ===
+                (Array.isArray(currentInfo) ? currentInfo[0]?.name : currentInfo?.name) &&
+              (Array.isArray(firstInfo) ? firstInfo[0]?.phone : firstInfo?.phone) ===
+                (Array.isArray(currentInfo) ? currentInfo[0]?.phone : currentInfo?.phone)
+            );
           });
 
-          const isShippingAddressSame = order.every((order) => {
-            const firstAddr = firstOrder.shippingAddress[0];
-            const currentAddr = order.shippingAddress[0];
+          // Kiểm tra shippingAddress
+          const isShippingAddressSame = order.every((orderItem) => {
+            const firstAddr = firstOrder.shippingAddress;
+            const currentAddr = orderItem.shippingAddress;
+            if (!firstAddr || !currentAddr) return false;
             return (
-              firstAddr.ward === currentAddr.ward &&
-              firstAddr.district === currentAddr.district &&
-              firstAddr.city === currentAddr.city &&
-              firstAddr.country === currentAddr.country
+              (Array.isArray(firstAddr) ? firstAddr[0]?.ward : firstAddr?.ward) ===
+                (Array.isArray(currentAddr) ? currentAddr[0]?.ward : currentAddr?.ward) &&
+              (Array.isArray(firstAddr) ? firstAddr[0]?.district : firstAddr?.district) ===
+                (Array.isArray(currentAddr) ? currentAddr[0]?.district : currentAddr?.district) &&
+              (Array.isArray(firstAddr) ? firstAddr[0]?.city : firstAddr?.city) ===
+                (Array.isArray(currentAddr) ? currentAddr[0]?.city : currentAddr?.city) &&
+              (Array.isArray(firstAddr) ? firstAddr[0]?.country : firstAddr?.country) ===
+                (Array.isArray(currentAddr) ? currentAddr[0]?.country : currentAddr?.country)
             );
           });
 
@@ -252,8 +262,8 @@ const getAllOrderOfUser = (id, statusOrder) => {
           }
 
           // Tạo danh sách orders đã loại bỏ các trường trùng lặp
-          responseData.orders = order.map((order) => {
-            const orderData = order.toObject();
+          responseData.orders = order.map((orderItem) => {
+            const orderData = orderItem.toObject();
             if (isCustomerInfoSame) delete orderData.customerInformation;
             if (isShippingAddressSame) delete orderData.shippingAddress;
             return orderData;
@@ -329,17 +339,12 @@ const updateStatusOrder = (orderId, statusOrder) => {
 
 const countOrderByUser = async (userId) => {
   try {
-    const orders = await Order.find({ userId }); // Lấy tất cả document
+    const orders = await Order.find({ userId }); // Lấy tất cả đơn hàng
     if (!orders || orders.length === 0) return 0;
-    // Tổng số orderDetailIds từ tất cả document
-    const totalOrderDetails = orders.reduce(
-      (sum, order) => sum + (order.orderDetailIds ? order.orderDetailIds.length : 0),
-      0,
-    );
-    return totalOrderDetails;
+    return orders.length; // Đếm số đơn hàng, không đếm số sản phẩm
   } catch (error) {
-    console.error('Error counting order items:', error.message);
-    throw new Error('Failed to count order items: ' + error.message);
+    console.error('Error counting orders:', error.message);
+    throw new Error('Failed to count orders: ' + error.message);
   }
 };
 

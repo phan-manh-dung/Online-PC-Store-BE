@@ -12,5 +12,7 @@ router.get('/get-all-order-user/:id', orderController.getAllOrderOfUser);
 router.get('/admin/get-all-order', authMiddlewareOrder, orderController.getAllOrder);
 // update status order
 router.put('/update-status', orderController.updateStatusOrder);
+// đếm số đơn hàng
 router.get('/order-count/:id', orderController.countOrderByUser);
+
 module.exports = router;
