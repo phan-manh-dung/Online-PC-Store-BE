@@ -201,6 +201,61 @@ class ServiceClient {
     }
   }
 
+  // getAuth for Order Stats
+  async getAuthForOrderStats(endpoint, token, queryParams = {}, headers = {}) {
+    if (typeof token !== 'string' || !token.trim()) {
+      throw new Error('Invalid authentication token');
+    }
+    return this._sendGetRequestForOrderStats(
+      endpoint,
+      {
+        ...headers,
+        Authorization: `Bearer ${token.trim()}`,
+      },
+      queryParams,
+    );
+  }
+
+  async _sendGetRequestForOrderStats(endpoint, headers = {}, queryParams = {}) {
+    const instance = await this._getServiceInstance();
+    if (!instance) {
+      throw new Error(`No available instances for ${this.serviceName}`);
+    }
+    const url = `http://${instance.host}:${instance.port}${endpoint}`;
+    console.log(`[DEBUG] GET request to: ${url}`, queryParams);
+
+    const maxRetries = 3;
+    let retryCount = 0;
+
+    while (retryCount < maxRetries) {
+      try {
+        const response = await axios.get(url, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...headers,
+          },
+          params: queryParams,
+        });
+
+        return response;
+      } catch (error) {
+        console.error(`[ERROR] GET request failed on attempt ${retryCount + 1}:`, error.message);
+        if (error.response) {
+          console.error(`[ERROR] Status: ${error.response.status}, Data:`, error.response.data);
+          throw error;
+        }
+
+        retryCount++;
+        if (retryCount === maxRetries) {
+          throw new Error(`Service ${this.serviceName} unavailable after ${maxRetries} retries`);
+        }
+
+        console.log(`Retrying GET request to ${url} in 3 seconds... (Attempt ${retryCount + 1}/${maxRetries})`);
+        await this._delay(3000);
+      }
+    }
+  }
+
   // delete
   async delete(endpoint, headers = {}) {
     console.log(`ServiceClient - Sending DELETE to ${endpoint} with headers:`, headers);

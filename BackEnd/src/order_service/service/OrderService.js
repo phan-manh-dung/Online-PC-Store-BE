@@ -434,6 +434,140 @@ const getSalesStats = async (req) => {
   }
 };
 
+const getSummaryStats = async (req) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      throw new Error('Token not found in request headers');
+    }
+
+    const ordersResponse = await axios.get(`${process.env.GATEWAY_URL}/api/order/admin/get-all-order`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const orders = ordersResponse.data.data || [];
+    const totalOrders = orders.filter((order) => order.statusOrder === 'successful').length;
+
+    let totalRevenue = 0;
+    try {
+      const salesStatsResponse = await getSalesStats(req);
+      const salesStats = salesStatsResponse.data || [];
+      totalRevenue = salesStats.reduce((sum, stat) => {
+        const revenueValue = parseFloat(stat.revenue.replace('$', '').replace(',', '')) || 0;
+        return sum + revenueValue;
+      }, 0);
+    } catch (error) {
+      console.error('Failed to calculate sales stats:', error.message);
+      totalRevenue = 0;
+    }
+
+    return {
+      status: 200,
+      message: 'Summary statistics retrieved successfully',
+      data: {
+        totalOrders,
+        totalRevenue: `$${totalRevenue.toFixed(2)}`,
+      },
+    };
+  } catch (error) {
+    console.error('Error in getSummaryStats service:', error.message);
+    return {
+      status: 500,
+      message: 'Error retrieving summary stats',
+      error: error.message,
+    };
+  }
+};
+
+const getRevenueStatsByDate = async (req) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      throw new Error('Token not found in request headers');
+    }
+
+    // Lấy tham số từ query
+    const { day, month, year } = req.query;
+
+    // Validate tham số
+    if (!year && (day || month)) {
+      throw new Error('Year is required if day or month is specified');
+    }
+    if (!month && day) {
+      throw new Error('Month is required if day is specified');
+    }
+
+    const yearNum = year ? parseInt(year) : null;
+    const monthNum = month ? parseInt(month) - 1 : null; // JavaScript months are 0-based (0-11)
+    const dayNum = day ? parseInt(day) : null;
+
+    if (yearNum && (yearNum < 1970 || yearNum > 9999)) {
+      throw new Error('Invalid year');
+    }
+    if (monthNum !== null && (monthNum < 0 || monthNum > 11)) {
+      throw new Error('Invalid month');
+    }
+    if (dayNum !== null && (dayNum < 1 || dayNum > 31)) {
+      throw new Error('Invalid day');
+    }
+
+    // Lấy tất cả đơn hàng
+    const ordersResponse = await axios.get(`${process.env.GATEWAY_URL}/api/order/admin/get-all-order`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const orders = ordersResponse.data.data || [];
+
+    // Lọc đơn hàng successful và theo ngày/tháng/năm
+    let filteredOrders = orders.filter((order) => order.statusOrder === 'successful');
+
+    // Nếu không có tham số nào, trả về 0
+    if (!yearNum && monthNum === null && dayNum === null) {
+      filteredOrders = [];
+    } else {
+      filteredOrders = filteredOrders.filter((order) => {
+        const createdAt = new Date(order.createdAt);
+        const matchesYear = yearNum ? createdAt.getFullYear() === yearNum : true;
+        const matchesMonth = monthNum !== null ? createdAt.getMonth() === monthNum : true;
+        const matchesDay = dayNum !== null ? createdAt.getDate() === dayNum : true;
+        return matchesYear && matchesMonth && matchesDay;
+      });
+    }
+
+    const totalOrders = filteredOrders.length;
+
+    // Lấy chi tiết đơn hàng
+    const orderDetailIds = filteredOrders.flatMap((order) => order.orderDetailIds);
+    const orderDetails = await OrderDetail.find({ _id: { $in: orderDetailIds } });
+
+    // Tính tổng doanh thu
+    const totalRevenue = orderDetails.reduce((sum, detail) => sum + (detail.totalPrice || 0), 0);
+
+    return {
+      status: 200,
+      message: 'Revenue statistics retrieved successfully',
+      data: {
+        totalOrders,
+        totalRevenue: `$${totalRevenue.toFixed(2)}`,
+        period: {
+          day: day ? parseInt(day) : undefined,
+          month: month ? parseInt(month) : undefined,
+          year: year ? parseInt(year) : undefined,
+        },
+      },
+    };
+  } catch (error) {
+    console.error('Error in getRevenueStats service:', error.message);
+    return {
+      status: 500,
+      message: 'Error retrieving revenue stats',
+      error: error.message,
+    };
+  }
+};
+
 module.exports = {
   createOrder,
   getOrderDetail,
@@ -443,4 +577,6 @@ module.exports = {
   updateStatusOrder,
   countOrderByUser,
   getSalesStats,
+  getSummaryStats,
+  getRevenueStatsByDate,
 };

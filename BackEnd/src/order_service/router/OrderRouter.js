@@ -12,9 +12,12 @@ router.get('/get-all-order-user/:id', orderController.getAllOrderOfUser);
 router.get('/admin/get-all-order', authMiddlewareOrder, orderController.getAllOrder);
 // update status order
 router.put('/update-status', orderController.updateStatusOrder);
-// đếm số đơn hàng
+// đếm số đơn hàng của từng user
 router.get('/order-count/:id', orderController.countOrderByUser);
-// thống kê doanh thu
+// thống kê doanh thu theo từng user
 router.get('/admin/sales-stats', authMiddlewareOrder, orderController.getSalesStats);
-
+// lấy tất cả các đơn hàng và doanh thu của user
+router.get('/admin/summary-stats', authMiddlewareOrder, orderController.getSummaryStats);
+// thống kê doanh thu theo ngày tháng năm
+router.get('/admin/revenue-stats', authMiddlewareOrder, orderController.getRevenueStatsByDate);
 module.exports = router;
