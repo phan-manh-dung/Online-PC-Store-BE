@@ -286,6 +286,34 @@ const getSalesStats = async (req, res) => {
   }
 };
 
+const getSummaryStats = async (req, res) => {
+  try {
+    const result = await OrderService.getSummaryStats(req);
+    return res.status(result.status).json(result);
+  } catch (error) {
+    console.error('Error in getSummaryStats controller:', error);
+    return res.status(500).json({
+      status: 'ERR',
+      message: 'Internal server error',
+      error: error.message,
+    });
+  }
+};
+
+const getRevenueStatsByDate = async (req, res) => {
+  try {
+    const result = await OrderService.getRevenueStatsByDate(req);
+    return res.status(result.status).json(result);
+  } catch (error) {
+    console.error('Error in getRevenueStatsByDate controller:', error);
+    return res.status(500).json({
+      status: 'ERR',
+      message: 'Internal server error',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   getDetailOrder,
@@ -295,4 +323,6 @@ module.exports = {
   updateStatusOrder,
   countOrderByUser,
   getSalesStats,
+  getSummaryStats,
+  getRevenueStatsByDate,
 };

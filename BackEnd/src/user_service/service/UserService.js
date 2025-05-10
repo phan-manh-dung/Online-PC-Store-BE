@@ -317,6 +317,20 @@ const getUserStats = async (userId) => {
   }
 };
 
+const getCountUsers = async () => {
+  try {
+    const totalUsers = await User.countDocuments(); // nhớ await
+    return {
+      status: 'OK',
+      message: 'Total users retrieved successfully',
+      data: { totalUsers },
+    };
+  } catch (error) {
+    console.error('Error in count-users:', error.message);
+    throw new Error('Error retrieving total users');
+  }
+};
+
 module.exports = {
   createUser,
   loginUser,
@@ -326,4 +340,5 @@ module.exports = {
   getDetailsUser,
   checkDeletableUser,
   getUserStats,
+  getCountUsers,
 };

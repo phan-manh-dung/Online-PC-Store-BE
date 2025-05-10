@@ -17,6 +17,7 @@ router.delete('/admin/delete-user/:id', authMiddleware, userController.deleteUse
 router.get('/admin/get-all', authMiddleware, userController.getAllUser);
 // API để lấy thống kê đơn hàng của người dùng
 router.get('/admin/stats/:id', authMiddleware, userController.getUserStats);
+router.get('/admin/count-users', authMiddleware, userController.getCountUsers);
 router.get('/get-detail/:id', userController.getDetailsUser);
 router.put('/update-user/:id', userController.updateUser);
 

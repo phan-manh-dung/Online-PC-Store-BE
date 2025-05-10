@@ -153,13 +153,11 @@ router.get('/verify-token', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1];
-    console.log('Gateway verify-token - Token:', token);
     if (!token) {
       return res.status(401).json({ message: 'No token provided' });
     }
 
     const response = await userServiceClient.getAuth('/api/user/verify-token', token);
-    console.log('Gateway verify-token - Response from user_service:', response.data);
     res.status(response.status).json(response.data);
   } catch (error) {
     errorHandler(error, res);
@@ -192,6 +190,30 @@ router.get('/admin/stats/:id', async (req, res) => {
     res.status(response.status).json(response.data);
   } catch (error) {
     errorHandler(error, res);
+  }
+});
+
+router.get('/admin/count-users', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({
+        message: 'Token is missing at API Gateway',
+        status: 'ERROR',
+      });
+    }
+
+    const response = await userServiceClient.getAuth('/api/user/admin/count-users', token);
+
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('Error when calling user service:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Internal server error at API Gateway',
+      status: 'ERROR',
+    });
   }
 });
 

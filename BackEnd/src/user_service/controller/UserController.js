@@ -249,6 +249,17 @@ const getUserStats = async (req, res) => {
   }
 };
 
+const getCountUsers = async (req, res) => {
+  try {
+    const response = await UserService.getCountUsers();
+    return res.status(200).json(response);
+  } catch (e) {
+    return res.status(404).json({
+      message: e,
+    });
+  }
+};
+
 module.exports = {
   createUser,
   loginUser,
@@ -260,4 +271,5 @@ module.exports = {
   getDetailsUser,
   checkDeletableUser,
   getUserStats,
+  getCountUsers,
 };
