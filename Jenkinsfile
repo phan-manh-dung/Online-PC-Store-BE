@@ -16,12 +16,7 @@ pipeline {
         }
         stage('Run Tests') {
             steps {
-                sh 'npm test'
-            }
-        }
-        stage('Build') {
-            steps {
-                sh 'npm run build' // Nếu dự án của bạn có script build
+                sh 'npm test' // Jest sẽ chạy thông qua lệnh npm test
             }
         }
     }
