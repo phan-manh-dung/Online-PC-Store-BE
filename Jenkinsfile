@@ -6,7 +6,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/dinhchung2102/Online-PC-Store-BE.git', branch: 'master'
+                checkout scm 
             }
         }
         stage('Install Dependencies') {
