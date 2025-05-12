@@ -27,10 +27,10 @@ pipeline {
     }
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo "Pipeline completed successfully on branch ${env.BRANCH_NAME}!"
         }
         failure {
-            echo 'Pipeline failed!'
+            echo "Pipeline failed on branch ${env.BRANCH_NAME}!"
         }
     }
 }
