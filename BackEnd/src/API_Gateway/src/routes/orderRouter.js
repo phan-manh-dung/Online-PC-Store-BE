@@ -5,7 +5,7 @@ const orderServiceClient = new ServiceClient('order_service');
 // Middleware verify token
 const authenticateToken = require('../middleware/authenMiddleware');
 
-const { readData, createData } = require('../../redis/v1/service/redisService');
+const { readData, createData, deleteDataPattern, deleteData } = require('../../redis/v1/service/redisService');
 
 const errorHandler = (error, res) => {
   console.error('Service Error:', error);
@@ -27,6 +27,13 @@ router.post('/create-order', async (req, res) => {
     const response = await orderServiceClient.postAuth('/api/order/create-order', req.body, {
       Authorization: req.headers.authorization,
     });
+    // Xóa cache sau khi tạo order thành công
+    // if (response.data.status === 'OK') {
+    //   const userId = req.body.userId;
+    //   const cachePattern = `order-all-one-user:${userId}:*`; // thêm wildcard
+    //   await deleteDataPattern(cachePattern);
+    // }
+
     res.status(response.status).json(response.data);
   } catch (error) {
     errorHandler(error, res);
@@ -43,8 +50,10 @@ router.get('/get-detail-order/:id', async (req, res) => {
     }
     const response = await orderServiceClient.get(`/api/order/get-detail-order/${req.params.id}`, req.body);
     const data = response.data;
-    await createData(cacheKey, data, 3600);
-    console.log(`Cache created for key: ${cacheKey}`);
+    if (data.status === 'OK') {
+      await createData(cacheKey, data, 3600);
+      console.log(`Cache created for key: ${cacheKey}`);
+    }
     res.status(response.status).json(response.data);
   } catch (error) {
     errorHandler(error, res);
@@ -93,17 +102,19 @@ router.patch('/cancel-order/:id', async (req, res) => {
 
 router.get('/get-all-order-user/:id', async (req, res) => {
   try {
-    const cacheKey = `order-all-one-user:${req.params.id}:${req.query.statusOrder || ''}`;
-    const cachedData = await readData(cacheKey).catch(() => null);
-    if (cachedData) {
-      return res.status(200).json(cachedData);
-    }
+    // const cacheKey = `order-all-one-user:${req.params.id}:${req.query.statusOrder || ''}`;
+    // const cachedData = await readData(cacheKey).catch(() => null);
+    // if (cachedData) {
+    //   return res.status(200).json(cachedData);
+    // }
     const response = await orderServiceClient.get(
       `/api/order/get-all-order-user/${req.params.id}?statusOrder=${req.query.statusOrder || ''}`,
     );
     const data = response.data;
-    await createData(cacheKey, data, 3600);
-    console.log(`Cache created for key: ${cacheKey}`);
+    // if (data.status === 'OK') {
+    //   await createData(cacheKey, data, 3600);
+    //   console.log(`Cache created for key: ${cacheKey}`);
+    // }
     res.status(response.status).json(response.data);
   } catch (error) {
     errorHandler(error, res);
