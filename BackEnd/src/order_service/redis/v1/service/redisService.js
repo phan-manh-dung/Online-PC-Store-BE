@@ -61,9 +61,26 @@ async function deleteData(key) {
   }
 }
 
+async function deleteDataPattern(pattern) {
+  try {
+    const keys = await redisClient.keys(pattern);
+    if (keys.length > 0) {
+      await redisClient.del(keys);
+      console.log(`Deleted ${keys.length} keys matching pattern: ${pattern}`);
+      return true;
+    }
+    console.log(`No keys found for pattern: ${pattern}`);
+    return false;
+  } catch (err) {
+    console.error('Error in deleteDataPattern:', err);
+    throw err;
+  }
+}
+
 module.exports = {
   createData,
   readData,
   updateData,
   deleteData,
+  deleteDataPattern,
 };

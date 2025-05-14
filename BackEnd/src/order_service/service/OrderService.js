@@ -2,7 +2,7 @@ const { Order, OrderDetail } = require('../model/OrderModel');
 const mongoose = require('mongoose');
 const axios = require('axios');
 
-const { readData, updateData, deleteData } = require('../redis/v1/service/redisService');
+const { readData, updateData, deleteData, deleteDataPattern } = require('../redis/v1/service/redisService');
 
 const createOrder = (
   userId,
@@ -215,7 +215,7 @@ const getAllOrderOfUser = (id, statusOrder) => {
       if (!order || order.length === 0 || order === null) {
         resolve({
           status: 'ERR',
-          message: 'No orders found',
+          message: 'User not found order',
         });
       } else {
         let responseData = {};
@@ -230,8 +230,8 @@ const getAllOrderOfUser = (id, statusOrder) => {
             const currentInfo = orderItem.customerInformation;
             if (!firstInfo || !currentInfo) return false;
             return (
-              (Array.isArray(firstInfo) ? firstInfo[0]?.name : firstInfo?.name) ===
-                (Array.isArray(currentInfo) ? currentInfo[0]?.name : currentInfo?.name) &&
+              (Array.isArray(firstInfo) ? firstInfo[0]?.fullname : firstInfo?.fullname) ===
+                (Array.isArray(currentInfo) ? currentInfo[0]?.fullname : currentInfo?.fullname) &&
               (Array.isArray(firstInfo) ? firstInfo[0]?.phone : firstInfo?.phone) ===
                 (Array.isArray(currentInfo) ? currentInfo[0]?.phone : currentInfo?.phone)
             );
@@ -247,8 +247,8 @@ const getAllOrderOfUser = (id, statusOrder) => {
                 (Array.isArray(currentAddr) ? currentAddr[0]?.ward : currentAddr?.ward) &&
               (Array.isArray(firstAddr) ? firstAddr[0]?.district : firstAddr?.district) ===
                 (Array.isArray(currentAddr) ? currentAddr[0]?.district : currentAddr?.district) &&
-              (Array.isArray(firstAddr) ? firstAddr[0]?.city : firstAddr?.city) ===
-                (Array.isArray(currentAddr) ? currentAddr[0]?.city : currentAddr?.city) &&
+              (Array.isArray(firstAddr) ? firstAddr[0]?.province : firstAddr?.province) ===
+                (Array.isArray(currentAddr) ? currentAddr[0]?.province : currentAddr?.province) &&
               (Array.isArray(firstAddr) ? firstAddr[0]?.country : firstAddr?.country) ===
                 (Array.isArray(currentAddr) ? currentAddr[0]?.country : currentAddr?.country)
             );

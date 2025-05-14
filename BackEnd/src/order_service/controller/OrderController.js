@@ -44,14 +44,14 @@ const createOrder = async (req, res) => {
     const userAddress = user?.address?.[0] || null;
 
     const customerInformation = {
-      name: user?.name,
+      fullname: user?.fullname,
       phone: user?.phone,
     };
 
     const shippingAddress = {
       ward: userAddress?.ward,
       district: userAddress?.district,
-      city: userAddress?.city,
+      province: userAddress?.province,
       country: userAddress?.country,
     };
 

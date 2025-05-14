@@ -34,7 +34,7 @@ const userSchema = new mongoose.Schema(
       {
         ward: { type: String, default: null },
         district: { type: String, default: null },
-        city: { type: String, default: null },
+        province: { type: String, default: null },
         country: { type: String, default: null },
         _id: false,
       },

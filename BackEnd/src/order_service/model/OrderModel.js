@@ -20,13 +20,13 @@ const orderSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, required: true },
     customerInformation: {
-      name: { type: String, require: true },
+      fullname: { type: String, require: true },
       phone: { type: String, require: true },
     },
     shippingAddress: {
       ward: { type: String, require: true },
       district: { type: String, required: true },
-      city: { type: String, require: true },
+      province: { type: String, require: true },
       country: { type: String, require: true },
     },
     paymentMethod: {

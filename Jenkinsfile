@@ -6,7 +6,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/dinhchung2102/Online-PC-Store-BE.git', branch: 'master'
+                checkout scm 
             }
         }
         stage('Install Dependencies') {
@@ -16,21 +16,16 @@ pipeline {
         }
         stage('Run Tests') {
             steps {
-                sh 'npm test'
-            }
-        }
-        stage('Build') {
-            steps {
-                sh 'npm run build' // Nếu dự án của bạn có script build
+                sh 'npm test' // Jest sẽ chạy thông qua lệnh npm test
             }
         }
     }
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo "Pipeline completed successfully on branch ${env.BRANCH_NAME}!"
         }
         failure {
-            echo 'Pipeline failed!'
+            echo "Pipeline failed on branch ${env.BRANCH_NAME}!"
         }
     }
 }
