@@ -88,7 +88,6 @@ const deleteManyCart = async (req, res) => {
     }
 
     const ids = cartIdObjects.map((item) => item.cartId);
-    console.log('ids', ids);
 
     if (!ids || ids.length === 0) {
       return res.status(400).json({
