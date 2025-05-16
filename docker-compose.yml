@@ -94,6 +94,17 @@ services:
     networks:
       - network-mcs-kttkpm
 
+  search_service:
+    build:
+      context: ./BackEnd/src/search_service
+      dockerfile: Dockerfile
+    ports:
+      - "5006:5006"
+    depends_on:
+      - redis
+    networks:
+      - network-mcs-kttkpm      
+
   payment_service:
     build:
       context: ./BackEnd/src/payment_service

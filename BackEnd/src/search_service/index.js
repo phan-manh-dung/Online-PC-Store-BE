@@ -16,13 +16,14 @@ app.use(express.json());
 
 let host = 'search_service';
 if (process.env.NODE_ENV === 'localhost') {
-  host = 'localhost';
+  // host = 'localhost';
+  host = 'search_service';
 }
 
 const SERVICE_INFO = {
   name: 'search_service',
   host: host,
-  port: process.env.PORT || 5005,
+  port: process.env.PORT || 5006,
   endpoints: [
     '/api/product/get-all',
     '/api/product/get-by-id/:id',

@@ -224,28 +224,85 @@ const getCartUser = async (userId) => {
   }
 };
 
+// const deleteManyCart = (ids) => {
+//   return new Promise(async (resolve, reject) => {
+//     try {
+//       // Chuyển đổi mảng ids (chuỗi) thành mảng ObjectId
+//       const objectIds = ids.map((id) => new ObjectId(id));
+//       // Thay đổi cách truy vấn để tìm các cart có cartItems._id khớp với các ID đã cho
+//       const result = await Cart.updateMany(
+//         { 'cartItems._id': { $in: objectIds } },
+//         { $pull: { cartItems: { _id: { $in: objectIds } } } },
+//       );
+
+//       if (result.modifiedCount === 0) {
+//         resolve({
+//           status: 'OK',
+//           message: 'No cart items found to delete',
+//         });
+//       } else {
+//         resolve({
+//           status: 'OK',
+//           message: `Deleted ${result.modifiedCount} cart items successfully`,
+//         });
+//       }
+//     } catch (e) {
+//       reject({
+//         status: 'ERR',
+//         message: e.message,
+//       });
+//     }
+//   });
+// };
+
 const deleteManyCart = (ids) => {
   return new Promise(async (resolve, reject) => {
     try {
-      // Chuyển đổi mảng ids (chuỗi) thành mảng ObjectId
       const objectIds = ids.map((id) => new ObjectId(id));
-      // Thay đổi cách truy vấn để tìm các cart có cartItems._id khớp với các ID đã cho
+
+      // 1. Tìm các cart chứa những cartItems cần xóa
+      const carts = await Cart.find({ 'cartItems._id': { $in: objectIds } });
+
+      if (carts.length === 0) {
+        return resolve({
+          status: 'OK',
+          message: 'No cart items found to delete',
+        });
+      }
+
+      // 2. Xóa cartItems khỏi DB
       const result = await Cart.updateMany(
         { 'cartItems._id': { $in: objectIds } },
         { $pull: { cartItems: { _id: { $in: objectIds } } } },
       );
 
-      if (result.modifiedCount === 0) {
-        resolve({
-          status: 'OK',
-          message: 'No cart items found to delete',
-        });
-      } else {
-        resolve({
-          status: 'OK',
-          message: `Deleted ${result.modifiedCount} cart items successfully`,
-        });
+      // 3. Cập nhật Redis cho từng cart liên quan
+      for (const cart of carts) {
+        const updatedCart = await Cart.findOne({ _id: cart._id });
+
+        const cacheKey = `get-cart-user:${cart.userId}`;
+
+        if (!updatedCart || updatedCart.cartItems.length === 0) {
+          // Nếu giỏ trống, xóa DB và cache
+          await Cart.deleteOne({ _id: cart._id });
+          await deleteData(cacheKey);
+          console.log(`Cart empty -> deleted cache: ${cacheKey}`);
+        } else {
+          // Nếu còn item, cập nhật lại cache
+          const responseData = {
+            status: 'OK',
+            message: 'Success',
+            data: updatedCart,
+          };
+          await updateData(cacheKey, responseData, 3600);
+          console.log(`Updated cache for: ${cacheKey}`);
+        }
       }
+
+      resolve({
+        status: 'OK',
+        message: `Deleted ${result.modifiedCount} cart items successfully`,
+      });
     } catch (e) {
       reject({
         status: 'ERR',
