@@ -5,6 +5,7 @@ const cors = require('cors');
 
 const express = require('express');
 const dotenv = require('dotenv');
+dotenv.config();
 const mongoose = require('mongoose');
 const axios = require('axios');
 const { Kafka } = require('kafkajs');
@@ -16,11 +17,13 @@ const kafka = new Kafka({
   //brokers: ['kafka:9092'],
 });
 const consumer = kafka.consumer({ groupId: 'payment-group' });
+const producer = kafka.producer();
 
-// Kết nối consumer và lắng nghe message
-const connectConsumer = async () => {
+// Kết nối consumer và producer
+const connectKafka = async () => {
   try {
     await consumer.connect();
+    await producer.connect();
     await consumer.subscribe({ topic: 'order-payment', fromBeginning: true });
 
     await consumer.run({
@@ -29,33 +32,45 @@ const connectConsumer = async () => {
         console.log('Received order from Kafka:', orderData);
 
         // Xử lý thanh toán với MoMo (gọi API create-payment)
-        await processMoMoPayment(orderData);
+        const payUrl = await processMoMoPayment(orderData);
+        if (payUrl) {
+          // Gửi payUrl về cho order service
+          await producer.send({
+            topic: 'payment-url',
+            messages: [
+              {
+                value: JSON.stringify({
+                  orderId: orderData.orderId,
+                  payUrl: payUrl,
+                }),
+              },
+            ],
+          });
+        }
       },
     });
-    console.log('Kafka Consumer connected');
+    console.log('Kafka Consumer and Producer connected');
   } catch (error) {
-    console.error('Error connecting Kafka Consumer:', error);
+    console.error('Error connecting Kafka:', error);
   }
 };
-connectConsumer();
+connectKafka();
 
 // Hàm xử lý thanh toán MoMo (sẽ gọi API create-payment)
 const processMoMoPayment = async (orderData) => {
   try {
     // Gọi API create-payment trong payment_service
-    const response = await fetch('http://localhost:5555/api/payment/create-payment-momo', {
-      method: 'POST',
+    const response = await axios.post('http://localhost:5555/api/payment/create-payment-momo', orderData, {
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orderData),
     });
-    const result = await response.json();
-    console.log('MoMo payment created:', result);
+    console.log('MoMo payment created:', response.data);
+    return response.data.payUrl; // Return payUrl from the response
   } catch (error) {
-    console.error('Error processing MoMo payment:', error);
+    console.error('Error processing MoMo payment:', error.message);
+    return null;
   }
 };
 
-dotenv.config();
 const app = express();
 // Thêm middleware để parse JSON
 app.use(express.json());
@@ -116,7 +131,8 @@ function startHeartbeat() {
 // Graceful shutdown
 process.on('SIGINT', async () => {
   await consumer.disconnect();
-  console.log('Kafka Consumer disconnected');
+  await producer.disconnect();
+  console.log('Kafka Consumer and Producer disconnected');
   if (serviceId) {
     try {
       await axios.post(`${process.env.GATEWAY_URL}/unregister/${serviceId}`);

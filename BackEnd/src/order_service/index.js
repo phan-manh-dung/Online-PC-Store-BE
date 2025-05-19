@@ -19,19 +19,36 @@ const kafka = new Kafka({
   //brokers: ['kafka:9092'],
 });
 const producer = kafka.producer();
+const consumer = kafka.consumer({ groupId: 'order-group' });
 
-//Kết nối producer
-const connectProducer = async () => {
+// Store payUrls temporarily
+const payUrlStore = new Map();
+
+//Kết nối producer và consumer
+const connectKafka = async () => {
   try {
     await producer.connect();
-    console.log('Kafka Producer connected');
+    await consumer.connect();
+    await consumer.subscribe({ topic: 'payment-url', fromBeginning: true });
+
+    await consumer.run({
+      eachMessage: async ({ topic, partition, message }) => {
+        const data = JSON.parse(message.value.toString());
+        console.log('Received payment URL from Kafka:', data);
+        // Store payUrl with orderId
+        payUrlStore.set(data.orderId, data.payUrl);
+      },
+    });
+    console.log('Kafka Producer and Consumer connected');
   } catch (error) {
-    console.error('Error connecting Kafka Producer:', error);
+    console.error('Error connecting Kafka:', error);
   }
 };
-connectProducer();
-// Đưa producer vào app.locals để các router/controller có thể sử dụng
+connectKafka();
+
+// Đưa producer và payUrlStore vào app.locals để các router/controller có thể sử dụng
 app.locals.producer = producer;
+app.locals.payUrlStore = payUrlStore;
 
 const SERVICE_INFO = {
   name: 'order_service',
@@ -82,9 +99,9 @@ function startHeartbeat() {
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-  // of kafka
   await producer.disconnect();
-  console.log('Kafka Producer disconnected');
+  await consumer.disconnect();
+  console.log('Kafka Producer and Consumer disconnected');
   if (serviceId) {
     try {
       await axios.post(`${process.env.GATEWAY_URL}/unregister/${serviceId}`);

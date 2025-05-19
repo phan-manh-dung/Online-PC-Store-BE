@@ -4,13 +4,12 @@ const Transaction = require('../model/transactionModel');
 const Webhook = require('../model/webhookModel');
 
 // Thông tin MoMo
-const partnerCode = 'MOMO' || process.env.MOMO_PARTNER_CODE;
-const accessKey = 'F8BBA842ECF85' || process.env.MOMO_ACCESS_KEY;
-const secretKey = 'K951B6PE1waDMi640xX08PD3vg6EkVlz' || process.env.MOMO_SECRET_KEY;
-const ipnUrl =
-  'https://0064-2001-ee0-5006-50a0-b003-5ba0-7840-9e64.ngrok-free.app/api/payment/callback' || process.env.MOMO_IPN_URL;
+const partnerCode = process.env.MOMO_PARTNER_CODE || 'MOMO';
+const accessKey = process.env.MOMO_ACCESS_KEY || 'F8BBA842ECF85';
+const secretKey = process.env.MOMO_SECRET_KEY || 'K951B6PE1waDMi640xX08PD3vg6EkVlz';
+const ipnUrl = 'https://phanmanhdung.id.vn/api/payment/callback';
 // thanh toán xong nó sẽ trở về đây
-const redirectUrl = 'https://webhook.site/cb7c3ef2-df12-482d-97bf-f76b1a4ead27' || process.env.MOMO_REDIRECT_URL;
+const redirectUrl = process.env.MOMO_REDIRECT_URL || 'https://phanmanhdung.id.vn/order-success';
 const requestType = 'captureWallet';
 
 function generateSignature(requestBody) {
@@ -60,17 +59,22 @@ const handleCallback = async (data) => {
     // Nếu thanh toán thành công, gọi API update-status của order_service
     if (data.resultCode === 0) {
       try {
-        await axios.put('http://api-gateway:5555/api/order/update-status', {
+        if (!process.env.GATEWAY_URL) {
+          throw new Error('GATEWAY_URL environment variable is not defined');
+        }
+        await axios.put(`${process.env.GATEWAY_URL}/api/order/update-status`, {
           orderId: data.orderId,
           statusOrder: 'completed',
         });
         console.log(`Updated statusOrder for order ${data.orderId} to completed`);
       } catch (error) {
         console.error(`Error updating order status for order ${data.orderId}:`, error.message);
+        throw error; // Re-throw để controller có thể xử lý
       }
     }
   } catch (error) {
     console.log('Error saving webhook:', error);
+    throw error; // Re-throw để controller có thể xử lý
   }
 };
 

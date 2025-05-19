@@ -3,7 +3,15 @@ const OrderService = require('../service/OrderService');
 
 const createOrder = async (req, res) => {
   try {
-    const { userId, products, shippingPrice = 0, totalPrice, statusOrder = '', paymentMethod = '' } = req.body;
+    const {
+      userId,
+      products,
+      shippingPrice = 0,
+      totalPrice,
+      statusOrder = '',
+      paymentMethod = '',
+      isDelivered = false,
+    } = req.body;
     const authHeader = req.headers['authorization'] || req.headers['Authorization'];
     let access_token = null;
 
@@ -120,7 +128,13 @@ const createOrder = async (req, res) => {
         totalPrice,
         statusOrder,
         paymentMethod,
+        isDelivered,
       );
+
+      // Convert Mongoose document to plain object
+      if (response.data && response.data.toObject) {
+        response.data = response.data.toObject();
+      }
     } catch (e) {
       console.error('Error calling OrderService.createOrder:', e);
       return res.status(500).json({
@@ -137,12 +151,16 @@ const createOrder = async (req, res) => {
 
     // Nếu paymentMethod là MOMO, gửi message đến Kafka
     if (paymentMethod.toUpperCase() === 'MOMO') {
-      const producer = req.app.locals.producer; // Lấy producer từ app.locals
+      const producer = req.app.locals.producer;
+      const payUrlStore = req.app.locals.payUrlStore;
+      const orderId = response?.data?._id.toString();
+      console.log('Order ID for payment:', orderId);
+
       const orderData = {
-        orderId: response?.data?._id.toString(),
+        orderId,
         userId,
-        amount: totalPrice, // Sử dụng totalPrice từ request
-        orderInfo: `Thanh toán đơn hàng ${response?.data?._id}`,
+        amount: totalPrice,
+        orderInfo: `Thanh toán đơn hàng ${orderId}`,
       };
 
       try {
@@ -155,9 +173,47 @@ const createOrder = async (req, res) => {
           ],
         });
         console.log('Order sent to Kafka:', orderData);
+
+        // Đợi payUrl với Promise và timeout
+        const waitForPayUrl = new Promise((resolve) => {
+          const checkPayUrl = () => {
+            const payUrl = payUrlStore.get(orderId);
+            console.log('Checking payUrl for orderId:', orderId, 'Current payUrl:', payUrl);
+            if (payUrl) {
+              payUrlStore.delete(orderId);
+              resolve(payUrl);
+            } else {
+              setTimeout(checkPayUrl, 100);
+            }
+          };
+          checkPayUrl();
+        });
+
+        const payUrl = await Promise.race([
+          waitForPayUrl,
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout waiting for payment URL')), 10000)),
+        ]).catch((error) => {
+          console.log('Timeout or error waiting for payment URL:', error.message);
+          return null;
+        });
+
+        console.log('Final payUrl received:', payUrl);
+
+        if (payUrl) {
+          console.log('Adding payUrl to response');
+          // Ensure response.data is a plain object
+          if (typeof response.data === 'object') {
+            response.data = { ...response.data, payUrl };
+            console.log('Response after adding payUrl:', JSON.stringify(response, null, 2));
+          }
+        } else {
+          console.log('No payUrl received within timeout');
+        }
       } catch (kafkaError) {
-        console.error('Error sending to Kafka:', kafkaError);
-        // Có thể thêm logic rollback nếu cần (ví dụ: xóa đơn hàng vừa tạo)
+        console.error('Error in payment process:', kafkaError);
+        if (typeof response.data === 'object') {
+          response.data = { ...response.data, paymentError: 'Payment processing failed, but order was created' };
+        }
       }
     }
 

@@ -40,7 +40,15 @@ const limiter = rateLimit({
 
 // Middleware
 app.use(limiter);
-app.use(cors());
+// app.use(cors());
+app.use(
+  cors({
+    origin: ['http://127.0.0.1:5500', 'http://localhost:5500'],
+    methods: ['GET', 'POST', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  }),
+);
 app.use(express.json({ limit: '10mb' }));
 app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, 'public')));

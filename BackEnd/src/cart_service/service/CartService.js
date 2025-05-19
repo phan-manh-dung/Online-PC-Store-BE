@@ -224,37 +224,6 @@ const getCartUser = async (userId) => {
   }
 };
 
-// const deleteManyCart = (ids) => {
-//   return new Promise(async (resolve, reject) => {
-//     try {
-//       // Chuyển đổi mảng ids (chuỗi) thành mảng ObjectId
-//       const objectIds = ids.map((id) => new ObjectId(id));
-//       // Thay đổi cách truy vấn để tìm các cart có cartItems._id khớp với các ID đã cho
-//       const result = await Cart.updateMany(
-//         { 'cartItems._id': { $in: objectIds } },
-//         { $pull: { cartItems: { _id: { $in: objectIds } } } },
-//       );
-
-//       if (result.modifiedCount === 0) {
-//         resolve({
-//           status: 'OK',
-//           message: 'No cart items found to delete',
-//         });
-//       } else {
-//         resolve({
-//           status: 'OK',
-//           message: `Deleted ${result.modifiedCount} cart items successfully`,
-//         });
-//       }
-//     } catch (e) {
-//       reject({
-//         status: 'ERR',
-//         message: e.message,
-//       });
-//     }
-//   });
-// };
-
 const deleteManyCart = (ids) => {
   return new Promise(async (resolve, reject) => {
     try {

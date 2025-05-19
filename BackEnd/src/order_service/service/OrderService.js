@@ -12,6 +12,7 @@ const createOrder = (
   totalPrice,
   statusOrder,
   paymentMethod,
+  isDelivered = false,
 ) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -37,6 +38,10 @@ const createOrder = (
         });
       }
 
+      // Convert isDelivered to boolean if it's a string
+      const isDeliveredBoolean =
+        typeof isDelivered === 'string' ? isDelivered.toLowerCase() === 'true' : Boolean(isDelivered);
+
       const createdOrderDetails = await OrderDetail.insertMany(
         orderDetails.map((item) => ({
           orderId: null, // sẽ cập nhật sau
@@ -60,6 +65,7 @@ const createOrder = (
         totalPrice,
         statusOrder: statusOrder || 'pending',
         paymentMethod: paymentMethod || 'CASH',
+        isDelivered: isDeliveredBoolean,
       });
 
       await newOrder.save();
