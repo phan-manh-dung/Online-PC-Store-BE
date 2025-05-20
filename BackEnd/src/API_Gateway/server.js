@@ -24,7 +24,7 @@ let requestCounter = {};
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 phút
-  max: 1000, // tối da 1000 request trong 15 phút
+  max: 100000, // tối da 1000 request trong 15 phút
   handler: (req, res) => {
     //  logger.warn(`IP ${req.ip} đã bị rate limit sau ${requestCounter[req.ip] || 'unknown'} requests`);
     res.status(429).json({ message: 'Too many requests. Please try again later.' });

@@ -5,8 +5,7 @@ const redisService = require('../services/Redis_Service');
 
 // Lấy tất cả sản phẩm
 const getAllProducts = async () => {
-
-  const cacheKey = 'products:all';  
+  const cacheKey = 'products:all';
   const cachedProducts = await redisService.getCache(cacheKey);
 
   if (cachedProducts) {
@@ -72,7 +71,6 @@ const getProductsByType = async (type) => {
 
 // Lấy sản phẩm theo nhà cung cấp và loại
 const getProductsByTypeSupplier = async (supplierId, type) => {
-
   const cacheKey = `products:supplier:${supplierId}:type:${type}`;
   const cachedProducts = await redisService.getCache(cacheKey);
 
@@ -83,7 +81,7 @@ const getProductsByTypeSupplier = async (supplierId, type) => {
 
   try {
     const supplierInfo = await supplierService.getSupplierById(supplierId);
-    
+
     if (!supplierInfo) {
       throw new Error('Supplier not found');
     }
@@ -91,8 +89,8 @@ const getProductsByTypeSupplier = async (supplierId, type) => {
     console.log(`Searching for products from supplier: ${supplierInfo.name}, type: ${type}`);
 
     const products = await Product.find({
-      'supplier': supplierId,
-      'computer.type': type
+      supplier: supplierId,
+      'computer.type': type,
     });
 
     await redisService.setCache(cacheKey, products, 3600); // Lưu vào cache 1 giờ
@@ -143,7 +141,6 @@ const getProductsByCategorySupplier = async (supplierId, categoryId) => {
 
 // Hàm lấy sản phẩm đã sắp xếp theo giá
 const getProductsSortedbyPrice = async ({ price_min, price_max, sort_by, page, limit }) => {
-
   const cacheKey = `products:sorted:price:${price_min}:${price_max}:${sort_by}:${page}:${limit}`;
   const cachedProducts = await redisService.getCache(cacheKey);
 
@@ -159,19 +156,16 @@ const getProductsSortedbyPrice = async ({ price_min, price_max, sort_by, page, l
 
     let sortOptions = {};
     if (sort_by === 'price_asc') {
-      sortOptions = { price: 1 }; 
+      sortOptions = { price: 1 };
     } else if (sort_by === 'price_desc') {
-      sortOptions = { price: -1 }; 
+      sortOptions = { price: -1 };
     } else {
       sortOptions = { price: 1 };
     }
 
     const skip = (page - 1) * limit;
 
-    const products = await Product.find(filterOptions)
-      .skip(skip) 
-      .limit(parseInt(limit)) 
-      .sort(sortOptions);
+    const products = await Product.find(filterOptions).skip(skip).limit(parseInt(limit)).sort(sortOptions);
 
     await redisService.setCache(cacheKey, products, 3600); // Lưu vào cache 1 giờ
 
@@ -254,6 +248,18 @@ const getSeriesByBrand = async (brand, type) => {
   }
 };
 
+const getProductsByBrandComputerService = async (brand, type) => {
+  const query = {
+    'computer.brand': brand,
+  };
+
+  if (type) {
+    query['computer.type'] = type;
+  }
+
+  return await Product.find(query);
+};
+
 module.exports = {
   getAllProducts,
   getProductById,
@@ -264,4 +270,5 @@ module.exports = {
   getProductsByCategorySupplier,
   getBrandsByCategory,
   getSeriesByBrand,
+  getProductsByBrandComputerService,
 };

@@ -34,6 +34,7 @@ const SERVICE_INFO = {
     '/api/product/get-products-by-type-supplier',
     '/api/product/get-products-by-category-supplier',
     '/api/product/brands/:categoryId',
+    '/api/product/get-by-brandcomputer',
     '/api/filter/get-all',
     '/api/filter/get-by-id/:id',
     '/api/filter/admin/create',
