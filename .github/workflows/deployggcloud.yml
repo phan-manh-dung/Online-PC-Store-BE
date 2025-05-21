@@ -1,4 +1,4 @@
-name: Deploy user_service to Cloud Run
+name: Deploy services to Cloud Run
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -22,16 +23,27 @@ jobs:
         with:
           project_id: shoppcstore
 
-      - name: Build Docker image and push to Artifact Registry
+      - name: Configure Docker auth for Artifact Registry
         run: |
           gcloud auth configure-docker asia-southeast1-docker.pkg.dev
-          gcloud builds submit ./src/user_service --tag asia-southeast1-docker.pkg.dev/shoppcstore/pc-store-repo/user_service
 
-      - name: Deploy to Cloud Run
+      - name: Build and deploy services (except recommend_service)
         run: |
-          gcloud run deploy user-service \
-            --image asia-southeast1-docker.pkg.dev/shoppcstore/pc-store-repo/user_service \
-            --platform managed \
-            --region asia-southeast1 \
-            --allow-unauthenticated \
-            --port 8080
+          SERVICES=("api-gateway" "user_service" "product_service" "order_service" "cart_service" "payment_service" "search_service")
+          
+          for SERVICE in "${SERVICES[@]}"
+          do
+            IMAGE="asia-southeast1-docker.pkg.dev/shoppcstore/pc-store-repo/${SERVICE}"
+            SERVICE_NAME=$(echo $SERVICE | sed 's/_/-/g') # convert snake_case to kebab-case for Cloud Run name
+
+            echo "🔨 Building and deploying $SERVICE..."
+            gcloud builds submit ./src/$SERVICE --tag $IMAGE
+
+            echo "🚀 Deploying $SERVICE_NAME to Cloud Run..."
+            gcloud run deploy $SERVICE_NAME \
+              --image $IMAGE \
+              --platform managed \
+              --region asia-southeast1 \
+              --allow-unauthenticated \
+              --port 8080
+          done
