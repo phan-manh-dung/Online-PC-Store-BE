@@ -13,7 +13,8 @@ class ServiceRegistry extends EventEmitter {
   register(serviceInfo) {
     const { name, baseUrl, endpoints } = serviceInfo;
     // Generate a unique ID for this service instance
-    const id = `${name}-${baseUrl.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    const timestamp = Date.now();
+    const id = `${name}_${timestamp}`;
     console.log('Registering service with info:', serviceInfo);
     console.log('Generated service ID:', id);
 
@@ -24,7 +25,7 @@ class ServiceRegistry extends EventEmitter {
 
     const serviceInstances = this.services.get(name);
     serviceInstances.set(id, {
-      id,
+      id: id,
       name,
       baseUrl,
       endpoints,

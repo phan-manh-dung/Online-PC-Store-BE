@@ -97,12 +97,11 @@ app.get('/health', (req, res) => {
 app.post('/register', (req, res) => {
   try {
     const serviceId = serviceRegistry.register(req.body);
-    // Kiểm tra xem serviceId có phải là chuỗi hoặc số không
-    if (typeof serviceId !== 'string' && typeof serviceId !== 'number') {
-      throw new Error('Invalid serviceId generated');
-    }
-    res.json({ success: true, serviceId });
+    console.log('Registering service: Type of serviceId =', typeof serviceId);
+    console.log('Registering service: Value of serviceId =', serviceId);
+    res.json({ success: true, serviceId: serviceId }); // Đảm bảo gửi đúng giá trị
   } catch (error) {
+    console.error('Register service error:', error);
     res.status(400).json({ success: false, message: error.message });
   }
 });
