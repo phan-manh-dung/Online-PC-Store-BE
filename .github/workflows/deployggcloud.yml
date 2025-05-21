@@ -29,7 +29,7 @@ jobs:
 
       - name: Build and deploy services (except recommend_service)
         run: |
-          SERVICES=("API_Gateway" "user_service" "product_service" "order_service" "cart_service" "payment_service" "search_service")
+          SERVICES=("API_Gateway" "user_service" "product_service" "cart_service" "search_service" "order_service" "payment_service")
           
           for SERVICE in "${SERVICES[@]}"
           do
@@ -47,4 +47,6 @@ jobs:
               --region asia-southeast1 \
               --allow-unauthenticated \
               --port 8080
+              --timeout 600 \
+              --set-env-vars "STARTUP_PROBE_PATH=/_health"
           done
