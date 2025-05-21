@@ -437,6 +437,20 @@ const getRevenueStatsByDate = async (req, res) => {
   }
 };
 
+const getRevenueStatsByYear = async (req, res) => {
+  try {
+    const result = await OrderService.getRevenueStatsByYear(req);
+    return res.status(result.status).json(result);
+  } catch (error) {
+    console.error('Error in getRevenueStatsByYear controller:', error);
+    return res.status(500).json({
+      status: 'ERR',
+      message: 'Internal server error',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   getDetailOrder,
@@ -448,4 +462,5 @@ module.exports = {
   getSalesStats,
   getSummaryStats,
   getRevenueStatsByDate,
+  getRevenueStatsByYear,
 };

@@ -448,8 +448,6 @@ const getSummaryStats = async (req) => {
         status: 401,
         message: 'Token not found in request headers',
       };
-<<<<<<< HEAD
-=======
     }
 
     // Lấy tất cả đơn hàng
@@ -492,7 +490,10 @@ const getRevenueStatsByDate = async (req) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
-      throw new Error('Token not found in request headers');
+      return {
+        status: 401,
+        message: 'Token not found in request headers',
+      };
     }
 
     // Lấy tham số từ query
@@ -500,43 +501,42 @@ const getRevenueStatsByDate = async (req) => {
 
     // Validate tham số
     if (!year && (day || month)) {
-      throw new Error('Year is required if day or month is specified');
+      return { status: 400, message: 'Year is required if day or month is specified' };
     }
     if (!month && day) {
-      throw new Error('Month is required if day is specified');
+      return { status: 400, message: 'Month is required if day is specified' };
     }
 
     const yearNum = year ? parseInt(year) : null;
-    const monthNum = month ? parseInt(month) - 1 : null; // JavaScript months are 0-based (0-11)
+    const monthNum = month ? parseInt(month) - 1 : null;
     const dayNum = day ? parseInt(day) : null;
 
     if (yearNum && (yearNum < 1970 || yearNum > 9999)) {
-      throw new Error('Invalid year');
+      return { status: 400, message: 'Invalid year' };
     }
     if (monthNum !== null && (monthNum < 0 || monthNum > 11)) {
-      throw new Error('Invalid month');
+      return { status: 400, message: 'Invalid month' };
     }
     if (dayNum !== null && (dayNum < 1 || dayNum > 31)) {
+      return { status: 400, message: 'Invalid day' };
       throw new Error('Invalid day');
->>>>>>> d01e288cff931fe73fe319af58ade56c6114406f
     }
 
     // Lấy tất cả đơn hàng
     const ordersResponse = await axios.get(`${process.env.GATEWAY_URL}/api/order/admin/get-all-order`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
     const orders = ordersResponse.data.data || [];
+    console.log('Orders from API:', orders);
 
-<<<<<<< HEAD
+
     // Tính số đơn hàng hoàn thành
     const completedOrders = orders.filter((order) => order.statusOrder === 'completed');
     const totalOrders = completedOrders.length;
-=======
+
     // Lọc đơn hàng completed và theo ngày/tháng/năm
     let filteredOrders = orders.filter((order) => order.statusOrder === 'completed');
->>>>>>> d01e288cff931fe73fe319af58ade56c6114406f
+
 
     // Tính tổng doanh thu từ totalPrice của các đơn hàng hoàn thành
     const totalRevenue = completedOrders.reduce((sum, order) => {
@@ -650,6 +650,77 @@ const getRevenueStatsByDate = async (req) => {
   }
 };
 
+const getRevenueStatsByYear = async (req) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return {
+        status: 401,
+        message: 'Token not found in request headers',
+      };
+    }
+
+    // Lấy tham số year từ query
+    const { year } = req.query;
+    if (!year) {
+      return { status: 400, message: 'Year is required' };
+    }
+
+    const yearNum = parseInt(year);
+    if (yearNum < 1970 || yearNum > 9999) {
+      return { status: 400, message: 'Invalid year' };
+    }
+
+    // Lấy tất cả đơn hàng
+    const ordersResponse = await axios.get(`${process.env.GATEWAY_URL}/api/order/admin/get-all-order`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const orders = ordersResponse.data.data || [];
+    console.log('Orders from API:', orders);
+
+    // Khởi tạo mảng kết quả cho 12 tháng
+    const monthlyStats = Array.from({ length: 12 }, (_, index) => ({
+      month: index + 1,
+      totalOrders: 0,
+      totalRevenue: 0,
+    }));
+
+    // Lọc và tính toán cho từng tháng
+    const completedOrders = orders.filter((order) => order.statusOrder === 'completed');
+    completedOrders.forEach((order) => {
+      const createdAt = new Date(order.createdAt);
+      const orderYear = createdAt.getFullYear();
+      const orderMonth = createdAt.getMonth() + 1; // 1-12
+
+      if (orderYear === yearNum) {
+        const monthIndex = orderMonth - 1;
+        monthlyStats[monthIndex].totalOrders += 1;
+        const orderPrice = parseFloat(order.totalPrice) || 0;
+        monthlyStats[monthIndex].totalRevenue += orderPrice;
+      }
+    });
+
+    // Định dạng totalRevenue
+    const formattedStats = monthlyStats.map((stat) => ({
+      ...stat,
+      totalRevenue: `$${stat.totalRevenue.toFixed(2)}`,
+    }));
+
+    return {
+      status: 200,
+      message: 'Revenue statistics by year retrieved successfully',
+      data: formattedStats,
+    };
+  } catch (error) {
+    console.error('Error in getRevenueStatsByYear service:', error.message, error.response?.data);
+    return {
+      status: error.response?.status || 500,
+      message: 'Error retrieving revenue stats by year',
+      error: error.response?.data?.message || error.message,
+    };
+  }
+};
+
 module.exports = {
   createOrder,
   getOrderDetail,
@@ -661,4 +732,5 @@ module.exports = {
   getSalesStats,
   getSummaryStats,
   getRevenueStatsByDate,
+  getRevenueStatsByYear,
 };

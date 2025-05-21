@@ -297,7 +297,7 @@ const getUserStats = async (userId) => {
 
     return {
       status: 200,
-      message: 'User order statistics retrieved successfully',
+      message: 'User order statistics retrieved completedly',
       data: {
         totalOrders: orderCount,
         totalAmount,

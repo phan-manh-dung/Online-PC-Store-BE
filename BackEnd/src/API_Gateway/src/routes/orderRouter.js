@@ -225,4 +225,25 @@ router.get('/admin/revenue-stats', async (req, res) => {
   }
 });
 
+router.get('/admin/revenue-stats-by-year', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Token is missing at API Gateway', status: 'ERROR' });
+    }
+
+    const response = await orderServiceClient.getAuthForOrderStats('/api/order/admin/revenue-stats-by-year', token, {
+      year: req.query.year,
+    });
+
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('Error calling order service:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Internal server error at API Gateway',
+      status: 'ERROR',
+    });
+  }
+});
+
 module.exports = router;

@@ -81,6 +81,9 @@ const SERVICE_INFO = {
     '/api/order/update-status',
     '/api/order/order-count/:id',
     '/api/order/admin/sales-stats',
+    '/api/order/admin/summary-stats',
+    '/api/order/admin/revenue-stats',
+    '/api/order/admin/revenue-stats-by-year',
   ],
 };
 

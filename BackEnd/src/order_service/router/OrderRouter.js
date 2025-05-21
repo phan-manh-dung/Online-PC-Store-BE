@@ -20,4 +20,7 @@ router.get('/admin/sales-stats', authMiddlewareOrder, orderController.getSalesSt
 router.get('/admin/summary-stats', authMiddlewareOrder, orderController.getSummaryStats);
 // thống kê doanh thu theo ngày tháng năm
 router.get('/admin/revenue-stats', authMiddlewareOrder, orderController.getRevenueStatsByDate);
+// thống kê doanh thu theo tháng năm
+router.get('/admin/revenue-stats-by-year', authMiddlewareOrder, orderController.getRevenueStatsByYear);
+
 module.exports = router;
