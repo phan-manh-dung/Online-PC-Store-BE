@@ -20,20 +20,18 @@ const searchRoutes = require('./src/routes/searchRouter');
  biệt service. status(429) là mã HTTP Too Many Requests
  khỏi bị spam, DDOS, abuse
 */
-let requestCounter = {};
+// Khai báo requestCounter như một object toàn cục
+const requestCounter = {};
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 phút
-  max: 1000, // tối da 1000 request trong 15 phút
+  max: 1000, // tối đa 1000 request trong 15 phút
   handler: (req, res) => {
-    //  logger.warn(`IP ${req.ip} đã bị rate limit sau ${requestCounter[req.ip] || 'unknown'} requests`);
     res.status(429).json({ message: 'Too many requests. Please try again later.' });
-  },
-  onLimitReached: (req, res, options) => {
-    //  logger.warn(`Rate limit hit for ${req.ip} on ${req.originalUrl}`);
   },
   keyGenerator: (req) => {
     requestCounter[req.ip] = (requestCounter[req.ip] || 0) + 1;
+    console.log(`[${new Date().toISOString()}] IP ${req.ip} sent request #${requestCounter[req.ip]}`);
     return req.ip;
   },
 });
