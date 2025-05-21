@@ -1,0 +1,49 @@
+name: Deploy services to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Authenticate with GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Setup gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: shoppcstore
+
+      - name: Configure Docker auth for Artifact Registry
+        run: |
+          gcloud auth configure-docker asia-southeast1-docker.pkg.dev
+
+      - name: Build and deploy services (except recommend_service)
+        run: |
+          SERVICES=("api-gateway" "user_service" "product_service" "order_service" "cart_service" "payment_service" "search_service")
+          
+          for SERVICE in "${SERVICES[@]}"
+          do
+            IMAGE="asia-southeast1-docker.pkg.dev/shoppcstore/pc-store-repo/${SERVICE}"
+            SERVICE_NAME=$(echo $SERVICE | sed 's/_/-/g') # convert snake_case to kebab-case for Cloud Run name
+
+            echo "🔨 Building and deploying $SERVICE..."
+            gcloud builds submit ./src/$SERVICE --tag $IMAGE
+
+            echo "🚀 Deploying $SERVICE_NAME to Cloud Run..."
+            gcloud run deploy $SERVICE_NAME \
+              --image $IMAGE \
+              --platform managed \
+              --region asia-southeast1 \
+              --allow-unauthenticated \
+              --port 8080
+          done
