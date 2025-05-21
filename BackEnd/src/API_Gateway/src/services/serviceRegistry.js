@@ -3,90 +3,114 @@ const EventEmitter = require('events');
 class ServiceRegistry extends EventEmitter {
   constructor() {
     super();
-    this.services = new Map(); // Lưu trữ các service
-    this.roundRobinCounters = new Map(); // Lưu trữ counter cho Round-Robin của từng service
-    this.healthCheckInterval = 120000; // Interval kiểm tra 120 giây
-    this._startHealthCheck(); // kiểm tra định kỳ xem service nào die
+    this.services = new Map(); // Store services
+    this.roundRobinCounters = new Map(); // Store Round-Robin counters for each service
+    this.healthCheckInterval = 60000; // 120 seconds check interval
+    this._startHealthCheck(); // Regularly check for dead services
   }
 
-  // Đăng ký một service instance mới
+  // Register a new service instance
   register(serviceInfo) {
-    // Nhận serviceInfo từ service (gửi từ index.js của các service)
-    const { name, host, port, endpoints } = serviceInfo;
-    const id = `${name}-${host}-${port}`;
+    const { name, baseUrl, endpoints } = serviceInfo;
+    // Generate a unique ID for this service instance
+    const timestamp = Date.now();
+    const id = `${name}_${timestamp}`;
     console.log('Registering service with info:', serviceInfo);
+    console.log('Generated service ID:', id);
 
     if (!this.services.has(name)) {
       this.services.set(name, new Map());
-      this.roundRobinCounters.set(name, 0); // Khởi tạo counter cho service mới
+      this.roundRobinCounters.set(name, 0); // Initialize counter for new service
     }
+
     const serviceInstances = this.services.get(name);
     serviceInstances.set(id, {
-      id,
+      id: id,
       name,
-      host,
-      port,
+      baseUrl,
       endpoints,
       lastHeartbeat: Date.now(),
     });
-    //  logger.info(`Registered service instance: ${id}`);
+
+    // Log registered services for debugging
+    console.log(`Registered service instance: ${id}`);
+    console.log(
+      'Current services:',
+      Array.from(this.services.entries()).map(([name, instances]) => {
+        return {
+          name,
+          instances: Array.from(instances.values()).map((i) => i.id),
+        };
+      }),
+    );
+
     return id;
   }
 
-  // Hủy đăng ký một service instance
+  // Unregister a service instance
   unregister(serviceId) {
+    console.log(`Attempting to unregister service: ${serviceId}`);
     for (const [serviceName, instances] of this.services) {
       if (instances.delete(serviceId)) {
         console.log(`Service instance unregistered: ${serviceId}`);
-        //  logger.warn(`Service instance unregistered: ${serviceId}`);
         this.emit('service-unregistered', serviceId);
         if (instances.size === 0) {
           this.services.delete(serviceName);
-          this.roundRobinCounters.delete(serviceName); // Xóa counter khi không còn instance
-          //    logger.warn(`No remaining instances for service: ${serviceName}`);
+          this.roundRobinCounters.delete(serviceName); // Remove counter when no instances remain
+          console.log(`No remaining instances for service: ${serviceName}`);
         }
         return true;
       }
     }
+    console.log(`Failed to unregister unknown service: ${serviceId}`);
     return false;
   }
 
-  // Cập nhật heartbeat cho service
+  // Update heartbeat for service
   heartbeat(serviceId) {
-    for (const instances of this.services.values()) {
+    console.log(`Received heartbeat from: ${serviceId}`);
+    let found = false;
+
+    for (const [serviceName, instances] of this.services) {
       const instance = instances.get(serviceId);
       if (instance) {
         instance.lastHeartbeat = Date.now();
-        //  logger.info(`💓Heartbeat received from: ${serviceId}`);
-        return true;
+        console.log(`Updated heartbeat for: ${serviceId}`);
+        found = true;
+        break;
       }
     }
-    //  logger.warn(`🚫 Heartbeat received from unknown serviceId: ${serviceId}`);
-    return false;
+
+    if (!found) {
+      console.log(`Heartbeat received from unknown serviceId: ${serviceId}`);
+    }
+
+    return found;
   }
 
-  // Lấy một instance khả dụng của service theo Round-Robin
+  // Get an available service instance using Round-Robin
   getInstance(serviceName) {
-    console.log('Getting instance for service:', serviceName);
+    console.log(`Getting instance for service: ${serviceName}`);
+    console.log('Available services:', Array.from(this.services.keys()));
+
     const instances = this.services.get(serviceName);
     if (!instances || instances.size === 0) {
-      //  logger.error(`🚨 No instances available for service: ${serviceName}`);
+      console.error(`No instances available for service: ${serviceName}`);
       throw new Error(`No instances available for service: ${serviceName}`);
     }
 
     const instancesArray = Array.from(instances.values());
-    // Lấy counter hiện tại, nếu không có thì mặc định là 0
+    console.log(`Found ${instancesArray.length} instances for ${serviceName}`);
+
     let counter = this.roundRobinCounters.get(serviceName) || 0;
-    // Chọn instance theo index Round-Robin
     const selectedInstance = instancesArray[counter % instancesArray.length];
-    // Tăng counter và cập nhật lại
-    counter = (counter + 1) % instancesArray.length;
-    this.roundRobinCounters.set(serviceName, counter);
-    //  logger.info(`🎯 Selected instance for service [${serviceName}]: ${selectedInstance.id}`);
+    this.roundRobinCounters.set(serviceName, (counter + 1) % instancesArray.length);
+
+    console.log(`Selected instance for service [${serviceName}]: ${selectedInstance.id}`);
     return selectedInstance;
   }
 
-  // Health check định kỳ để loại bỏ instance không gửi heartbeat
+  // Regular health check to remove instances that aren't sending heartbeats
   _startHealthCheck() {
     setInterval(() => {
       const now = Date.now();
@@ -94,13 +118,27 @@ class ServiceRegistry extends EventEmitter {
         for (const [instanceId, instance] of instances) {
           const inactiveDuration = now - instance.lastHeartbeat;
           if (inactiveDuration > this.healthCheckInterval * 3) {
-            console.log(`Removing inactive service: ${instanceId}`);
-            //  logger.warn(`💀 Instance ${instanceId} removed (inactive for ${Math.round(inactiveDuration / 1000)}s)`);
+            console.log(
+              `Removing inactive service: ${instanceId} (inactive for ${Math.round(inactiveDuration / 1000)}s)`,
+            );
             this.unregister(instanceId);
           }
         }
       }
     }, this.healthCheckInterval);
+  }
+
+  // Debug method to list all registered services
+  listServices() {
+    const services = {};
+    for (const [serviceName, instances] of this.services) {
+      services[serviceName] = Array.from(instances.values()).map((inst) => ({
+        id: inst.id,
+        baseUrl: inst.baseUrl,
+        lastHeartbeat: new Date(inst.lastHeartbeat).toISOString(),
+      }));
+    }
+    return services;
   }
 }
 

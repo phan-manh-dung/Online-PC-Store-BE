@@ -448,6 +448,8 @@ const getSummaryStats = async (req) => {
         status: 401,
         message: 'Token not found in request headers',
       };
+<<<<<<< HEAD
+=======
     }
 
     // Lấy tất cả đơn hàng
@@ -461,6 +463,80 @@ const getSummaryStats = async (req) => {
     // Tính số đơn hàng hoàn thành
     const completedOrders = orders.filter((order) => order.statusOrder === 'completed');
     const totalOrders = completedOrders.length;
+
+    // Tính tổng doanh thu từ totalPrice của các đơn hàng hoàn thành
+    const totalRevenue = completedOrders.reduce((sum, order) => {
+      const orderPrice = parseFloat(order.totalPrice) || 0;
+      return sum + orderPrice;
+    }, 0);
+
+    return {
+      status: 200,
+      message: 'Summary statistics retrieved successfully',
+      data: {
+        totalOrders,
+        totalRevenue: `$${totalRevenue.toFixed(2)}`,
+      },
+    };
+  } catch (error) {
+    console.error('Error in getSummaryStats service:', error.message, error.response?.data);
+    return {
+      status: error.response?.status || 500,
+      message: 'Error retrieving summary stats',
+      error: error.response?.data?.message || error.message,
+    };
+  }
+};
+
+const getRevenueStatsByDate = async (req) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      throw new Error('Token not found in request headers');
+    }
+
+    // Lấy tham số từ query
+    const { day, month, year } = req.query;
+
+    // Validate tham số
+    if (!year && (day || month)) {
+      throw new Error('Year is required if day or month is specified');
+    }
+    if (!month && day) {
+      throw new Error('Month is required if day is specified');
+    }
+
+    const yearNum = year ? parseInt(year) : null;
+    const monthNum = month ? parseInt(month) - 1 : null; // JavaScript months are 0-based (0-11)
+    const dayNum = day ? parseInt(day) : null;
+
+    if (yearNum && (yearNum < 1970 || yearNum > 9999)) {
+      throw new Error('Invalid year');
+    }
+    if (monthNum !== null && (monthNum < 0 || monthNum > 11)) {
+      throw new Error('Invalid month');
+    }
+    if (dayNum !== null && (dayNum < 1 || dayNum > 31)) {
+      throw new Error('Invalid day');
+>>>>>>> d01e288cff931fe73fe319af58ade56c6114406f
+    }
+
+    // Lấy tất cả đơn hàng
+    const ordersResponse = await axios.get(`${process.env.GATEWAY_URL}/api/order/admin/get-all-order`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const orders = ordersResponse.data.data || [];
+
+<<<<<<< HEAD
+    // Tính số đơn hàng hoàn thành
+    const completedOrders = orders.filter((order) => order.statusOrder === 'completed');
+    const totalOrders = completedOrders.length;
+=======
+    // Lọc đơn hàng completed và theo ngày/tháng/năm
+    let filteredOrders = orders.filter((order) => order.statusOrder === 'completed');
+>>>>>>> d01e288cff931fe73fe319af58ade56c6114406f
 
     // Tính tổng doanh thu từ totalPrice của các đơn hàng hoàn thành
     const totalRevenue = completedOrders.reduce((sum, order) => {
