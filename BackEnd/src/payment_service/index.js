@@ -12,6 +12,9 @@ const { Kafka } = require('kafkajs');
 
 // Cấu hình Kafka với Confluent Cloud
 const kafka = new Kafka({
+  clientId: 'payment_service',
+  brokers: ['localhost:9092'],
+  //brokers: ['kafka:9092'],
   clientId: 'payment-service',
   brokers: [process.env.KAFKA_BROKER],
   ssl: true,
