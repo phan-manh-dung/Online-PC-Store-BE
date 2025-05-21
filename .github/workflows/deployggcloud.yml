@@ -46,7 +46,7 @@ jobs:
               --platform managed \
               --region asia-southeast1 \
               --allow-unauthenticated \
-              --port 8080
+              --port 8080 \
               --timeout 600 \
               --set-env-vars "STARTUP_PROBE_PATH=/_health"
           done
