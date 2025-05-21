@@ -398,7 +398,7 @@ const getSalesStats = async (req) => {
 
       // Chỉ tính các đơn hàng đã giao (hoặc điều chỉnh theo yêu cầu)
       const deliveredOrders = productOrders.filter(
-        (order) => order.isDelivered === true && order.statusOrder === 'successful',
+        (order) => order.isDelivered === true && order.statusOrder === 'completed',
       );
       const totalOrders = deliveredOrders.length;
 
@@ -444,29 +444,31 @@ const getSummaryStats = async (req) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
-      throw new Error('Token not found in request headers');
+      return {
+        status: 401,
+        message: 'Token not found in request headers',
+      };
+<<<<<<< HEAD
+=======
     }
 
+    // Lấy tất cả đơn hàng
     const ordersResponse = await axios.get(`${process.env.GATEWAY_URL}/api/order/admin/get-all-order`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
     const orders = ordersResponse.data.data || [];
-    const totalOrders = orders.filter((order) => order.statusOrder === 'successful').length;
 
-    let totalRevenue = 0;
-    try {
-      const salesStatsResponse = await getSalesStats(req);
-      const salesStats = salesStatsResponse.data || [];
-      totalRevenue = salesStats.reduce((sum, stat) => {
-        const revenueValue = parseFloat(stat.revenue.replace('$', '').replace(',', '')) || 0;
-        return sum + revenueValue;
-      }, 0);
-    } catch (error) {
-      console.error('Failed to calculate sales stats:', error.message);
-      totalRevenue = 0;
-    }
+    // Tính số đơn hàng hoàn thành
+    const completedOrders = orders.filter((order) => order.statusOrder === 'completed');
+    const totalOrders = completedOrders.length;
+
+    // Tính tổng doanh thu từ totalPrice của các đơn hàng hoàn thành
+    const totalRevenue = completedOrders.reduce((sum, order) => {
+      const orderPrice = parseFloat(order.totalPrice) || 0;
+      return sum + orderPrice;
+    }, 0);
 
     return {
       status: 200,
@@ -477,11 +479,11 @@ const getSummaryStats = async (req) => {
       },
     };
   } catch (error) {
-    console.error('Error in getSummaryStats service:', error.message);
+    console.error('Error in getSummaryStats service:', error.message, error.response?.data);
     return {
-      status: 500,
+      status: error.response?.status || 500,
       message: 'Error retrieving summary stats',
-      error: error.message,
+      error: error.response?.data?.message || error.message,
     };
   }
 };
@@ -516,6 +518,7 @@ const getRevenueStatsByDate = async (req) => {
     }
     if (dayNum !== null && (dayNum < 1 || dayNum > 31)) {
       throw new Error('Invalid day');
+>>>>>>> d01e288cff931fe73fe319af58ade56c6114406f
     }
 
     // Lấy tất cả đơn hàng
@@ -526,10 +529,83 @@ const getRevenueStatsByDate = async (req) => {
     });
     const orders = ordersResponse.data.data || [];
 
-    // Lọc đơn hàng successful và theo ngày/tháng/năm
-    let filteredOrders = orders.filter((order) => order.statusOrder === 'successful');
+<<<<<<< HEAD
+    // Tính số đơn hàng hoàn thành
+    const completedOrders = orders.filter((order) => order.statusOrder === 'completed');
+    const totalOrders = completedOrders.length;
+=======
+    // Lọc đơn hàng completed và theo ngày/tháng/năm
+    let filteredOrders = orders.filter((order) => order.statusOrder === 'completed');
+>>>>>>> d01e288cff931fe73fe319af58ade56c6114406f
 
-    // Nếu không có tham số nào, trả về 0
+    // Tính tổng doanh thu từ totalPrice của các đơn hàng hoàn thành
+    const totalRevenue = completedOrders.reduce((sum, order) => {
+      const orderPrice = parseFloat(order.totalPrice) || 0;
+      return sum + orderPrice;
+    }, 0);
+
+    return {
+      status: 200,
+      message: 'Summary statistics retrieved successfully',
+      data: {
+        totalOrders,
+        totalRevenue: `$${totalRevenue.toFixed(2)}`,
+      },
+    };
+  } catch (error) {
+    console.error('Error in getSummaryStats service:', error.message, error.response?.data);
+    return {
+      status: error.response?.status || 500,
+      message: 'Error retrieving summary stats',
+      error: error.response?.data?.message || error.message,
+    };
+  }
+};
+
+const getRevenueStatsByDate = async (req) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return {
+        status: 401,
+        message: 'Token not found in request headers',
+      };
+    }
+
+    // Lấy tham số từ query
+    const { day, month, year } = req.query;
+
+    // Validate tham số
+    if (!year && (day || month)) {
+      return { status: 400, message: 'Year is required if day or month is specified' };
+    }
+    if (!month && day) {
+      return { status: 400, message: 'Month is required if day is specified' };
+    }
+
+    const yearNum = year ? parseInt(year) : null;
+    const monthNum = month ? parseInt(month) - 1 : null;
+    const dayNum = day ? parseInt(day) : null;
+
+    if (yearNum && (yearNum < 1970 || yearNum > 9999)) {
+      return { status: 400, message: 'Invalid year' };
+    }
+    if (monthNum !== null && (monthNum < 0 || monthNum > 11)) {
+      return { status: 400, message: 'Invalid month' };
+    }
+    if (dayNum !== null && (dayNum < 1 || dayNum > 31)) {
+      return { status: 400, message: 'Invalid day' };
+    }
+
+    // Lấy tất cả đơn hàng
+    const ordersResponse = await axios.get(`${process.env.GATEWAY_URL}/api/order/admin/get-all-order`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const orders = ordersResponse.data.data || [];
+    console.log('Orders from API:', orders);
+
+    // Lọc đơn hàng completed và theo ngày/tháng/năm
+    let filteredOrders = orders.filter((order) => order.statusOrder === 'completed');
     if (!yearNum && monthNum === null && dayNum === null) {
       filteredOrders = [];
     } else {
@@ -541,15 +617,15 @@ const getRevenueStatsByDate = async (req) => {
         return matchesYear && matchesMonth && matchesDay;
       });
     }
+    console.log('Filtered orders:', filteredOrders);
 
     const totalOrders = filteredOrders.length;
 
-    // Lấy chi tiết đơn hàng
-    const orderDetailIds = filteredOrders.flatMap((order) => order.orderDetailIds);
-    const orderDetails = await OrderDetail.find({ _id: { $in: orderDetailIds } });
-
-    // Tính tổng doanh thu
-    const totalRevenue = orderDetails.reduce((sum, detail) => sum + (detail.totalPrice || 0), 0);
+    // Tính tổng doanh thu từ orders.totalPrice
+    const totalRevenue = filteredOrders.reduce((sum, order) => {
+      const orderPrice = parseFloat(order.totalPrice) || 0;
+      return sum + orderPrice;
+    }, 0);
 
     return {
       status: 200,
@@ -565,11 +641,11 @@ const getRevenueStatsByDate = async (req) => {
       },
     };
   } catch (error) {
-    console.error('Error in getRevenueStats service:', error.message);
+    console.error('Error in getRevenueStatsByDate service:', error.message, error.response?.data);
     return {
-      status: 500,
+      status: error.response?.status || 500,
       message: 'Error retrieving revenue stats',
-      error: error.message,
+      error: error.response?.data?.message || error.message,
     };
   }
 };
