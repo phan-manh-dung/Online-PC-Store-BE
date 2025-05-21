@@ -1,4 +1,5 @@
 const paymentService = require('../service/PaymentService');
+const axios = require('axios');
 
 // Lưu trữ các client SSE theo orderId
 const clients = new Map(); // Map<orderId, response>
@@ -22,9 +23,32 @@ const handleCallback = async (req, res) => {
     }
     req.body.requestId = 'processed';
     await paymentService.handleCallback(req.body);
+
+    // Thông báo cho client về trạng thái thanh toán
+    const status = req.body.resultCode === 0 ? 'SUCCESS' : 'FAILED';
+    const notificationData = {
+      status,
+      message: req.body.message,
+      resultCode: req.body.resultCode,
+      transId: req.body.transId,
+    };
+
+    // Thông báo qua API Gateway
+    try {
+      await axios.post(`${process.env.GATEWAY_URL}/api/payment/notify-client`, {
+        orderId: req.body.orderId,
+        data: notificationData,
+      });
+    } catch (notifyError) {
+      console.error('Error notifying client through API Gateway:', notifyError);
+    }
+
+    // Thông báo trực tiếp nếu có client kết nối
+    await notifyClients(req.body.orderId, notificationData);
+
     res.status(200).json(req.body);
   } catch (error) {
-    console.log('Erro callback:', error);
+    console.log('Error callback:', error);
     res.status(500).json({ message: 'Error handling callback', error });
   }
 };

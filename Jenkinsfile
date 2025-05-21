@@ -19,7 +19,7 @@ pipeline {
                 sh 'npm test' // Jest sẽ chạy thông qua lệnh npm test
             }
         }
-      stage('Build Docker Image') {
+        stage('Build Docker Image') {
             steps {
                 sh 'docker-compose build' // Build image từ docker-compose.yml
             }
@@ -30,8 +30,6 @@ pipeline {
                 sh 'docker-compose up -d' // Chạy container mới
             }
         }
-    }
-
     }
     post {
         success {

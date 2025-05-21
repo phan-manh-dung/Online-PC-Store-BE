@@ -5,23 +5,31 @@ const cors = require('cors');
 
 const express = require('express');
 const dotenv = require('dotenv');
+dotenv.config();
 const mongoose = require('mongoose');
 const axios = require('axios');
 const { Kafka } = require('kafkajs');
 
-// Cấu hình Kafka
+// Cấu hình Kafka với Confluent Cloud
 const kafka = new Kafka({
   clientId: 'payment-service',
-  brokers: ['localhost:9092'],
-  //brokers: ['kafka:9092'],
+  brokers: [process.env.KAFKA_BROKER],
+  ssl: true,
+  sasl: {
+    mechanism: process.env.KAFKA_SASL_MECHANISM,
+    username: process.env.KAFKA_SASL_USERNAME,
+    password: process.env.KAFKA_SASL_PASSWORD,
+  },
 });
-const consumer = kafka.consumer({ groupId: 'payment-group' });
+const consumer = kafka.consumer({ groupId: process.env.KAFKA_CONSUMER_GROUP });
+const producer = kafka.producer();
 
-// Kết nối consumer và lắng nghe message
-const connectConsumer = async () => {
+// Kết nối consumer và producer
+const connectKafka = async () => {
   try {
     await consumer.connect();
-    await consumer.subscribe({ topic: 'order-payment', fromBeginning: true });
+    await producer.connect();
+    await consumer.subscribe({ topic: process.env.KAFKA_TOPIC_ORDER_PAYMENT, fromBeginning: true });
 
     await consumer.run({
       eachMessage: async ({ topic, partition, message }) => {
@@ -29,33 +37,45 @@ const connectConsumer = async () => {
         console.log('Received order from Kafka:', orderData);
 
         // Xử lý thanh toán với MoMo (gọi API create-payment)
-        await processMoMoPayment(orderData);
+        const payUrl = await processMoMoPayment(orderData);
+        if (payUrl) {
+          // Gửi payUrl về cho order service
+          await producer.send({
+            topic: process.env.KAFKA_TOPIC_PAYMENT_URL,
+            messages: [
+              {
+                value: JSON.stringify({
+                  orderId: orderData.orderId,
+                  payUrl: payUrl,
+                }),
+              },
+            ],
+          });
+        }
       },
     });
-    console.log('Kafka Consumer connected');
+    console.log('Kafka Consumer and Producer connected');
   } catch (error) {
-    console.error('Error connecting Kafka Consumer:', error);
+    console.error('Error connecting Kafka:', error);
   }
 };
-connectConsumer();
+connectKafka();
 
 // Hàm xử lý thanh toán MoMo (sẽ gọi API create-payment)
 const processMoMoPayment = async (orderData) => {
   try {
     // Gọi API create-payment trong payment_service
-    const response = await fetch('http://localhost:5555/api/payment/create-payment-momo', {
-      method: 'POST',
+    const response = await axios.post(`${process.env.GATEWAY_URL}/api/payment/create-payment-momo`, orderData, {
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orderData),
     });
-    const result = await response.json();
-    console.log('MoMo payment created:', result);
+    console.log('MoMo payment created:', response.data);
+    return response.data.payUrl; // Return payUrl from the response
   } catch (error) {
-    console.error('Error processing MoMo payment:', error);
+    console.error('Error processing MoMo payment:', error.message);
+    return null;
   }
 };
 
-dotenv.config();
 const app = express();
 // Thêm middleware để parse JSON
 app.use(express.json());
@@ -70,32 +90,86 @@ app.use(
   }),
 );
 
+// const actualPort = process.env.PORT || 5005;
+
 const SERVICE_INFO = {
   name: 'payment_service',
   //host: 'payment_service',
-  host: 'localhost',
-  port: process.env.PORT_PAYMENT_SERVICE || 5005,
+  //host: 'localhost',
+  baseUrl: process.env.SERVICE_URL || 'https://payment-service-422663804011.asia-southeast1.run.app',
   endpoints: [
     '/api/payment/create-payment-momo',
     '/api/payment/callback',
     '/api/payment/status',
-    'api/payment/transaction-status-momo',
+    '/api/payment/transaction-status-momo',
   ],
 };
 
 let serviceId = null;
 
+// Add health check endpoint for Google Cloud Run
+app.get('/_health', (req, res) => {
+  res.status(200).send('OK');
+});
+
+// Add debug endpoint to see service status
+app.get('/_debug/info', (req, res) => {
+  res.json({
+    service: SERVICE_INFO.name,
+    baseUrl: SERVICE_INFO.baseUrl,
+    registered: serviceId !== null,
+    serviceId,
+    gatewayUrl: process.env.GATEWAY_URL,
+    environment: process.env.NODE_ENV,
+  });
+});
+
 // Register with API Gateway
+// async function registerWithGateway() {
+//   try {
+//     const response = await axios.post(`${process.env.GATEWAY_URL}/register`, SERVICE_INFO);
+//     serviceId = response.data.serviceId;
+//     console.log('Registered with API Gateway, serviceId:', serviceId);
+//     startHeartbeat();
+//   } catch (error) {
+//     console.error('Failed to register with API Gateway:', error.message);
+//     // Thử lại sau 4 giây
+//     setTimeout(registerWithGateway, 4000);
+//   }
+// }
+
 async function registerWithGateway() {
   try {
+    console.log(`Attempting to register with API Gateway: ${process.env.GATEWAY_URL}`);
+    console.log('Service info:', JSON.stringify(SERVICE_INFO));
+
     const response = await axios.post(`${process.env.GATEWAY_URL}/register`, SERVICE_INFO);
     serviceId = response.data.serviceId;
-    console.log('Registered with API Gateway, serviceId:', serviceId);
+    registrationAttempts = 0;
+
+    console.log('Successfully registered with API Gateway, serviceId:', serviceId);
     startHeartbeat();
   } catch (error) {
-    console.error('Failed to register with API Gateway:', error.message);
-    // Thử lại sau 4 giây
-    setTimeout(registerWithGateway, 4000);
+    registrationAttempts++;
+    console.error(
+      `Failed to register with API Gateway (attempt ${registrationAttempts}/${MAX_REGISTRATION_ATTEMPTS}):`,
+      error.message,
+    );
+
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+    }
+
+    // Try again with backoff
+    const retryDelay = Math.min(30000, 4000 * Math.pow(2, registrationAttempts));
+    console.log(`Will retry in ${retryDelay / 1000} seconds`);
+
+    if (registrationAttempts < MAX_REGISTRATION_ATTEMPTS) {
+      setTimeout(registerWithGateway, retryDelay);
+    } else {
+      console.error('Max registration attempts reached. Service will run without API Gateway registration.');
+    }
   }
 }
 
@@ -116,7 +190,8 @@ function startHeartbeat() {
 // Graceful shutdown
 process.on('SIGINT', async () => {
   await consumer.disconnect();
-  console.log('Kafka Consumer disconnected');
+  await producer.disconnect();
+  console.log('Kafka Consumer and Producer disconnected');
   if (serviceId) {
     try {
       await axios.post(`${process.env.GATEWAY_URL}/unregister/${serviceId}`);
@@ -144,10 +219,18 @@ mongoose
     console.log('Connect database ERROR');
   });
 
-// port 4000
-app.listen(SERVICE_INFO.port, () => {
-  console.log(`Cart Service running on http://localhost:${SERVICE_INFO.port}`);
-  setTimeout(registerWithGateway, 1000);
+// app.listen(actualPort, () => {
+//   console.log(`Payment Service running on http://localhost:${actualPort}`);
+//   setTimeout(registerWithGateway, 1000);
+// });
+
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`User Service running on port ${PORT}`);
+  console.log(`Service URL: ${SERVICE_INFO.baseUrl}`);
+
+  // Wait a bit for everything to initialize before registering
+  setTimeout(registerWithGateway, 2000);
 });
 
 module.exports = { app };
