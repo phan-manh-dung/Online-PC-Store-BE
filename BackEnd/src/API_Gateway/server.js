@@ -26,7 +26,6 @@ const requestCounter = {};
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 phút
   max: 1000, // tối đa 1000 request trong 15 phút
-  max: 100000, // tối da 1000 request trong 15 phút
   handler: (req, res) => {
     res.status(429).json({ message: 'Too many requests. Please try again later.' });
   },
@@ -42,7 +41,7 @@ app.use(limiter);
 // app.use(cors());
 app.use(
   cors({
-    origin: ['https://api.phanmanhdung.id.vn'],
+    origin: ['http://127.0.0.1:5500', 'http://localhost:5500'],
     methods: ['GET', 'POST', 'OPTIONS'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -72,10 +71,8 @@ app.use('/api/search', searchRoutes);
 // Đăng ký API Gateway cho các service
 serviceRegistry.register({
   name: 'api-gateway',
-  //host: process.env.HOST || 'localhost',
-  // port: process.env.PORT || 5555,
-  //port: process.env.PORT || 8080,
-  baseUrl: process.env.SERVICE_URL || 'https://api-gateway-422663804011.asia-southeast1.run.app',
+  host: process.env.HOST || 'localhost',
+  port: process.env.PORT || 5555,
   endpoints: ['/api/user/*', '/api/product/*', '/api/order/*', '/api/cart/*', '/api/payment/*', '/api/search/*'],
 });
 
@@ -84,23 +81,11 @@ app.get('/health', (req, res) => {
 });
 
 // Service Registry endpoint
-// app.post('/register', (req, res) => {
-//   try {
-//     const serviceId = serviceRegistry.register(req.body);
-//     res.json({ success: true, serviceId });
-//   } catch (error) {
-//     res.status(400).json({ success: false, message: error.message });
-//   }
-// });
-
 app.post('/register', (req, res) => {
   try {
     const serviceId = serviceRegistry.register(req.body);
-    console.log('Registering service: Type of serviceId =', typeof serviceId);
-    console.log('Registering service: Value of serviceId =', serviceId);
-    res.json({ success: true, serviceId: serviceId }); // Đảm bảo gửi đúng giá trị
+    res.json({ success: true, serviceId });
   } catch (error) {
-    console.error('Register service error:', error);
     res.status(400).json({ success: false, message: error.message });
   }
 });
@@ -137,8 +122,7 @@ app.get('/services', (req, res) => {
   res.json(services);
 });
 
-// const PORT = process.env.PORT || 5555;
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 5555;
 app.listen(PORT, () => {
   console.log(`🚀 API Gateway running on http://localhost:${PORT}`);
 });
