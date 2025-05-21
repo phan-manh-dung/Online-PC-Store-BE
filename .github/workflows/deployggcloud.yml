@@ -37,7 +37,7 @@ jobs:
             SERVICE_NAME=$(echo $SERVICE | sed 's/_/-/g') # convert snake_case to kebab-case for Cloud Run name
 
             echo "🔨 Building and deploying $SERVICE..."
-            gcloud builds submit ./src/$SERVICE --tag $IMAGE
+            gcloud builds submit ./BackEnd/src/$SERVICE --tag $IMAGE
 
             echo "🚀 Deploying $SERVICE_NAME to Cloud Run..."
             gcloud run deploy $SERVICE_NAME \
