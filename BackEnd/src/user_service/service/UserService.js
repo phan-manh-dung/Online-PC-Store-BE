@@ -266,12 +266,12 @@ const getUserStats = async (userId) => {
     // Tính toán tổng tiền và phân loại theo trạng thái
     let totalAmount = 0;
     let pendingAmount = 0;
-    let successfulAmount = 0;
+    let completedAmount = 0;
     let cancelledAmount = 0;
 
     const statusCounts = {
       pending: 0,
-      successful: 0,
+      completed: 0,
       cancelled: 0,
     };
 
@@ -280,9 +280,9 @@ const getUserStats = async (userId) => {
         const orderTotal = order.totalPrice || 0;
         totalAmount += orderTotal;
 
-        if (order.statusOrder === 'successful') {
-          successfulAmount += orderTotal;
-          statusCounts.successful += 1;
+        if (order.statusOrder === 'completed') {
+          completedAmount += orderTotal;
+          statusCounts.completed += 1;
         } else if (order.statusOrder === 'pending') {
           pendingAmount += orderTotal;
           statusCounts.pending += 1;
@@ -297,12 +297,12 @@ const getUserStats = async (userId) => {
 
     return {
       status: 200,
-      message: 'User order statistics retrieved successfully',
+      message: 'User order statistics retrieved completedly',
       data: {
         totalOrders: orderCount,
         totalAmount,
         pendingAmount,
-        successfulAmount,
+        completedAmount,
         cancelledAmount,
         statusCounts,
       },
