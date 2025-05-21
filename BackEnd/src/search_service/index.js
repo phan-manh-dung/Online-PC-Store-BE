@@ -27,7 +27,6 @@ const SERVICE_INFO = {
   // port: process.env.PORT || 5006,
   // port: process.env.PORT || 8080,
   baseUrl: process.env.SERVICE_URL || 'https://search-service-422663804011.asia-southeast1.run.app',
-=======
   host: host,
   port: process.env.PORT || 5005,
 
