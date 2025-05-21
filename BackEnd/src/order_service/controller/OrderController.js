@@ -2,6 +2,7 @@ const axios = require('axios');
 const OrderService = require('../service/OrderService');
 
 const createOrder = async (req, res) => {
+  const redis = req.app.locals.redis;
   try {
     const {
       userId,
@@ -218,8 +219,26 @@ const createOrder = async (req, res) => {
               'Current payUrl:',
               payUrl ? 'URL received' : 'Not yet received',
             );
+        // const waitForPayUrl = new Promise((resolve) => {
+        //   const checkPayUrl = () => {
+        //     const payUrl = payUrlStore.get(orderId);
+        //     console.log('Checking payUrl for orderId:', orderId, 'Current payUrl:', payUrl);
+        //     if (payUrl) {
+        //       payUrlStore.delete(orderId);
+        //       resolve(payUrl);
+        //     } else {
+        //       setTimeout(checkPayUrl, 100);
+        //     }
+        //   };
+        //   checkPayUrl();
+        // });
+
+        const waitForPayUrl = new Promise((resolve) => {
+          const checkPayUrl = async () => {
+            const payUrl = await redis.get(`payUrl:${orderId}`);
+            console.log('Checking payUrl for orderId:', orderId, 'Current payUrl:', payUrl);
             if (payUrl) {
-              payUrlStore.delete(orderId);
+              await redis.del(`payurl:${orderId}`);
               resolve(payUrl);
             } else {
               setTimeout(checkPayUrl, 100);

@@ -1,6 +1,7 @@
 const Product = require('../models/Product_Model');
 const cloudinary = require('../config/cloudinaryConfig');
 const redisService = require('../services/Redis_Service');
+const redis = require('../config/redis');
 
 const getAllProducts = async ({ page = 1, limit = 10 }) => {
   const skip = (page - 1) * limit;
@@ -105,7 +106,11 @@ const deleteProduct = async (productId) => {
     const cacheKey = `product:${productId}`;
     await redisService.deleteCache(cacheKey);
 
-    await redisService.deleteCache('products:all');
+    // await redisService.deleteCache('getall-products');
+    const keys = await redis.keys('getall-products:*');
+    if (keys.length > 0) {
+      await redis.del(keys);
+    }
 
     return deletedProduct;
   } catch (error) {
