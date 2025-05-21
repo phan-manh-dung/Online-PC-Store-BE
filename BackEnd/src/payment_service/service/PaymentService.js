@@ -11,6 +11,9 @@ const ipnUrl = 'https://fc7a-2001-ee0-4f86-5210-2196-4a36-8e4a-7019.ngrok-free.a
 // thanh toán xong nó sẽ trở về đây
 const redirectUrl =
   process.env.MOMO_REDIRECT_URL || 'https://fc7a-2001-ee0-4f86-5210-2196-4a36-8e4a-7019.ngrok-free.app/order-success';
+const ipnUrl = `${process.env.GATEWAY_URL}/api/payment/callback`;
+// thanh toán xong nó sẽ trở về đây
+const redirectUrl = `${process.env.GATEWAY_URL}/order-success`;
 const requestType = 'captureWallet';
 
 function generateSignature(requestBody) {
