@@ -35,7 +35,7 @@ jobs:
           do
             IMAGE_NAME=$(echo $SERVICE | tr '[:upper:]' '[:lower:]') # convert to lowercase
             IMAGE="asia-southeast1-docker.pkg.dev/shoppcstore/pc-store-repo/${IMAGE_NAME}"
-            SERVICE_NAME=$(echo $SERVICE | sed 's/_/-/g') # convert snake_case to kebab-case for Cloud Run name
+            SERVICE_NAME=$(echo $SERVICE | tr '[:upper:]' '[:lower:]' | sed 's/_/-/g') # convert to lowercase and snake_case to kebab-case
 
             echo "🔨 Building and deploying $SERVICE..."
             gcloud builds submit ./BackEnd/src/$SERVICE --tag $IMAGE
