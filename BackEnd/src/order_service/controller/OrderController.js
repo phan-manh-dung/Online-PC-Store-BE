@@ -10,7 +10,7 @@ const createOrder = async (req, res) => {
       totalPrice,
       statusOrder = '',
       paymentMethod = '',
-      isDelivered = false,
+      isDelivered = true,
     } = req.body;
     const authHeader = req.headers['authorization'] || req.headers['Authorization'];
     let access_token = null;
@@ -33,6 +33,13 @@ const createOrder = async (req, res) => {
         },
       });
       userData = userResponse.data;
+
+      if (!userData || (!userData.data && !userData.success)) {
+        return res.status(404).json({
+          success: false,
+          message: `User with ID ${userId} not found`,
+        });
+      }
 
       // Kiểm tra cấu trúc response từ API Gateway
       if (!userData || (!userData.data && !userData.success)) {
@@ -90,6 +97,7 @@ const createOrder = async (req, res) => {
     const productPromises = products.map((item) =>
       axios.get(`${process.env.GATEWAY_URL}/api/product/product/get-by-id/${item.productId}`),
     );
+
     const productResponses = await Promise.all(productPromises);
 
     // Xử lý dữ liệu từ các response
@@ -154,7 +162,31 @@ const createOrder = async (req, res) => {
       const producer = req.app.locals.producer;
       const payUrlStore = req.app.locals.payUrlStore;
       const orderId = response?.data?._id.toString();
-      console.log('Order ID for payment:', orderId);
+
+      if (!producer) {
+        console.error('Kafka producer is not initialized');
+        return res.status(500).json({
+          success: false,
+          message: 'Payment service is not available',
+          error: 'Kafka producer not initialized',
+        });
+      }
+
+      if (!payUrlStore) {
+        console.error('PayUrlStore is not initialized');
+        return res.status(500).json({
+          success: false,
+          message: 'Payment service is not available',
+          error: 'PayUrlStore not initialized',
+        });
+      }
+
+      console.log('Preparing to send order to payment service:', {
+        orderId,
+        userId,
+        amount: totalPrice,
+        paymentMethod,
+      });
 
       const orderData = {
         orderId,
@@ -164,6 +196,7 @@ const createOrder = async (req, res) => {
       };
 
       try {
+        console.log('Sending order to Kafka topic order-payment...');
         await producer.send({
           topic: 'order-payment',
           messages: [
@@ -172,13 +205,19 @@ const createOrder = async (req, res) => {
             },
           ],
         });
-        console.log('Order sent to Kafka:', orderData);
+        console.log('Successfully sent order to Kafka:', orderData);
 
         // Đợi payUrl với Promise và timeout
+        console.log('Waiting for payment URL...');
         const waitForPayUrl = new Promise((resolve) => {
           const checkPayUrl = () => {
             const payUrl = payUrlStore.get(orderId);
-            console.log('Checking payUrl for orderId:', orderId, 'Current payUrl:', payUrl);
+            console.log(
+              'Checking payUrl for orderId:',
+              orderId,
+              'Current payUrl:',
+              payUrl ? 'URL received' : 'Not yet received',
+            );
             if (payUrl) {
               payUrlStore.delete(orderId);
               resolve(payUrl);
@@ -193,26 +232,35 @@ const createOrder = async (req, res) => {
           waitForPayUrl,
           new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout waiting for payment URL')), 10000)),
         ]).catch((error) => {
-          console.log('Timeout or error waiting for payment URL:', error.message);
+          console.error('Error or timeout waiting for payment URL:', error.message);
           return null;
         });
 
-        console.log('Final payUrl received:', payUrl);
-
         if (payUrl) {
-          console.log('Adding payUrl to response');
-          // Ensure response.data is a plain object
+          console.log('Payment URL received successfully');
           if (typeof response.data === 'object') {
             response.data = { ...response.data, payUrl };
-            console.log('Response after adding payUrl:', JSON.stringify(response, null, 2));
+            console.log('Added payment URL to response');
           }
         } else {
-          console.log('No payUrl received within timeout');
+          console.warn('No payment URL received within timeout period');
+          if (typeof response.data === 'object') {
+            response.data = { ...response.data, paymentError: 'Payment URL not received within timeout' };
+          }
         }
       } catch (kafkaError) {
-        console.error('Error in payment process:', kafkaError);
+        console.error('Error in payment process:', {
+          error: kafkaError.message,
+          stack: kafkaError.stack,
+          orderId,
+          userId,
+        });
         if (typeof response.data === 'object') {
-          response.data = { ...response.data, paymentError: 'Payment processing failed, but order was created' };
+          response.data = {
+            ...response.data,
+            paymentError: 'Payment processing failed, but order was created',
+            errorDetails: kafkaError.message,
+          };
         }
       }
     }
