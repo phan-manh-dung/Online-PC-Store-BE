@@ -81,6 +81,18 @@ router.get('/product/get-products-by-category-supplier', async (req, res) => {
     errorHandler(error, res);
   }
 });
+router.get('/product/get-by-brandcomputer', async (req, res) => {
+  console.log('Req.query APIGW', req.query); // Đây mới là chỗ bạn cần log để xem query params
+
+  try {
+    const response = await searchServiceClient.get(
+      `/api/product/get-by-brandcomputer?brand=${req.query.brand}&type=${req.query.type}`,
+    );
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    errorHandler(error, res);
+  }
+});
 
 router.get('/category/get-all', async (req, res) => {
   try {
