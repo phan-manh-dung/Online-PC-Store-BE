@@ -16,7 +16,7 @@ router.put('/update-status', orderController.updateStatusOrder);
 router.get('/order-count/:id', orderController.countOrderByUser);
 // thống kê doanh thu theo từng user
 router.get('/admin/sales-stats', authMiddlewareOrder, orderController.getSalesStats);
-// lấy tất cả các đơn hàng và doanh thu của user
+// lấy tất cả các đơn hàng và doanh thu trong db
 router.get('/admin/summary-stats', authMiddlewareOrder, orderController.getSummaryStats);
 // thống kê doanh thu theo ngày tháng năm
 router.get('/admin/revenue-stats', authMiddlewareOrder, orderController.getRevenueStatsByDate);

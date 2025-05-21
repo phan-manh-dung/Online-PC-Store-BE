@@ -21,9 +21,10 @@ if (process.env.NODE_ENV === 'localhost') {
 
 const SERVICE_INFO = {
   name: 'product_service',
-  host: 'localhost',
+  //host: 'localhost',
   //host: 'product_service',
-  port: process.env.PORT || 5002,
+  // port: process.env.PORT || 5002,
+  baseUrl: process.env.SERVICE_URL || 'https://product-service-422663804011.asia-southeast1.run.app',
   endpoints: [
     '/api/product/get-all',
     '/api/product/get-by-id/:id',
@@ -79,17 +80,69 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 router(app);
 
+// Add health check endpoint for Google Cloud Run
+app.get('/_health', (req, res) => {
+  res.status(200).send('OK');
+});
+
+// Add debug endpoint to see service status
+app.get('/_debug/info', (req, res) => {
+  res.json({
+    service: SERVICE_INFO.name,
+    baseUrl: SERVICE_INFO.baseUrl,
+    registered: serviceId !== null,
+    serviceId,
+    gatewayUrl: process.env.GATEWAY_URL,
+    environment: process.env.NODE_ENV,
+  });
+});
+
 // Register with API Gateway
+// async function registerWithGateway() {
+//   try {
+//     const response = await axios.post(`${process.env.GATEWAY_URL}/register`, SERVICE_INFO);
+//     serviceId = response.data.serviceId;
+//     console.log('Registered with API Gateway, serviceId:', serviceId);
+//     startHeartbeat();
+//   } catch (error) {
+//     console.error('Failed to register with API Gateway:', error.message);
+//     // Thử lại sau 5 giây
+//     setTimeout(registerWithGateway, 5000);
+//   }
+// }
+
 async function registerWithGateway() {
   try {
+    console.log(`Attempting to register with API Gateway: ${process.env.GATEWAY_URL}`);
+    console.log('Service info:', JSON.stringify(SERVICE_INFO));
+
     const response = await axios.post(`${process.env.GATEWAY_URL}/register`, SERVICE_INFO);
     serviceId = response.data.serviceId;
-    console.log('Registered with API Gateway, serviceId:', serviceId);
+    registrationAttempts = 0;
+
+    console.log('Successfully registered with API Gateway, serviceId:', serviceId);
     startHeartbeat();
   } catch (error) {
-    console.error('Failed to register with API Gateway:', error.message);
-    // Thử lại sau 5 giây
-    setTimeout(registerWithGateway, 5000);
+    registrationAttempts++;
+    console.error(
+      `Failed to register with API Gateway (attempt ${registrationAttempts}/${MAX_REGISTRATION_ATTEMPTS}):`,
+      error.message,
+    );
+
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+    }
+
+    // Try again with backoff
+    const retryDelay = Math.min(30000, 4000 * Math.pow(2, registrationAttempts));
+    console.log(`Will retry in ${retryDelay / 1000} seconds`);
+
+    if (registrationAttempts < MAX_REGISTRATION_ATTEMPTS) {
+      setTimeout(registerWithGateway, retryDelay);
+    } else {
+      console.error('Max registration attempts reached. Service will run without API Gateway registration.');
+    }
   }
 }
 
@@ -130,7 +183,16 @@ mongoose
   });
 
 // Start server
-app.listen(SERVICE_INFO.port, () => {
-  console.log(`Product Service running on http://localhost:${SERVICE_INFO.port}`);
-  setTimeout(registerWithGateway, 1000);
+// app.listen(SERVICE_INFO.port, () => {
+//   console.log(`Product Service running on http://localhost:${SERVICE_INFO.port}`);
+//   setTimeout(registerWithGateway, 1000);
+// });
+
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`User Service running on port ${PORT}`);
+  console.log(`Service URL: ${SERVICE_INFO.baseUrl}`);
+
+  // Wait a bit for everything to initialize before registering
+  setTimeout(registerWithGateway, 2000);
 });

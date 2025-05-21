@@ -35,7 +35,7 @@ const handleCallback = async (req, res) => {
 
     // Thông báo qua API Gateway
     try {
-      await axios.post('http://localhost:5555/api/payment/notify-client', {
+      await axios.post(`${process.env.GATEWAY_URL}/api/payment/notify-client`, {
         orderId: req.body.orderId,
         data: notificationData,
       });
