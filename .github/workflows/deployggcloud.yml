@@ -3,7 +3,7 @@ name: Deploy services to Cloud Run
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   deploy:
