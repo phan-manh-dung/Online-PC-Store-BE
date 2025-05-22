@@ -52,8 +52,8 @@ app.locals.payUrlStore = payUrlStore;
 
 const SERVICE_INFO = {
   name: 'order_service',
-  host: 'order_service',
-  //host: 'localhost',
+  //host: 'order_service',
+  host: 'localhost',
   port: process.env.PORT || 5003,
   endpoints: [
     '/api/order/create-order',
