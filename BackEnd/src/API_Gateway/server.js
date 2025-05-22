@@ -24,8 +24,8 @@ const searchRoutes = require('./src/routes/searchRouter');
 const requestCounter = {};
 
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 phút
-  max: 100, // tối đa 1000 request trong 15 phút
+  windowMs: 1 * 60 * 1000, // 15 phút
+  max: 1000, // tối đa 1000 request trong 15 phút
   handler: (req, res) => {
     res.status(429).json({ message: 'Too many requests. Please try again later.' });
   },
@@ -49,6 +49,10 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization'],
   }),
 );
+
+// Xử lý OPTIONS cho tất cả route
+app.options('*', cors());
+
 app.use(express.json({ limit: '10mb' }));
 app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, 'public')));
