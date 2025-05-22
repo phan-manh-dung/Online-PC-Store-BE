@@ -41,6 +41,9 @@ const SERVICE_INFO = {
     '/api/filter/admin/update',
     '/api/filter/admin/delete',
 
+    //AI
+    '/api/gemini/generate',
+
     //For menu filter:
     '/api/get-list-by-category/:categoryId',
     '/api/series/:brand',
