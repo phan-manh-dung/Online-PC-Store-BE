@@ -41,7 +41,7 @@ app.use(limiter);
 // app.use(cors());
 app.use(
   cors({
-    origin: ['http://127.0.0.1:5500', 'http://localhost:5173'],
+    origin: ['https://phanmanhdung.id.vn', 'http://localhost:5173', 'https://online-pc.vercel.app'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
