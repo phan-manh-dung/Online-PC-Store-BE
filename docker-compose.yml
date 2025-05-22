@@ -139,3 +139,183 @@ services:
 networks:
   network-mcs-kttkpm:
     external: true
+
+
+# version: '3.8'
+# services:
+#   zookeeper:
+#     image: confluentinc/cp-zookeeper:7.4.4
+#     environment:
+#       ZOOKEEPER_CLIENT_PORT: 2181
+#       ZOOKEEPER_TICK_TIME: 2000
+#     ports:
+#       - "2181:2181"
+#     healthcheck:
+#       test: ["CMD", "nc", "-z", "localhost", "2181"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+#       start_period: 30s
+#     networks:
+#       - network-mcs-kttkpm
+
+#   kafka:
+#     image: confluentinc/cp-kafka:7.4.4
+#     depends_on:
+#       zookeeper:
+#         condition: service_healthy
+#     ports:
+#       - "9092:9092"
+#       - "29092:29092"
+#     environment:
+#       KAFKA_BROKER_ID: 1
+#       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+#       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+#       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+#       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+#       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#     healthcheck:
+#       test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+#       start_period: 30s
+#     networks:
+#       - network-mcs-kttkpm
+
+#   redis:
+#     image: redis:latest
+#     ports:
+#       - "6379:6379"
+#     networks:
+#       - network-mcs-kttkpm
+
+#   api-gateway:
+#     build: 
+#       context: ./BackEnd/src/API_Gateway  
+#       dockerfile: Dockerfile
+#     ports:
+#       - "5555:5555"
+#     environment:
+#       # Override any .env values with Docker network URLs
+#       - GATEWAY_URL=http://api-gateway:5555
+#       - CART_SERVICE_URL=http://cart_service:5004
+#       - ORDER_SERVICE_URL=http://order_service:5003
+#       - USER_SERVICE_URL=http://user_service:5001
+#       - PRODUCT_SERVICE_URL=http://product_service:5002
+#       - PAYMENT_SERVICE_URL=http://payment_service:5005
+#       - SEARCH_SERVICE_URL=http://search_service:5006
+#       - REDIS_URL=redis://redis:6379
+#     depends_on:
+#       - redis
+#     networks:
+#       - network-mcs-kttkpm
+
+#   user_service:
+#     build:
+#       context: ./BackEnd/src/user_service
+#       dockerfile: Dockerfile
+#     ports:
+#       - "5001:5001"
+#     environment:
+#       # Set internal service URLs
+#       - GATEWAY_URL=http://api-gateway:5555
+#       - CART_SERVICE_URL=http://cart_service:5004
+#       - ORDER_SERVICE_URL=http://order_service:5003
+#       - REDIS_URL=redis://redis:6379
+#       - SERVICE_PORT=5001
+#     depends_on:
+#       - redis
+#     networks:
+#       - network-mcs-kttkpm
+
+#   product_service:
+#     build:
+#       context: ./BackEnd/src/product_service
+#       dockerfile: Dockerfile
+#     ports:
+#       - "5002:5002"
+#     environment:
+#       - GATEWAY_URL=http://api-gateway:5555
+#       - REDIS_URL=redis://redis:6379
+#       - SERVICE_PORT=5002
+#     depends_on:
+#       - redis
+#     networks:
+#       - network-mcs-kttkpm
+
+#   order_service:
+#     build:
+#       context: ./BackEnd/src/order_service
+#       dockerfile: Dockerfile
+#     ports:
+#       - "5003:5003"
+#     environment:
+#       - KAFKA_BROKER=kafka:9092
+#       - KAFKAJS_NO_PARTITIONER_WARNING=1
+#       - GATEWAY_URL=http://api-gateway:5555
+#       - PRODUCT_SERVICE_URL=http://product_service:5002
+#       - REDIS_URL=redis://redis:6379
+#       - SERVICE_PORT=5003
+#     depends_on:
+#       kafka:
+#         condition: service_healthy
+#       redis:
+#         condition: service_started
+#     networks:
+#       - network-mcs-kttkpm
+
+#   cart_service:
+#     build:
+#       context: ./BackEnd/src/cart_service
+#       dockerfile: Dockerfile
+#     ports:
+#       - "5004:5004"
+#     environment:
+#       - GATEWAY_URL=http://api-gateway:5555
+#       - REDIS_URL=redis://redis:6379
+#       - SERVICE_PORT=5004
+#     depends_on:
+#       - redis
+#     networks:
+#       - network-mcs-kttkpm
+
+#   search_service:
+#     build:
+#       context: ./BackEnd/src/search_service
+#       dockerfile: Dockerfile
+#     ports:
+#       - "5006:5006"
+#     environment:
+#       - GATEWAY_URL=http://api-gateway:5555
+#       - PRODUCT_SERVICE_URL=http://product_service:5002
+#       - REDIS_URL=redis://redis:6379
+#       - SERVICE_PORT=5006
+#     depends_on:
+#       - redis
+#     networks:
+#       - network-mcs-kttkpm      
+
+#   payment_service:
+#     build:
+#       context: ./BackEnd/src/payment_service
+#       dockerfile: Dockerfile
+#     ports:
+#       - "5005:5005"
+#     environment:
+#       - KAFKA_BROKER=kafka:9092
+#       - KAFKAJS_NO_PARTITIONER_WARNING=1
+#       - GATEWAY_URL=http://api-gateway:5555
+#       - REDIS_URL=redis://redis:6379
+#       - SERVICE_PORT=5005
+#     depends_on:
+#       kafka:
+#         condition: service_healthy
+#       redis:
+#         condition: service_started
+#     networks:
+#       - network-mcs-kttkpm
+
+# networks:
+#   network-mcs-kttkpm:
+#     external: true

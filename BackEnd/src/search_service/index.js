@@ -16,8 +16,8 @@ app.use(express.json());
 
 let host = 'search_service';
 if (process.env.NODE_ENV === 'localhost') {
-  host = 'localhost';
-  //host = 'search_service';
+  //host = 'localhost';
+  host = 'search_service';
 }
 
 const SERVICE_INFO = {

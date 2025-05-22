@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const axios = require('axios');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+
 const cors = require('cors');
 
 const router = require('./router');
@@ -15,8 +16,8 @@ app.use(express.json());
 
 const SERVICE_INFO = {
   name: 'user_service',
-  host: 'localhost',
-  //host: 'user_service',
+  //host: 'localhost',
+  host: 'user_service',
   port: process.env.PORT || 5001,
   endpoints: [
     '/api/user/sign-in',

@@ -21,8 +21,8 @@ if (process.env.NODE_ENV === 'localhost') {
 
 const SERVICE_INFO = {
   name: 'product_service',
-  //host: 'product_service',
-  host: 'localhost',
+  host: 'product_service',
+  //host: 'localhost',
   port: process.env.PORT || 5002,
   // baseUrl: process.env.SERVICE_URL || 'https://product-service-422663804011.asia-southeast1.run.app',
   endpoints: [
