@@ -138,5 +138,3 @@ app.listen(PORT, () => {
   // Register with gateway after a short delay
   setTimeout(registerWithGateway, 2000);
 });
-
-// tesst
