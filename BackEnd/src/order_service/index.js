@@ -112,6 +112,8 @@ app.get('/_debug/info', (req, res) => {
 });
 
 async function registerWithGateway() {
+  let registrationAttempts = 0;
+  const MAX_REGISTRATION_ATTEMPTS = 3;
   try {
     console.log(`Attempting to register with API Gateway: ${process.env.GATEWAY_URL}`);
     console.log('Service info:', JSON.stringify(SERVICE_INFO));
@@ -123,7 +125,6 @@ async function registerWithGateway() {
     }
 
     serviceId = response.data.serviceId;
-    registrationAttempts = 0;
 
     console.log('Successfully registered with API Gateway, serviceId:', serviceId);
 

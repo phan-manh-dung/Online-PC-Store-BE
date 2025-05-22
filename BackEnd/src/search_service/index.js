@@ -8,6 +8,7 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
 const router = require('./routes');
+const { listenerCount } = require('./models/Filter_Model');
 const app = express();
 
 dotenv.config();
@@ -102,15 +103,15 @@ app.get('/_debug/info', (req, res) => {
 //     setTimeout(registerWithGateway, 5000);
 //   }
 // }
-
 async function registerWithGateway() {
+  let registrationAttempts = 0;
+  const MAX_REGISTRATION_ATTEMPTS = 3;
   try {
     console.log(`Attempting to register with API Gateway: ${process.env.GATEWAY_URL}`);
     console.log('Service info:', JSON.stringify(SERVICE_INFO));
 
     const response = await axios.post(`${process.env.GATEWAY_URL}/register`, SERVICE_INFO);
     serviceId = response.data.serviceId;
-    registrationAttempts = 0;
 
     console.log('Successfully registered with API Gateway, serviceId:', serviceId);
     startHeartbeat();
