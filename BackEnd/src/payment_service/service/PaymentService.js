@@ -7,9 +7,10 @@ const Webhook = require('../model/webhookModel');
 const partnerCode = process.env.MOMO_PARTNER_CODE || 'MOMO';
 const accessKey = process.env.MOMO_ACCESS_KEY || 'F8BBA842ECF85';
 const secretKey = process.env.MOMO_SECRET_KEY || 'K951B6PE1waDMi640xX08PD3vg6EkVlz';
-const ipnUrl = 'https://phanmanhdung.id.vn/api/payment/callback';
+const ipnUrl =
+  process.env.MOMO_IPN_URL || 'https://fc7a-2001-ee0-4f86-5210-2196-4a36-8e4a-7019.ngrok-free.app/api/payment/callback';
 // thanh toán xong nó sẽ trở về đây
-const redirectUrl = process.env.MOMO_REDIRECT_URL || 'https://phanmanhdung.id.vn/order-success';
+const redirectUrl = process.env.MOMO_REDIRECT_URL || 'https://shopmd.vercel.app/orderSuccess';
 const requestType = 'captureWallet';
 
 function generateSignature(requestBody) {

@@ -13,8 +13,8 @@ const { Kafka } = require('kafkajs');
 // Cấu hình Kafka
 const kafka = new Kafka({
   clientId: 'payment-service',
-  brokers: ['localhost:9092'],
-  //brokers: ['kafka:9092'],
+  //brokers: ['localhost:9092'],
+  brokers: ['kafka:9092'],
 });
 const consumer = kafka.consumer({ groupId: 'payment-group' });
 const producer = kafka.producer();
@@ -60,7 +60,7 @@ connectKafka();
 const processMoMoPayment = async (orderData) => {
   try {
     // Gọi API create-payment trong payment_service
-    const response = await axios.post('http://localhost:5555/api/payment/create-payment-momo', orderData, {
+    const response = await axios.post(`${process.env.GATEWAY_URL}/api/payment/create-payment-momo`, orderData, {
       headers: { 'Content-Type': 'application/json' },
     });
     console.log('MoMo payment created:', response.data);
@@ -87,8 +87,8 @@ app.use(
 
 const SERVICE_INFO = {
   name: 'payment_service',
-  //host: 'payment_service',
-  host: 'localhost',
+  host: 'payment_service',
+  //host: 'localhost',
   port: process.env.PORT_PAYMENT_SERVICE || 5005,
   endpoints: [
     '/api/payment/create-payment-momo',
@@ -162,7 +162,7 @@ mongoose
 
 // port 4000
 app.listen(SERVICE_INFO.port, () => {
-  console.log(`Cart Service running on http://localhost:${SERVICE_INFO.port}`);
+  console.log(`Payment Service running on http://localhost:${SERVICE_INFO.port}`);
   setTimeout(registerWithGateway, 1000);
 });
 

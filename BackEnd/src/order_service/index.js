@@ -15,8 +15,8 @@ const { Kafka } = require('kafkajs');
 // // Cấu hình Kafka
 const kafka = new Kafka({
   clientId: 'order_service',
-  brokers: ['localhost:9092'], // Địa chỉ Kafka server
-  //brokers: ['kafka:9092'],
+  //brokers: ['localhost:9092'], // Địa chỉ Kafka server
+  brokers: ['kafka:9092'],
 });
 const producer = kafka.producer();
 const consumer = kafka.consumer({ groupId: 'order-group' });
@@ -52,8 +52,8 @@ app.locals.payUrlStore = payUrlStore;
 
 const SERVICE_INFO = {
   name: 'order_service',
-  //host: 'order_service',
-  host: 'localhost',
+  host: 'order_service',
+  //host: 'localhost',
   port: process.env.PORT || 5003,
   endpoints: [
     '/api/order/create-order',
@@ -82,7 +82,7 @@ async function registerWithGateway() {
   } catch (error) {
     console.error('Failed to register with API Gateway:', error.message);
     // Thử lại sau 4 giây
-    setTimeout(registerWithGateway, 4000);
+    setTimeout(registerWithGateway, 5000);
   }
 }
 

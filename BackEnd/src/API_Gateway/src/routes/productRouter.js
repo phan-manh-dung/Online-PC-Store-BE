@@ -3,8 +3,11 @@ const express = require('express');
 const router = express.Router();
 const { StatusCodes } = require('http-status-codes');
 const ServiceClient = require('../services/serviceClient');
-
 const productServiceClient = new ServiceClient('product_service');
+const FormData = require('form-data');
+const axios = require('axios');
+const multer = require('multer');
+const upload = multer(); // lưu file vào memory buffer
 
 const errorHandler = (error, res) => {
   console.error('Service Error:', error);
@@ -176,28 +179,42 @@ router.get('/computerOption/admin/get-grouped', async (req, res) => {
   }
 });
 
-router.post('/product/admin/create', async (req, res) => {
+router.post('/product/admin/create', upload.single('image'), async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1];
-    console.log('token gateway', token);
     if (!token) {
-      return res.status(401).json({
-        message: 'Token is missing at API Gateway router',
-        status: 'ERROR',
+      return res.status(401).json({ message: 'Missing token' });
+    }
+
+    // Tạo form-data mới
+    const form = new FormData();
+
+    // Thêm các fields thường (text)
+    for (const key in req.body) {
+      form.append(key, req.body[key]);
+    }
+
+    // Thêm file upload nếu có
+    if (req.file) {
+      form.append('image', req.file.buffer, {
+        filename: req.file.originalname,
+        contentType: req.file.mimetype,
       });
     }
 
-    const response = await productServiceClient.postAuth('/api/product/admin/create', req.body, {
-      Authorization: `Bearer ${token}`,
+    // Gửi sang ProductService (endpoint full URL hoặc baseURL + path)
+    const response = await axios.post('http://localhost:5002/api/product/admin/create', form, {
+      headers: {
+        ...form.getHeaders(), // multipart headers (Content-Type)
+        Authorization: `Bearer ${token}`, // token
+      },
     });
+
     res.status(response.status).json(response.data);
   } catch (error) {
-    console.error('Error when calling product service:', error.response?.data || error.message);
-    res.status(error.response?.status || 500).json({
-      message: error.response?.data?.message || 'Internal server error at API Gateway',
-      status: 'ERROR',
-    });
+    console.error(error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({ message: 'Error forwarding request', error: error.message });
   }
 });
 
