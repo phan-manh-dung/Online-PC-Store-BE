@@ -1,5 +1,5 @@
 const EventEmitter = require('events');
-//const logger = require('../../utils/logger');
+const logger = require('../../utils/logger');
 class ServiceRegistry extends EventEmitter {
   constructor() {
     super();
@@ -29,7 +29,7 @@ class ServiceRegistry extends EventEmitter {
       endpoints,
       lastHeartbeat: Date.now(),
     });
-    //  logger.info(`Registered service instance: ${id}`);
+    logger.info(`Registered service instance: ${id}`);
     return id;
   }
 
@@ -38,12 +38,12 @@ class ServiceRegistry extends EventEmitter {
     for (const [serviceName, instances] of this.services) {
       if (instances.delete(serviceId)) {
         console.log(`Service instance unregistered: ${serviceId}`);
-        //  logger.warn(`Service instance unregistered: ${serviceId}`);
+        logger.warn(`Service instance unregistered: ${serviceId}`);
         this.emit('service-unregistered', serviceId);
         if (instances.size === 0) {
           this.services.delete(serviceName);
           this.roundRobinCounters.delete(serviceName); // Xóa counter khi không còn instance
-          //    logger.warn(`No remaining instances for service: ${serviceName}`);
+          logger.warn(`No remaining instances for service: ${serviceName}`);
         }
         return true;
       }
@@ -57,11 +57,11 @@ class ServiceRegistry extends EventEmitter {
       const instance = instances.get(serviceId);
       if (instance) {
         instance.lastHeartbeat = Date.now();
-        //  logger.info(`💓Heartbeat received from: ${serviceId}`);
+        logger.info(`💓Heartbeat received from: ${serviceId}`);
         return true;
       }
     }
-    //  logger.warn(`🚫 Heartbeat received from unknown serviceId: ${serviceId}`);
+    logger.warn(`🚫 Heartbeat received from unknown serviceId: ${serviceId}`);
     return false;
   }
 
@@ -70,7 +70,7 @@ class ServiceRegistry extends EventEmitter {
     console.log('Getting instance for service:', serviceName);
     const instances = this.services.get(serviceName);
     if (!instances || instances.size === 0) {
-      //  logger.error(`🚨 No instances available for service: ${serviceName}`);
+      logger.error(`🚨 No instances available for service: ${serviceName}`);
       throw new Error(`No instances available for service: ${serviceName}`);
     }
 
@@ -82,7 +82,7 @@ class ServiceRegistry extends EventEmitter {
     // Tăng counter và cập nhật lại
     counter = (counter + 1) % instancesArray.length;
     this.roundRobinCounters.set(serviceName, counter);
-    //  logger.info(`🎯 Selected instance for service [${serviceName}]: ${selectedInstance.id}`);
+    logger.info(`🎯 Selected instance for service [${serviceName}]: ${selectedInstance.id}`);
     return selectedInstance;
   }
 
@@ -95,7 +95,7 @@ class ServiceRegistry extends EventEmitter {
           const inactiveDuration = now - instance.lastHeartbeat;
           if (inactiveDuration > this.healthCheckInterval * 3) {
             console.log(`Removing inactive service: ${instanceId}`);
-            //  logger.warn(`💀 Instance ${instanceId} removed (inactive for ${Math.round(inactiveDuration / 1000)}s)`);
+            logger.warn(`💀 Instance ${instanceId} removed (inactive for ${Math.round(inactiveDuration / 1000)}s)`);
             this.unregister(instanceId);
           }
         }

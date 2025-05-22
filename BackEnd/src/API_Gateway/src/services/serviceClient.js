@@ -1,7 +1,7 @@
 const axios = require('axios');
 const CircuitBreaker = require('opossum');
 const serviceRegistry = require('./serviceRegistry');
-// const logger = require('../../utils/logger');
+const logger = require('../../utils/logger');
 
 class ServiceClient {
   constructor(serviceName) {
@@ -35,7 +35,7 @@ class ServiceClient {
     const baseDelay = 1000; // time gian cơ bản giữa các lần thử lại
     const maxDelay = 2000; // thời gian tối đa giữa các lần thử lại
     const delay = Math.min(maxDelay, baseDelay * Math.pow(2, retryCount)); // tính time delay cấp nhân
-    //  logger.debug(`Waiting ${delay / 1000}s before retry #${retryCount}`);
+    logger.debug(`Waiting ${delay / 1000}s before retry #${retryCount}`);
     return new Promise((resolve) => setTimeout(resolve, delay));
   }
 
@@ -58,7 +58,7 @@ class ServiceClient {
   }
 
   async _makeRequest(method, endpoint, data = null, headers = {}) {
-    //  logger.info('----------------------------- New Request -----------------------------');
+    logger.info('----------------------------- New Request -----------------------------');
     const instance = await this._getServiceInstance();
     if (!instance) {
       const msg = `No available instances for ${this.serviceName}`;
@@ -72,15 +72,15 @@ class ServiceClient {
 
     while (retryCount < maxRetries) {
       try {
-        //  logger.debug(`Sending request to ${url} (Attempt ${retryCount + 1})`);
+        logger.debug(`Sending request to ${url} (Attempt ${retryCount + 1})`);
         const response = await this.breaker.fire({ method, url, data, headers });
-        //  logger.debug(`Request to ${url} succeeded on attempt ${retryCount + 1}`);
+        logger.debug(`Request to ${url} succeeded on attempt ${retryCount + 1}`);
         return response;
       } catch (error) {
-        //  logger.error(`Request to ${url} failed on attempt ${retryCount + 1}: ${error.message}`);
+        logger.error(`Request to ${url} failed on attempt ${retryCount + 1}: ${error.message}`);
 
         if (error.response) {
-          //  logger.error(`Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+          logger.error(`Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
           throw error;
         }
 
@@ -90,12 +90,12 @@ class ServiceClient {
           const msg = this.breaker.opened
             ? `Circuit breaker OPEN – ${this.serviceName} temporarily unavailable after ${retryCount} retries`
             : `${this.serviceName} unavailable after ${maxRetries} retries`;
-          //  logger.error(msg);
+          logger.error(msg);
           throw new Error(msg);
         }
 
         await this._delay(retryCount);
-        //  logger.info(`Retrying request to ${url} (Attempt ${retryCount + 1}/${maxRetries})`);
+        logger.info(`Retrying request to ${url} (Attempt ${retryCount + 1}/${maxRetries})`);
       }
     }
   }
@@ -177,7 +177,7 @@ class ServiceClient {
             ...headers,
           },
         });
-        // console.log(`[DEBUG] Response received on attempt ${retryCount + 1}:`, response.data);
+        console.log(`[DEBUG] Response received on attempt ${retryCount + 1}:`, response.data);
         return response;
       } catch (error) {
         console.error(`[ERROR] GET request failed on attempt ${retryCount + 1}:`, error.message);

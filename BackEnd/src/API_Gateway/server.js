@@ -6,7 +6,7 @@ const serviceRegistry = require('./src/services/serviceRegistry');
 const path = require('path');
 const app = express();
 require('dotenv').config();
-// const logger = require('../../src/API_Gateway/utils/logger');
+const logger = require('../../src/API_Gateway/utils/logger');
 
 // Routes
 const userRoutes = require('./src/routes/userRouter');
@@ -25,13 +25,15 @@ const requestCounter = {};
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 phút
-  max: 10000, // tối đa 1000 request trong 15 phút
+  max: 100, // tối đa 1000 request trong 15 phút
   handler: (req, res) => {
     res.status(429).json({ message: 'Too many requests. Please try again later.' });
   },
   keyGenerator: (req) => {
     requestCounter[req.ip] = (requestCounter[req.ip] || 0) + 1;
     console.log(`[${new Date().toISOString()}] IP ${req.ip} sent request #${requestCounter[req.ip]}`);
+    logger.warn('Vượt quá giới hạn request');
+    logger.warn(`[${new Date().toISOString()}] IP ${req.ip} sent request #${requestCounter[req.ip]}`);
     return req.ip;
   },
 });

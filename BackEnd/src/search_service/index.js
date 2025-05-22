@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const axios = require('axios');
+const GATEWAY_URL = 'http://localhost:5555';
 
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
