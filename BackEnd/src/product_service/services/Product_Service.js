@@ -70,8 +70,10 @@ const createProduct = async (productData, filePath) => {
     console.log(newProduct);
 
     await newProduct.save();
-
-    await redisService.deleteCache('products:all');
+    const keys = await redis.keys('getall-products:*');
+    if (keys.length > 0) {
+      await redis.del(keys);
+    }
 
     return newProduct;
   } catch (error) {
@@ -88,8 +90,10 @@ const updateProduct = async (productId, updateData) => {
 
     const cacheKey = `product:${productId}`;
     await redisService.setCache(cacheKey, updatedProduct, 3600);
-    await redisService.deleteCache('products:all');
-
+    const keys = await redis.keys('getall-products:*');
+    if (keys.length > 0) {
+      await redis.del(keys);
+    }
     return updatedProduct;
   } catch (error) {
     throw new Error('Error updating product: ' + error.message);
