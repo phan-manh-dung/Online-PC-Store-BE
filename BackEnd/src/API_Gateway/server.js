@@ -24,8 +24,8 @@ const searchRoutes = require('./src/routes/searchRouter');
 const requestCounter = {};
 
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 phút
-  max: 10000, // tối đa 1000 request trong 15 phút
+  windowMs: 1 * 60 * 1000, // 1 phút
+  max: 200,
   handler: (req, res) => {
     res.status(429).json({ message: 'Too many requests. Please try again later.' });
   },

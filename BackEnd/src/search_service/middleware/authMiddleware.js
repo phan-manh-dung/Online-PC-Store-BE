@@ -3,7 +3,7 @@ const axios = require('axios');
 const dotenv = require('dotenv');
 dotenv.config();
 
-// const GATEWAY_URL = 'http://localhost:5555';
+const GATEWAY_URL = 'http://localhost:5555';
 
 const authMiddleware = async (req, res, next) => {
   try {
@@ -15,7 +15,7 @@ const authMiddleware = async (req, res, next) => {
     }
 
     // Gọi user_service qua Gateway để xác thực token
-    const response = await axios.get(`${process.env.GATEWAY_URL}/api/user/verify-token`, {
+    const response = await axios.get(`${GATEWAY_URL}/api/user/verify-token`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const userData = response.data;
