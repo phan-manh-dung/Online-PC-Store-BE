@@ -55,7 +55,8 @@ const SERVICE_INFO = {
   ],
 };
 
-const GATEWAY_URL = 'http://localhost:5555';
+const GATEWAY_URL = process.env.GATEWAY_URL;
+
 let serviceId = null;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
