@@ -25,7 +25,7 @@ const requestCounter = {};
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 phút
-  max: 1000, // tối đa 1000 request trong 15 phút
+  max: 10000, // tối đa 1000 request trong 15 phút
   handler: (req, res) => {
     res.status(429).json({ message: 'Too many requests. Please try again later.' });
   },
@@ -41,8 +41,8 @@ app.use(limiter);
 // app.use(cors());
 app.use(
   cors({
-    origin: ['http://127.0.0.1:5500', 'http://localhost:5500'],
-    methods: ['GET', 'POST', 'OPTIONS'],
+    origin: ['http://127.0.0.1:5500', 'http://localhost:5173'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
   }),

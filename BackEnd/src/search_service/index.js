@@ -8,6 +8,7 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
 const router = require('./routes');
+const { listenerCount } = require('./models/Filter_Model');
 const app = express();
 
 dotenv.config();
@@ -16,14 +17,17 @@ app.use(express.json());
 
 let host = 'search_service';
 if (process.env.NODE_ENV === 'localhost') {
-  //host = 'localhost';
-  host = 'search_service';
+  // host = 'localhost';
+  host = 'localhost';
 }
 
 const SERVICE_INFO = {
   name: 'search_service',
-  host: host,
+
   port: process.env.PORT || 5006,
+  // port: process.env.PORT || 8080,
+  host: 'localhost',
+
   endpoints: [
     '/api/product/get-all',
     '/api/product/get-by-id/:id',
@@ -34,6 +38,7 @@ const SERVICE_INFO = {
     '/api/product/get-products-by-type-supplier',
     '/api/product/get-products-by-category-supplier',
     '/api/product/brands/:categoryId',
+    '/api/product/get-by-brandcomputer',
     '/api/filter/get-all',
     '/api/filter/get-by-id/:id',
     '/api/filter/admin/create',
@@ -55,7 +60,6 @@ const SERVICE_INFO = {
   ],
 };
 
-const GATEWAY_URL = 'http://localhost:5555';
 let serviceId = null;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -65,10 +69,27 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 router(app);
 
+// Add health check endpoint for Google Cloud Run
+app.get('/_health', (req, res) => {
+  res.status(200).send('OK');
+});
+
+// Add debug endpoint to see service status
+app.get('/_debug/info', (req, res) => {
+  res.json({
+    service: SERVICE_INFO.name,
+    baseUrl: SERVICE_INFO.baseUrl,
+    registered: serviceId !== null,
+    serviceId,
+    gatewayUrl: process.env.GATEWAY_URL,
+    environment: process.env.NODE_ENV,
+  });
+});
+
 // Register with API Gateway
 async function registerWithGateway() {
   try {
-    const response = await axios.post(`${GATEWAY_URL}/register`, SERVICE_INFO);
+    const response = await axios.post(`${process.env.GATEWAY_URL}/register`, SERVICE_INFO);
     serviceId = response.data.serviceId;
     console.log('Registered with API Gateway, serviceId:', serviceId);
     startHeartbeat();
@@ -83,7 +104,7 @@ async function registerWithGateway() {
 function startHeartbeat() {
   setInterval(async () => {
     try {
-      await axios.post(`${GATEWAY_URL}/heartbeat/${serviceId}`);
+      await axios.post(`${process.env.GATEWAY_URL}/heartbeat/${serviceId}`);
     } catch (error) {
       console.error('Heartbeat failed:', error.message);
       // Thử đăng ký lại nếu heartbeat thất bại
@@ -97,7 +118,7 @@ function startHeartbeat() {
 process.on('SIGINT', async () => {
   if (serviceId) {
     try {
-      await axios.post(`${GATEWAY_URL}/unregister/${serviceId}`);
+      await axios.post(`${process.env.GATEWAY_URL}/unregister/${serviceId}`);
       console.log('Unregistered from API Gateway');
     } catch (error) {
       console.error('Failed to unregister:', error.message);

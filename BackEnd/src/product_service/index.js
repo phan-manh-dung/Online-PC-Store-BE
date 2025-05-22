@@ -21,10 +21,9 @@ if (process.env.NODE_ENV === 'localhost') {
 
 const SERVICE_INFO = {
   name: 'product_service',
-  host: 'product_service',
-  //host: 'localhost',
+  host: 'localhost',
+  //host: 'product_service',
   port: process.env.PORT || 5002,
-  // baseUrl: process.env.SERVICE_URL || 'https://product-service-422663804011.asia-southeast1.run.app',
   endpoints: [
     '/api/product/get-all',
     '/api/product/get-by-id/:id',
@@ -111,41 +110,6 @@ async function registerWithGateway() {
   }
 }
 
-// async function registerWithGateway() {
-//   try {
-//     console.log(`Attempting to register with API Gateway: ${process.env.GATEWAY_URL}`);
-//     console.log('Service info:', JSON.stringify(SERVICE_INFO));
-
-//     const response = await axios.post(`${process.env.GATEWAY_URL}/register`, SERVICE_INFO);
-//     serviceId = response.data.serviceId;
-//     registrationAttempts = 0;
-
-//     console.log('Successfully registered with API Gateway, serviceId:', serviceId);
-//     startHeartbeat();
-//   } catch (error) {
-//     registrationAttempts++;
-//     console.error(
-//       `Failed to register with API Gateway (attempt ${registrationAttempts}/${MAX_REGISTRATION_ATTEMPTS}):`,
-//       error.message,
-//     );
-
-//     if (error.response) {
-//       console.error('Response status:', error.response.status);
-//       console.error('Response data:', error.response.data);
-//     }
-
-//     // Try again with backoff
-//     const retryDelay = Math.min(30000, 4000 * Math.pow(2, registrationAttempts));
-//     console.log(`Will retry in ${retryDelay / 1000} seconds`);
-
-//     if (registrationAttempts < MAX_REGISTRATION_ATTEMPTS) {
-//       setTimeout(registerWithGateway, retryDelay);
-//     } else {
-//       console.error('Max registration attempts reached. Service will run without API Gateway registration.');
-//     }
-//   }
-// }
-
 // Heartbeat
 function startHeartbeat() {
   setInterval(async () => {
@@ -187,12 +151,3 @@ app.listen(SERVICE_INFO.port, () => {
   console.log(`Product Service running on http://localhost:${SERVICE_INFO.port}`);
   setTimeout(registerWithGateway, 1000);
 });
-
-// const PORT = process.env.PORT || 8080;
-// app.listen(PORT, () => {
-//   console.log(`User Service running on port ${PORT}`);
-//   console.log(`Service URL: ${SERVICE_INFO.baseUrl}`);
-
-//   // Wait a bit for everything to initialize before registering
-//   setTimeout(registerWithGateway, 2000);
-// });

@@ -8,7 +8,7 @@ const partnerCode = process.env.MOMO_PARTNER_CODE || 'MOMO';
 const accessKey = process.env.MOMO_ACCESS_KEY || 'F8BBA842ECF85';
 const secretKey = process.env.MOMO_SECRET_KEY || 'K951B6PE1waDMi640xX08PD3vg6EkVlz';
 const ipnUrl =
-  process.env.MOMO_IPN_URL || 'https://fc7a-2001-ee0-4f86-5210-2196-4a36-8e4a-7019.ngrok-free.app/api/payment/callback';
+  process.env.MOMO_IPN_URL || 'https://65cc-2001-ee0-4f86-5210-fc41-754f-9113-bf4f.ngrok-free.app/api/payment/callback';
 // thanh toán xong nó sẽ trở về đây
 const redirectUrl = process.env.MOMO_REDIRECT_URL || 'https://shopmd.vercel.app/orderSuccess';
 const requestType = 'captureWallet';
